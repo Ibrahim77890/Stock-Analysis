@@ -1,7 +1,7 @@
 """HTTP API (FastAPI + Swagger UI at /docs) exposing every function of the market-data service.
 
 Sections (Swagger tags):
-  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark.
+  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark, Backtest.
 Read endpoints never write. The pure-function endpoints (POST /adjust/preview, /indicators/compute,
 /indicators/causality-check, /quality/rules/check) take your own sample data so each function can
 be tested by hand. Endpoints under "Ingestion" and POST /quality/run change data or call Alpaca;
@@ -40,6 +40,8 @@ app = FastAPI(
         {"name": "Data quality", "description": "Stored quality results, pure rule checks on sample data, and a run trigger."},
         {"name": "Ingestion", "description": "Raw-file verification, download from Alpaca, load into PostgreSQL, job history."},
         {"name": "Benchmark", "description": "Stored benchmark results (Sprint 01 and 02)."},
+        {"name": "Backtest", "description": "Honest backtests: simulate, metrics, runs with hashes, fill-model comparison, "
+                                            "cost sweep, shuffle test, causality check, reproduce. Only persist=true writes."},
     ],
 )
 
@@ -55,6 +57,10 @@ def get_conn() -> Iterator[psycopg.Connection]:
 
 
 Conn = Depends(get_conn)
+
+from market_data.api_backtest import make_router  # noqa: E402  (needs get_conn defined above)
+
+app.include_router(make_router(get_conn))
 
 
 @app.exception_handler(UnknownSymbolError)

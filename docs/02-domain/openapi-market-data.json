@@ -375,36 +375,6 @@
         "title": "BarsResponse",
         "type": "object"
       },
-      "CausalityRequest": {
-        "properties": {
-          "closes": {
-            "items": {
-              "type": "number"
-            },
-            "title": "Closes",
-            "type": "array"
-          },
-          "cut_points": {
-            "default": 100,
-            "title": "Cut Points",
-            "type": "integer"
-          },
-          "indicator": {
-            "description": "Spec, or 'leaky_centered_sma:5' to see a failing case",
-            "examples": [
-              "sma:5"
-            ],
-            "title": "Indicator",
-            "type": "string"
-          }
-        },
-        "required": [
-          "indicator",
-          "closes"
-        ],
-        "title": "CausalityRequest",
-        "type": "object"
-      },
       "ComputeRequest": {
         "examples": [
           {
@@ -508,6 +478,32 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "MetricsRequest": {
+        "properties": {
+          "equity": {
+            "examples": [
+              [
+                100,
+                110,
+                99,
+                120
+              ]
+            ],
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 100000,
+            "minItems": 1,
+            "title": "Equity",
+            "type": "array"
+          }
+        },
+        "required": [
+          "equity"
+        ],
+        "title": "MetricsRequest",
+        "type": "object"
+      },
       "RuleCheckRequest": {
         "examples": [
           {
@@ -578,6 +574,88 @@
         "title": "RuleCheckRequest",
         "type": "object"
       },
+      "RunRequest": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "description": "Basis points of the fill value, every fill",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2023-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 5,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "fill_model": {
+            "default": "next_open",
+            "description": "next_open = decide at the close, trade at the next open (realisable). same_close = trade at the signal close (look-ahead, teaching only).",
+            "enum": [
+              "next_open",
+              "same_close"
+            ],
+            "title": "Fill Model",
+            "type": "string"
+          },
+          "include_equity": {
+            "default": false,
+            "title": "Include Equity",
+            "type": "boolean"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "persist": {
+            "default": false,
+            "description": "true writes the run to research.* (idempotent on the config hash)",
+            "title": "Persist",
+            "type": "boolean"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "description": "Buy at price*(1+s), sell at price*(1-s)",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 20,
+            "maximum": 1000.0,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2020-07-27",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "AAPL",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "RunRequest",
+        "type": "object"
+      },
       "SessionRequest": {
         "properties": {
           "start": {
@@ -601,6 +679,438 @@
           "start"
         ],
         "title": "SessionRequest",
+        "type": "object"
+      },
+      "ShuffleRequest": {
+        "properties": {
+          "block_length": {
+            "default": 20,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Block Length",
+            "type": "integer"
+          },
+          "commission_bps": {
+            "default": 0.0,
+            "description": "Basis points of the fill value, every fill",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2023-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 5,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "fill_model": {
+            "default": "next_open",
+            "description": "next_open = decide at the close, trade at the next open (realisable). same_close = trade at the signal close (look-ahead, teaching only).",
+            "enum": [
+              "next_open",
+              "same_close"
+            ],
+            "title": "Fill Model",
+            "type": "string"
+          },
+          "include_paths": {
+            "default": false,
+            "title": "Include Paths",
+            "type": "boolean"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "method": {
+            "default": "block_bootstrap",
+            "enum": [
+              "block_bootstrap",
+              "gbm"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "n_paths": {
+            "default": 100,
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "N Paths",
+            "type": "integer"
+          },
+          "seed": {
+            "default": 1,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "description": "Buy at price*(1+s), sell at price*(1-s)",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 20,
+            "maximum": 1000.0,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2020-07-27",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "AAPL",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "ShuffleRequest",
+        "type": "object"
+      },
+      "SimBar": {
+        "properties": {
+          "close": {
+            "exclusiveMinimum": 0.0,
+            "title": "Close",
+            "type": "number"
+          },
+          "high": {
+            "exclusiveMinimum": 0.0,
+            "title": "High",
+            "type": "number"
+          },
+          "low": {
+            "exclusiveMinimum": 0.0,
+            "title": "Low",
+            "type": "number"
+          },
+          "open": {
+            "exclusiveMinimum": 0.0,
+            "title": "Open",
+            "type": "number"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_date",
+          "open",
+          "high",
+          "low",
+          "close"
+        ],
+        "title": "SimBar",
+        "type": "object"
+      },
+      "SimulateRequest": {
+        "example": {
+          "bars": [
+            {
+              "close": 10,
+              "high": 10.5,
+              "low": 9.5,
+              "open": 10,
+              "trade_date": "2024-01-01"
+            },
+            {
+              "close": 11,
+              "high": 11.5,
+              "low": 10.0,
+              "open": 10.5,
+              "trade_date": "2024-01-02"
+            },
+            {
+              "close": 12,
+              "high": 12.5,
+              "low": 11.0,
+              "open": 11.5,
+              "trade_date": "2024-01-03"
+            },
+            {
+              "close": 11,
+              "high": 13.0,
+              "low": 10.5,
+              "open": 12.5,
+              "trade_date": "2024-01-04"
+            },
+            {
+              "close": 9,
+              "high": 11.0,
+              "low": 8.5,
+              "open": 10.5,
+              "trade_date": "2024-01-05"
+            },
+            {
+              "close": 8,
+              "high": 9.0,
+              "low": 7.5,
+              "open": 8.5,
+              "trade_date": "2024-01-06"
+            },
+            {
+              "close": 9,
+              "high": 9.5,
+              "low": 7.5,
+              "open": 8,
+              "trade_date": "2024-01-07"
+            },
+            {
+              "close": 10,
+              "high": 10.5,
+              "low": 9.0,
+              "open": 9.5,
+              "trade_date": "2024-01-08"
+            }
+          ],
+          "commission_bps": 0,
+          "fast": 2,
+          "fill_model": "next_open",
+          "initial_cash": 1000,
+          "slippage_bps": 0,
+          "slow": 3
+        },
+        "properties": {
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/SimBar"
+            },
+            "maxItems": 5000,
+            "minItems": 2,
+            "title": "Bars",
+            "type": "array"
+          },
+          "commission_bps": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "fast": {
+            "default": 2,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "fill_model": {
+            "default": "next_open",
+            "enum": [
+              "next_open",
+              "same_close"
+            ],
+            "title": "Fill Model",
+            "type": "string"
+          },
+          "initial_cash": {
+            "default": 1000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 3,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bars"
+        ],
+        "title": "SimulateRequest",
+        "type": "object"
+      },
+      "SpecIn": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "description": "Basis points of the fill value, every fill",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2023-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 5,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "fill_model": {
+            "default": "next_open",
+            "description": "next_open = decide at the close, trade at the next open (realisable). same_close = trade at the signal close (look-ahead, teaching only).",
+            "enum": [
+              "next_open",
+              "same_close"
+            ],
+            "title": "Fill Model",
+            "type": "string"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "description": "Buy at price*(1+s), sell at price*(1-s)",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 20,
+            "maximum": 1000.0,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2020-07-27",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "AAPL",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "SpecIn",
+        "type": "object"
+      },
+      "SweepRequest": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "description": "Basis points of the fill value, every fill",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2023-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 5,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "fill_model": {
+            "default": "next_open",
+            "description": "next_open = decide at the close, trade at the next open (realisable). same_close = trade at the signal close (look-ahead, teaching only).",
+            "enum": [
+              "next_open",
+              "same_close"
+            ],
+            "title": "Fill Model",
+            "type": "string"
+          },
+          "grid_bps": {
+            "default": [
+              0,
+              1,
+              2,
+              5,
+              10,
+              20,
+              50
+            ],
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Grid Bps",
+            "type": "array"
+          },
+          "include_commission": {
+            "default": false,
+            "description": "also apply the grid value as commission bps",
+            "title": "Include Commission",
+            "type": "boolean"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "description": "Buy at price*(1+s), sell at price*(1-s)",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 20,
+            "maximum": 1000.0,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2020-07-27",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "AAPL",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "SweepRequest",
         "type": "object"
       },
       "ValidationError": {
@@ -642,11 +1152,125 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "market_data__api__CausalityRequest": {
+        "properties": {
+          "closes": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Closes",
+            "type": "array"
+          },
+          "cut_points": {
+            "default": 100,
+            "title": "Cut Points",
+            "type": "integer"
+          },
+          "indicator": {
+            "description": "Spec, or 'leaky_centered_sma:5' to see a failing case",
+            "examples": [
+              "sma:5"
+            ],
+            "title": "Indicator",
+            "type": "string"
+          }
+        },
+        "required": [
+          "indicator",
+          "closes"
+        ],
+        "title": "CausalityRequest",
+        "type": "object"
+      },
+      "market_data__api_backtest__CausalityRequest": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "description": "Basis points of the fill value, every fill",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "cut_points": {
+            "default": 30,
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Cut Points",
+            "type": "integer"
+          },
+          "end": {
+            "default": "2023-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 5,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "fill_model": {
+            "default": "next_open",
+            "description": "next_open = decide at the close, trade at the next open (realisable). same_close = trade at the signal close (look-ahead, teaching only).",
+            "enum": [
+              "next_open",
+              "same_close"
+            ],
+            "title": "Fill Model",
+            "type": "string"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "seed": {
+            "default": 1,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "description": "Buy at price*(1+s), sell at price*(1-s)",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 20,
+            "maximum": 1000.0,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2020-07-27",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "AAPL",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "CausalityRequest",
+        "type": "object"
       }
     }
   },
   "info": {
-    "description": "HTTP API (FastAPI + Swagger UI at /docs) exposing every function of the market-data service.\n\nSections (Swagger tags):\n  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark.\nRead endpoints never write. The pure-function endpoints (POST /adjust/preview, /indicators/compute,\n/indicators/causality-check, /quality/rules/check) take your own sample data so each function can\nbe tested by hand. Endpoints under \"Ingestion\" and POST /quality/run change data or call Alpaca;\nthey are for the local owner only (the server binds to 127.0.0.1).\n",
+    "description": "HTTP API (FastAPI + Swagger UI at /docs) exposing every function of the market-data service.\n\nSections (Swagger tags):\n  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark, Backtest.\nRead endpoints never write. The pure-function endpoints (POST /adjust/preview, /indicators/compute,\n/indicators/causality-check, /quality/rules/check) take your own sample data so each function can\nbe tested by hand. Endpoints under \"Ingestion\" and POST /quality/run change data or call Alpaca;\nthey are for the local owner only (the server binds to 127.0.0.1).\n",
     "title": "MarketLab market-data API",
     "version": "0.2.0"
   },
@@ -690,6 +1314,539 @@
         "summary": "adjust_bars: adjust your own bars as of a date (no database)",
         "tags": [
           "Adjustment"
+        ]
+      }
+    },
+    "/backtests": {
+      "get": {
+        "operationId": "runs_backtests_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Runs Backtests Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "list_runs: stored runs, newest first",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/causality-check": {
+      "post": {
+        "operationId": "causality_backtests_causality_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/market_data__api_backtest__CausalityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Causality Backtests Causality Check Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "check_engine_truncation: equity at t must not depend on data after t",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/cost-sweep": {
+      "post": {
+        "operationId": "sweep_backtests_cost_sweep_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SweepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sweep Backtests Cost Sweep Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "cost_sweep: rerun across a grid of costs and estimate the break-even cost",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/fill-model-comparison": {
+      "post": {
+        "operationId": "fill_models_backtests_fill_model_comparison_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpecIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Fill Models Backtests Fill Model Comparison Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "look-ahead detector: next_open vs same_close on the same strategy",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/metrics": {
+      "post": {
+        "operationId": "metrics_endpoint_backtests_metrics_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetricsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Metrics Endpoint Backtests Metrics Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "summarise: metrics of an equity curve you type in (no database)",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/run": {
+      "post": {
+        "operationId": "run_backtests_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Run Backtests Run Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "run_backtest on database bars (+ buy-and-hold); persist=true saves it with hashes",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/shuffle-test": {
+      "post": {
+        "operationId": "shuffle_backtests_shuffle_test_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShuffleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Shuffle Backtests Shuffle Test Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "shuffle_test: rank the real result among bootstrap / random-walk paths",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/simulate": {
+      "post": {
+        "operationId": "simulate_backtests_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Simulate Backtests Simulate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "run_backtest on YOUR bars (no database); the golden example is prefilled",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/{run_id}": {
+      "get": {
+        "operationId": "run_detail_backtests__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Run Detail Backtests  Run Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "get_run: one stored run with metrics and hashes",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/{run_id}/equity": {
+      "get": {
+        "operationId": "run_equity_backtests__run_id__equity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Run Equity Backtests  Run Id  Equity Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "get_equity: daily equity of a stored run",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/{run_id}/reproduce": {
+      "post": {
+        "operationId": "reproduce_backtests__run_id__reproduce_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reproduce Backtests  Run Id  Reproduce Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "reproduce_run: rebuild from the stored config and compare result hashes",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/{run_id}/trades": {
+      "get": {
+        "operationId": "run_trades_backtests__run_id__trades_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Run Trades Backtests  Run Id  Trades Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "get_trades: trades of a stored run",
+        "tags": [
+          "Backtest"
         ]
       }
     },
@@ -934,7 +2091,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CausalityRequest"
+                "$ref": "#/components/schemas/market_data__api__CausalityRequest"
               }
             }
           },
@@ -1905,6 +3062,10 @@
     {
       "description": "Stored benchmark results (Sprint 01 and 02).",
       "name": "Benchmark"
+    },
+    {
+      "description": "Honest backtests: simulate, metrics, runs with hashes, fill-model comparison, cost sweep, shuffle test, causality check, reproduce. Only persist=true writes.",
+      "name": "Backtest"
     }
   ]
 }

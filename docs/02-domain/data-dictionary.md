@@ -74,6 +74,26 @@ after `poe migration-run` is verified**, see the sprint notes). Prices are **raw
 | detail | jsonb | no | Rule-specific, e.g. `{"return": -0.75, "explained_by_split": true}` or `{"classification": "provider_gap"}` |
 | created_at | timestamptz | no | Instant |
 
+## research.backtest_run  (unique: config_hash; owner: Python service, migration 0007)
+| Column | Type | Meaning |
+|---|---|---|
+| run_id | bigint identity PK | |
+| config_hash | text (64 hex), unique | sha256 of canonical {spec, dataset_fingerprint, engine_version} |
+| result_hash | text (64 hex) | sha256 of the rounded equity curve and trades |
+| engine_version | text | bumped when results can change |
+| spec | jsonb | the BacktestSpec (symbol, dates, fast, slow, fill_model, costs in bps, initial_cash) |
+| dataset_fingerprint | text (64 hex) | sha256 of the exact bars used |
+| symbol, first_date, last_date, bars_used | | window actually used |
+| realisable | boolean | false for the `same_close` teaching mode |
+| metrics, benchmark_metrics | jsonb | strategy and buy-and-hold metrics (conventions in backtest.md) |
+| created_at | timestamptz | |
+
+## research.backtest_trade  (PK: run_id, trade_no; ON DELETE CASCADE)
+entry_date, exit_date, entry_price, exit_price (fill prices, slippage included; for an open trade the last close), shares (numeric 24,8), costs (commission plus slippage cost), pnl (net), closed (false for the position still open on the last bar).
+
+## research.backtest_equity  (PK: run_id, trade_date; ON DELETE CASCADE)
+equity (marked at the close), position (0 or 1).
+
 ## Adjustment modes (computed, never stored)
 
 `market.bar_daily` stores **raw** prices only. `get_bars(..., adjustment=...)` and `GET /bars` compute adjusted series **as of the cursor** (`min(end, max_date)`); only corporate actions with `ex_date <= cursor` are used.

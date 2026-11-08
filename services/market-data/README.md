@@ -51,7 +51,7 @@ Workflow for a schema change:
 
 Alembic's version table is `market.alembic_version`, so nothing is created outside the `market` schema.
 
-## How to reproduce Sprints 1 and 2 (from an empty machine)
+## How to reproduce Sprints 1 to 3 (from an empty machine)
 
 Run from `services/market-data`. Steps marked (needs keys) need `ALPACA_API_KEY_ID`/`ALPACA_API_SECRET_KEY` in `.env`.
 
@@ -70,6 +70,7 @@ uv run market-data bench-load             # schema bench (separate from market)
 uv run market-data bench-run              # warm; restart PostgreSQL, then: bench-run --cold
 uv run market-data bench-report           # writes docs/03-benchmarks/benchmark-01-postgres-daily-bars.md
 uv run market-data bench-index-experiment # Sprint 02: effect of a (trade_date, instrument_id) index (long)
+uv run python scripts/backtest_worked_example.py  # Sprint 03: real-data backtest example + saved runs (needs loaded data and migration 0007)
 uv run market-data export-openapi         # refresh docs/02-domain/openapi-market-data.json (a test compares it)
 uv run market-data serve                  # HTTP API + Swagger UI: http://127.0.0.1:8000/docs
 ```
@@ -89,6 +90,9 @@ Open http://127.0.0.1:8000/docs (binds to 127.0.0.1 only; no authentication). Se
 | Data quality | stored results, `POST /quality/rules/check` (your bars), `POST /quality/run` (writes) |
 | Ingestion | job history, quarantine, raw files, `verify`; `download` (needs Alpaca keys) and `load` write data |
 | Benchmark | stored benchmark results |
+| Backtest | `POST /backtests/simulate` (your bars, prefilled golden example), `/backtests/metrics` (your equity values), `/backtests/run` (database bars, `persist=true` saves with hashes), `/backtests/fill-model-comparison` (look-ahead detector), `/backtests/cost-sweep`, `/backtests/shuffle-test`, `/backtests/causality-check`, `GET /backtests`, `/backtests/{id}`, `/{id}/trades`, `/{id}/equity`, `POST /{id}/reproduce` |
+
+Sprint 03 (backtest): `uv run poe migration-run` applies `0007` (schema `research`). Try in Swagger: `POST /backtests/run` with the default body (AAPL 5/20, from 2020-07-27) and `persist: true`, run it twice (same `run_id`, `created: false`), then `POST /backtests/{run_id}/reproduce` (expect `reproduced`). Model, metrics and limits: `docs/02-domain/backtest.md`; real numbers: `docs/02-domain/backtest-worked-example.md`. Only `persist=true` writes (to `research.*`).
 
 Environment note: `ALPACA_API_KEY_ID` and `ALPACA_API_SECRET_KEY` in `.env` are only needed by `download`. Nothing else needs credentials besides the PostgreSQL login in `DATABASE_URL`.
 

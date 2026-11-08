@@ -1,4 +1,4 @@
-# MarketLab glossary (Sprint 01)
+# MarketLab glossary (Sprints 01 to 03)
 
 All terms below are **mechanic** (established fact) unless labelled **interpretation**. Sources are
 first-party glossaries; deep links were not individually verified (marked `(unverified)`), so check the
@@ -49,3 +49,16 @@ Sources used: [Investor.gov glossary](https://www.investor.gov/introduction-inve
 | 39 | IEX | Investors Exchange, one US equity venue; its data feed covers only trades on IEX. | IEX volume is a small share of the day's total. | intermediate | mechanic | SIP, volume | IEX Exchange (unverified) |
 | 40 | reverse split | A split that reduces share count and multiplies price. | 1-for-8: price 10 becomes 80. | intermediate | mechanic | split | SEC (unverified) |
 | 41 | adjustment factor | The multiplier applied to an earlier raw price to make it comparable after corporate actions. | 4-for-1 split: 0.25. | intermediate | mechanic | adjusted price, split | project definition |
+| 42 | fill model | The rule that says at which bar and price a signal becomes a trade (here next_open or same_close). | Signal at Monday's close, fill at Tuesday's open. | intermediate | mechanic | signal, slippage, look-ahead bias | project definition |
+| 43 | slippage | The gap between the expected reference price and the price actually obtained, in the unfavourable direction. | Buy with 5 bps slippage: 100.00 becomes 100.05. | beginner | mechanic | spread, basis point | Wikipedia: Slippage (finance) |
+| 44 | basis point | One hundredth of a percent (0.01%). | 10 bps = 0.10%. | beginner | mechanic | slippage, commission | project definition |
+| 45 | commission | A fee charged per trade, here a share of the traded value. | 1 bp on a 100,000 fill = 10. | beginner | mechanic | slippage | Investor.gov trading costs |
+| 46 | drawdown | Decline of equity from its running peak; the maximum drawdown is the worst such decline. | Equity 110 then 99: drawdown -10%. | intermediate | mechanic | equity curve, Sharpe ratio | project definition |
+| 47 | Sharpe ratio | Mean daily return divided by its sample standard deviation, annualised by sqrt(252) (risk-free rate 0 in this project). | Mean 0.001, std 0.01: about 1.59. | intermediate | mechanic | volatility, drawdown | Sharpe (1994) |
+| 48 | buy-and-hold | The baseline of entering once and staying invested, computed through the same engine and costs. | Buy at the first fill, mark at the last close. | beginner | mechanic | benchmark | project definition |
+| 49 | bootstrap | Resampling observed data with replacement to see how a result varies. | Redraw 20-day blocks of bars to build new price paths. | intermediate | mechanic | block bootstrap, luck control | Wikipedia: Bootstrapping (statistics) |
+| 50 | block bootstrap | A bootstrap that resamples runs of consecutive observations to keep short-range structure. | Blocks of 20 bars. | intermediate | mechanic | bootstrap | project definition |
+| 51 | luck control | Running the same strategy on synthetic data where no edge can exist, to see how often it does as well as the real result. | Real return ranks at the 42nd percentile of 200 paths. | intermediate | mechanic | bootstrap | project definition |
+| 52 | config hash | A sha256 fingerprint of the canonical configuration, dataset fingerprint and engine version of a run. | Same hash, same result. | intermediate | mechanic | reproducibility, dataset fingerprint | project definition |
+| 53 | dataset fingerprint | A sha256 of the exact bars a run used. | One changed volume changes it. | intermediate | mechanic | config hash, provenance | project definition |
+| 54 | equity curve | Account value (cash plus position) marked at each close. | 100000, 100400, 99800. | beginner | mechanic | drawdown | project definition |
