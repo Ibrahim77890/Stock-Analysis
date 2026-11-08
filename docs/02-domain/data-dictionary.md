@@ -94,6 +94,12 @@ entry_date, exit_date, entry_price, exit_price (fill prices, slippage included; 
 ## research.backtest_equity  (PK: run_id, trade_date; ON DELETE CASCADE)
 equity (marked at the close), position (0 or 1).
 
+## research.study  (owner: Python service, migration 0008)
+study_id (identity PK), name, family (e.g. `sma_crossover`), symbol, created_at, holdout_used_at (NULL until the one-use holdout evaluation).
+
+## research.trial  (FK study_id ON DELETE CASCADE)
+trial_id (identity PK), study_id, phase (`train` | `test` | `holdout`, CHECK), params (jsonb, e.g. `{"fast": 5, "slow": 20}`), window_start, window_end, config_hash (nullable), total_return, sharpe (annualised, nullable when undefined), trades, created_at. Trials are append-only by convention: nothing deletes weak trials (ADR 0012).
+
 ## Adjustment modes (computed, never stored)
 
 `market.bar_daily` stores **raw** prices only. `get_bars(..., adjustment=...)` and `GET /bars` compute adjusted series **as of the cursor** (`min(end, max_date)`); only corporate actions with `ex_date <= cursor` are used.

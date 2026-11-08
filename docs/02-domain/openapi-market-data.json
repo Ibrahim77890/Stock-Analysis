@@ -375,6 +375,98 @@
         "title": "BarsResponse",
         "type": "object"
       },
+      "BestOfNIn": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 20,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "min_bars": {
+            "default": 500,
+            "maximum": 100000.0,
+            "minimum": 2.0,
+            "title": "Min Bars",
+            "type": "integer"
+          },
+          "replicates": {
+            "default": 50,
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Replicates",
+            "type": "integer"
+          },
+          "seed": {
+            "default": 1,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 50,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2018-11-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "SPY",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          },
+          "symbols": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbols"
+          }
+        },
+        "title": "BestOfNIn",
+        "type": "object"
+      },
       "ComputeRequest": {
         "examples": [
           {
@@ -478,6 +570,78 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "HoldoutIn": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 5,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "holdout_bars": {
+            "default": 200,
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Holdout Bars",
+            "type": "integer"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 20,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2018-11-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "study_id": {
+            "minimum": 1.0,
+            "title": "Study Id",
+            "type": "integer"
+          },
+          "symbol": {
+            "default": "SPY",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "study_id"
+        ],
+        "title": "HoldoutIn",
+        "type": "object"
+      },
       "MetricsRequest": {
         "properties": {
           "equity": {
@@ -502,6 +666,72 @@
           "equity"
         ],
         "title": "MetricsRequest",
+        "type": "object"
+      },
+      "RegimeIn": {
+        "properties": {
+          "by": {
+            "default": "year",
+            "enum": [
+              "year",
+              "vol"
+            ],
+            "title": "By",
+            "type": "string"
+          },
+          "commission_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 20,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 50,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2018-11-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "SPY",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "RegimeIn",
         "type": "object"
       },
       "RuleCheckRequest": {
@@ -656,6 +886,175 @@
         "title": "RunRequest",
         "type": "object"
       },
+      "ScanIn": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast": {
+            "default": 20,
+            "minimum": 1.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "min_bars": {
+            "default": 500,
+            "maximum": 100000.0,
+            "minimum": 2.0,
+            "title": "Min Bars",
+            "type": "integer"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow": {
+            "default": 50,
+            "minimum": 2.0,
+            "title": "Slow",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2018-11-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "SPY",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          },
+          "symbols": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbols"
+          }
+        },
+        "title": "ScanIn",
+        "type": "object"
+      },
+      "SearchIn": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast_values": {
+            "default": [
+              3,
+              5,
+              10,
+              20
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Fast Values",
+            "type": "array"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "metric": {
+            "default": "sharpe",
+            "enum": [
+              "sharpe",
+              "total_return"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "record": {
+            "default": false,
+            "description": "true creates a study and stores one trial per evaluated pair",
+            "title": "Record",
+            "type": "boolean"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow_values": {
+            "default": [
+              30,
+              50,
+              100,
+              150
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Slow Values",
+            "type": "array"
+          },
+          "start": {
+            "default": "2018-11-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "SPY",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "title": "SearchIn",
+        "type": "object"
+      },
       "SessionRequest": {
         "properties": {
           "start": {
@@ -679,6 +1078,130 @@
           "start"
         ],
         "title": "SessionRequest",
+        "type": "object"
+      },
+      "SharpeIn": {
+        "properties": {
+          "benchmark_sr": {
+            "default": 0.0,
+            "description": "Per-period Sharpe threshold for the PSR",
+            "title": "Benchmark Sr",
+            "type": "number"
+          },
+          "returns": {
+            "examples": [
+              [
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005,
+                0.001,
+                -0.002,
+                0.003,
+                0.0005
+              ]
+            ],
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 100000,
+            "minItems": 2,
+            "title": "Returns",
+            "type": "array"
+          },
+          "trial_sharpes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "maxItems": 100000,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Per-period Sharpe estimates of ALL trials; enables the DSR",
+            "title": "Trial Sharpes"
+          }
+        },
+        "required": [
+          "returns"
+        ],
+        "title": "SharpeIn",
         "type": "object"
       },
       "ShuffleRequest": {
@@ -1018,6 +1541,123 @@
         "title": "SpecIn",
         "type": "object"
       },
+      "SplitIn": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "embargo": {
+            "default": 5,
+            "maximum": 500.0,
+            "minimum": 0.0,
+            "title": "Embargo",
+            "type": "integer"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast_values": {
+            "default": [
+              3,
+              5,
+              10,
+              20
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Fast Values",
+            "type": "array"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "metric": {
+            "default": "sharpe",
+            "enum": [
+              "sharpe",
+              "total_return"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "record": {
+            "default": false,
+            "description": "true creates a study and stores one trial per evaluated pair",
+            "title": "Record",
+            "type": "boolean"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow_values": {
+            "default": [
+              30,
+              50,
+              100,
+              150
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Slow Values",
+            "type": "array"
+          },
+          "start": {
+            "default": "2018-11-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "SPY",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          },
+          "test_bars": {
+            "anyOf": [
+              {
+                "maximum": 100000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Bars"
+          },
+          "train_bars": {
+            "default": 1000,
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Train Bars",
+            "type": "integer"
+          }
+        },
+        "title": "SplitIn",
+        "type": "object"
+      },
       "SweepRequest": {
         "properties": {
           "commission_bps": {
@@ -1153,6 +1793,117 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "WalkIn": {
+        "properties": {
+          "commission_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Commission Bps",
+            "type": "number"
+          },
+          "embargo": {
+            "default": 5,
+            "maximum": 500.0,
+            "minimum": 0.0,
+            "title": "Embargo",
+            "type": "integer"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "fast_values": {
+            "default": [
+              3,
+              5,
+              10,
+              20
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Fast Values",
+            "type": "array"
+          },
+          "initial_cash": {
+            "default": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Initial Cash",
+            "type": "number"
+          },
+          "metric": {
+            "default": "sharpe",
+            "enum": [
+              "sharpe",
+              "total_return"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "record": {
+            "default": false,
+            "description": "true creates a study and stores one trial per evaluated pair",
+            "title": "Record",
+            "type": "boolean"
+          },
+          "slippage_bps": {
+            "default": 0.0,
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "type": "number"
+          },
+          "slow_values": {
+            "default": [
+              30,
+              50,
+              100,
+              150
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 40,
+            "minItems": 1,
+            "title": "Slow Values",
+            "type": "array"
+          },
+          "start": {
+            "default": "2018-11-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbol": {
+            "default": "SPY",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Symbol",
+            "type": "string"
+          },
+          "test": {
+            "default": 100,
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Test",
+            "type": "integer"
+          },
+          "train": {
+            "default": 500,
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Train",
+            "type": "integer"
+          }
+        },
+        "title": "WalkIn",
+        "type": "object"
+      },
       "market_data__api__CausalityRequest": {
         "properties": {
           "closes": {
@@ -1270,7 +2021,7 @@
     }
   },
   "info": {
-    "description": "HTTP API (FastAPI + Swagger UI at /docs) exposing every function of the market-data service.\n\nSections (Swagger tags):\n  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark, Backtest.\nRead endpoints never write. The pure-function endpoints (POST /adjust/preview, /indicators/compute,\n/indicators/causality-check, /quality/rules/check) take your own sample data so each function can\nbe tested by hand. Endpoints under \"Ingestion\" and POST /quality/run change data or call Alpaca;\nthey are for the local owner only (the server binds to 127.0.0.1).\n",
+    "description": "HTTP API (FastAPI + Swagger UI at /docs) exposing every function of the market-data service.\n\nSections (Swagger tags):\n  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark, Backtest, Validation.\nRead endpoints never write. The pure-function endpoints (POST /adjust/preview, /indicators/compute,\n/indicators/causality-check, /quality/rules/check) take your own sample data so each function can\nbe tested by hand. Endpoints under \"Ingestion\" and POST /quality/run change data or call Alpaca;\nthey are for the local owner only (the server binds to 127.0.0.1).\n",
     "title": "MarketLab market-data API",
     "version": "0.2.0"
   },
@@ -3024,6 +3775,444 @@
           "Reference"
         ]
       }
+    },
+    "/validation/best-of-n": {
+      "post": {
+        "operationId": "best_of_n_validation_best_of_n_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BestOfNIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Best Of N Validation Best Of N Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "best_of_n_control: real best-of-N Sharpe vs best of N random-walk symbols",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/grid-search": {
+      "post": {
+        "operationId": "grid_search_validation_grid_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Grid Search Validation Grid Search Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "grid_search: evaluate every (fast, slow) pair; record=true stores each as a trial",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/holdout": {
+      "post": {
+        "operationId": "holdout_validation_holdout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldoutIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Holdout Validation Holdout Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "final_holdout_evaluation: one use per study (409 on a second call)",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/regimes": {
+      "post": {
+        "operationId": "regimes_endpoint_validation_regimes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegimeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Regimes Endpoint Validation Regimes Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "regime_breakdown: results by calendar year or volatility tercile (reconciled)",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/sharpe-stats": {
+      "post": {
+        "operationId": "sharpe_stats_validation_sharpe_stats_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharpeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sharpe Stats Validation Sharpe Stats Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "PSR / DSR on YOUR returns (no database); add trial_sharpes for the deflation",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/split-evaluation": {
+      "post": {
+        "operationId": "split_evaluation_validation_split_evaluation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SplitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Split Evaluation Validation Split Evaluation Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "evaluate_split: select on the training bars, test once after an embargo",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/studies": {
+      "get": {
+        "operationId": "studies_validation_studies_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Studies Validation Studies Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "list studies with trial counts",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/studies/{study_id}": {
+      "get": {
+        "operationId": "study_validation_studies__study_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "study_id",
+            "required": true,
+            "schema": {
+              "title": "Study Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Study Validation Studies  Study Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "study_summary + overfitting_meter (N trials, expected best, DSR)",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/universe-scan": {
+      "post": {
+        "operationId": "universe_scan_validation_universe_scan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Universe Scan Validation Universe Scan Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "universe_scan: the same rule on every eligible symbol (best of N is biased)",
+        "tags": [
+          "Validation"
+        ]
+      }
+    },
+    "/validation/walk-forward": {
+      "post": {
+        "operationId": "walk_forward_validation_walk_forward_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Walk Forward Validation Walk Forward Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "walk_forward: rolling select-on-train, trade-the-next-block, stitched curve",
+        "tags": [
+          "Validation"
+        ]
+      }
     }
   },
   "tags": [
@@ -3066,6 +4255,10 @@
     {
       "description": "Honest backtests: simulate, metrics, runs with hashes, fill-model comparison, cost sweep, shuffle test, causality check, reproduce. Only persist=true writes.",
       "name": "Backtest"
+    },
+    {
+      "description": "Grid search with trial counting, train/test split, one-use holdout, walk-forward, PSR/DSR, universe scan, best-of-N control, regime breakdown. Writes only with record=true.",
+      "name": "Validation"
     }
   ]
 }

@@ -1,4 +1,4 @@
-# MarketLab glossary (Sprints 01 to 03)
+# MarketLab glossary (Sprints 01 to 04)
 
 All terms below are **mechanic** (established fact) unless labelled **interpretation**. Sources are
 first-party glossaries; deep links were not individually verified (marked `(unverified)`), so check the
@@ -62,3 +62,15 @@ Sources used: [Investor.gov glossary](https://www.investor.gov/introduction-inve
 | 52 | config hash | A sha256 fingerprint of the canonical configuration, dataset fingerprint and engine version of a run. | Same hash, same result. | intermediate | mechanic | reproducibility, dataset fingerprint | project definition |
 | 53 | dataset fingerprint | A sha256 of the exact bars a run used. | One changed volume changes it. | intermediate | mechanic | config hash, provenance | project definition |
 | 54 | equity curve | Account value (cash plus position) marked at each close. | 100000, 100400, 99800. | beginner | mechanic | drawdown | project definition |
+| 55 | in-sample | The part of a time series used to choose parameters. | First 1,000 bars. | beginner | mechanic | out-of-sample, overfitting | project definition |
+| 56 | out-of-sample | Data not used to choose parameters, used to judge the choice. | Bars 1,006 onward. | beginner | mechanic | in-sample, holdout | Wikipedia: Cross-validation (statistics) |
+| 57 | overfitting | Tuning a rule to the quirks of one dataset so it fails on new data. | Best of 22 pairs looks great in-sample only. | beginner | mechanic | trial, data snooping | Wikipedia: Overfitting |
+| 58 | trial | One evaluated parameter configuration; the count of trials measures how many tries were made. | Pair 5/20 on the training window. | intermediate | mechanic | study, deflated Sharpe ratio | project definition |
+| 59 | embargo | Bars skipped between the end of training and the start of testing so information does not leak across the boundary. | 5 bars. | intermediate | mechanic | in-sample, warm-up | project definition |
+| 60 | warm-up | Earlier bars supplied only so indicators exist at the first scored bar. | 50 bars before a test block for SMA(50). | intermediate | mechanic | embargo | project definition |
+| 61 | holdout | A final slice of data evaluated once at the end of the work. | Last 200 bars, one use. | intermediate | mechanic | out-of-sample | project definition |
+| 62 | walk-forward analysis | Repeating select-on-the-past, trade-the-next-block through time and stitching the test blocks. | 8 folds of 100 test bars. | intermediate | mechanic | out-of-sample, fold | Wikipedia: Walk forward optimization |
+| 63 | probabilistic Sharpe ratio | The probability that the true Sharpe ratio exceeds a threshold, given sample length and return shape. | PSR(0) = 0.977 for Sharpe 1 over 1,000 days. | advanced | mechanic | Sharpe ratio, deflated Sharpe ratio | Bailey and Lopez de Prado (unverified) |
+| 64 | deflated Sharpe ratio | The probabilistic Sharpe ratio evaluated at the Sharpe a no-skill search of N trials is expected to reach. | DSR 0.86 means the winner is only weakly beyond luck. | advanced | mechanic | probabilistic Sharpe ratio, trial | Bailey and Lopez de Prado (unverified) |
+| 65 | best of N | The maximum of N results; a biased estimate of any single one. | Best Sharpe among 53 symbols. | intermediate | mechanic | selection bias, survivorship bias | Wikipedia: Selection bias |
+| 66 | regime | A period with a distinct statistical character, such as high volatility. | Year 2022 versus 2021. | intermediate | mechanic | non-stationarity | project definition |

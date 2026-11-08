@@ -1,7 +1,7 @@
 """HTTP API (FastAPI + Swagger UI at /docs) exposing every function of the market-data service.
 
 Sections (Swagger tags):
-  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark, Backtest.
+  Reference, Bars, Adjustment, Indicators, Replay, Lineage, Data quality, Ingestion, Benchmark, Backtest, Validation.
 Read endpoints never write. The pure-function endpoints (POST /adjust/preview, /indicators/compute,
 /indicators/causality-check, /quality/rules/check) take your own sample data so each function can
 be tested by hand. Endpoints under "Ingestion" and POST /quality/run change data or call Alpaca;
@@ -42,6 +42,8 @@ app = FastAPI(
         {"name": "Benchmark", "description": "Stored benchmark results (Sprint 01 and 02)."},
         {"name": "Backtest", "description": "Honest backtests: simulate, metrics, runs with hashes, fill-model comparison, "
                                             "cost sweep, shuffle test, causality check, reproduce. Only persist=true writes."},
+        {"name": "Validation", "description": "Grid search with trial counting, train/test split, one-use holdout, walk-forward, "
+                                               "PSR/DSR, universe scan, best-of-N control, regime breakdown. Writes only with record=true."},
     ],
 )
 
@@ -61,6 +63,10 @@ Conn = Depends(get_conn)
 from market_data.api_backtest import make_router  # noqa: E402  (needs get_conn defined above)
 
 app.include_router(make_router(get_conn))
+
+from market_data.api_validation import make_router as make_validation_router  # noqa: E402
+
+app.include_router(make_validation_router(get_conn))
 
 
 @app.exception_handler(UnknownSymbolError)
