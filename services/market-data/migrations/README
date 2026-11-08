@@ -1,0 +1,8 @@
+Alembic migrations for the `market` schema (hand-written, numbered 0001, 0002, ...).
+
+Create one:   uv run poe migration-new create instrument table
+Apply:        uv run poe migration-run
+Undo latest:  uv run poe migration-rollback
+Preview SQL:  uv run poe migration-sql
+
+See ../README.md for the full workflow.

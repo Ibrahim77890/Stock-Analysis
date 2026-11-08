@@ -1,0 +1,62 @@
+[project]
+name = "market-data"
+version = "0.1.0"
+description = "MarketLab market-data service: ingestion, validation, storage and queries for historical OHLCV data."
+readme = "README.md"
+authors = [
+    { name = "Ibrahim77890", email = "ibrahimqaiser2405@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.20.1",
+    "exchange-calendars>=4.13.2",
+    "fastapi>=0.162.2",
+    "httpx>=0.28.1",
+    "polars>=2.1.0",
+    "psycopg[binary]>=3.3.8",
+    "pyarrow>=26.0.1",
+    "python-dotenv",
+    "sqlalchemy>=2.1.8",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+market-data = "market_data:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.49.0",
+    "pytest>=9.2.0",
+    "pytest-cov",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.poe]
+envfile = "../../.env"
+
+# Run any task with: uv run poe <task>   (list them with: uv run poe)
+[tool.poe.tasks]
+test = { cmd = "pytest -v", help = "Run all tests" }
+test-coverage = { cmd = "pytest --cov=market_data", help = "Run tests with coverage" }
+
+# --- local database (native PostgreSQL service on localhost:5432; no Docker) ---
+db-init = { cmd = "sudo -u postgres psql -v pw=${POSTGRES_PASSWORD} -f scripts/db_init.sql", help = "One-time: create role + database (asks for sudo)" }
+db-psql = { cmd = "psql ${DATABASE_URL}", help = "Open psql on the project database" }
+db-check = { cmd = "pg_isready -h localhost -p 5432", help = "Is the PostgreSQL service accepting connections?" }
+
+# --- migrations (Alembic, hand-written; no autogenerate) ---
+# poe forwards extra CLI words to `cmd` tasks, e.g.:
+#   uv run poe migration-new create instrument table
+migration-new = { cmd = "python scripts/new_migration.py", help = "Create the next numbered migration file: migration-new <message words>" }
+migration-run = { cmd = "alembic upgrade head", help = "Apply all pending migrations" }
+migration-rollback = { cmd = "alembic downgrade -1", help = "Undo the latest migration" }
+migration-history = { cmd = "alembic history --verbose", help = "List all migrations" }
+migration-current = { cmd = "alembic current", help = "Show the revision the database is at" }
+migration-heads = { cmd = "alembic heads", help = "Show head revision(s); more than one means a branch conflict" }
+migration-sql = { cmd = "alembic upgrade head --sql", help = "Print the SQL of pending migrations without running it" }

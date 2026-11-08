@@ -1,0 +1,16 @@
+# Licensed / large data and generated reports
+data/
+
+# Secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS / editor
+.DS_Store

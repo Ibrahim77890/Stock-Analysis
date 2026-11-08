@@ -1,0 +1,54 @@
+symbol,name,type,sector,reason_included
+SPY,SPDR S&P 500 ETF Trust,etf,Broad market,Broad US large-cap benchmark; most liquid ETF
+QQQ,Invesco QQQ Trust,etf,Broad market,Nasdaq-100 benchmark
+IWM,iShares Russell 2000 ETF,etf,Broad market,US small-cap benchmark
+DIA,SPDR Dow Jones Industrial Average ETF,etf,Broad market,Price-weighted Dow benchmark
+XLK,Technology Select Sector SPDR,etf,Technology,Sector ETF
+XLF,Financial Select Sector SPDR,etf,Financials,Sector ETF
+XLE,Energy Select Sector SPDR,etf,Energy,Sector ETF; commodity-sensitive volatility
+XLV,Health Care Select Sector SPDR,etf,Health care,Sector ETF
+XLY,Consumer Discretionary Select Sector SPDR,etf,Consumer discretionary,Sector ETF
+XLP,Consumer Staples Select Sector SPDR,etf,Consumer staples,Sector ETF
+TLT,iShares 20+ Year Treasury Bond ETF,etf,Bonds,Bond ETF with regular dividends
+GLD,SPDR Gold Shares,etf,Commodities,Commodity ETF
+AAPL,Apple Inc.,stock,Technology,Split test case: 4-for-1 ex-date 2020-08-31 (date to be confirmed against downloaded corporate actions in 01_05)
+MSFT,Microsoft Corp.,stock,Technology,Large liquid stock; no splits in range (control)
+NVDA,NVIDIA Corp.,stock,Technology,Split test cases: 4-for-1 ex-date 2021-07-20 and 10-for-1 ex-date 2024-06-10 (confirm in 01_05)
+AVGO,Broadcom Inc.,stock,Technology,Large liquid stock; 10-for-1 split Jul 2024 (confirm in 01_05)
+ORCL,Oracle Corp.,stock,Technology,Large liquid stock; regular dividends
+CRM,Salesforce Inc.,stock,Technology,Large liquid stock
+AMD,Advanced Micro Devices,stock,Technology,High-volatility large-cap
+TSLA,Tesla Inc.,stock,Consumer discretionary,Split test cases: 5-for-1 ex-date 2020-08-31 and 3-for-1 ex-date 2022-08-25 (confirm in 01_05)
+AMZN,Amazon.com Inc.,stock,Consumer discretionary,Split test case: 20-for-1 ex-date 2022-06-06 (confirm in 01_05)
+HD,Home Depot Inc.,stock,Consumer discretionary,Large liquid stock; regular dividends
+MCD,McDonald's Corp.,stock,Consumer discretionary,Large liquid stock; regular dividends
+NKE,Nike Inc.,stock,Consumer discretionary,Large liquid stock; 2-for-1 split Dec 2015 is before range (control)
+GOOGL,Alphabet Inc. Class A,stock,Communication services,Split test case: 20-for-1 ex-date 2022-07-18 (confirm in 01_05)
+META,Meta Platforms Inc.,stock,Communication services,Large liquid stock; ticker changed from FB in 2022 (symbol-change gap risk)
+NFLX,Netflix Inc.,stock,Communication services,Large liquid stock; 10-for-1 split Nov 2025 (confirm in 01_05)
+DIS,Walt Disney Co.,stock,Communication services,Large liquid stock; dividend suspended 2020 then paused (dividend gap)
+JPM,JPMorgan Chase & Co.,stock,Financials,Large liquid stock; regular dividends
+BAC,Bank of America Corp.,stock,Financials,Large liquid stock
+GS,Goldman Sachs Group,stock,Financials,High-priced large-cap
+V,Visa Inc.,stock,Financials,Large liquid stock
+BRK.B,Berkshire Hathaway Class B,stock,Financials,Share-class ticker with a dot (symbol-format edge case); 50-for-1 split Jan 2010 is before range
+UNH,UnitedHealth Group,stock,Health care,High-priced large-cap
+JNJ,Johnson & Johnson,stock,Health care,Large liquid stock; low volatility
+PFE,Pfizer Inc.,stock,Health care,Large liquid stock; high dividend
+LLY,Eli Lilly and Co.,stock,Health care,Large liquid stock; strong trend
+MRK,Merck & Co.,stock,Health care,Large liquid stock
+WMT,Walmart Inc.,stock,Consumer staples,Split test case: 3-for-1 ex-date 2024-02-26 (confirm in 01_05)
+PG,Procter & Gamble Co.,stock,Consumer staples,Large liquid stock; regular dividends
+KO,Coca-Cola Co.,stock,Consumer staples,Large liquid stock; regular dividends
+COST,Costco Wholesale Corp.,stock,Consumer staples,Special dividends (non-regular cash actions)
+XOM,Exxon Mobil Corp.,stock,Energy,Large liquid stock; 2020 oil shock
+CVX,Chevron Corp.,stock,Energy,Large liquid stock
+CAT,Caterpillar Inc.,stock,Industrials,Large liquid stock
+BA,Boeing Co.,stock,Industrials,Large drawdown 2019-2020 and halted dividend
+GE,GE Aerospace,stock,Industrials,Reverse split 1-for-8 Aug 2021 and spin-offs (confirm in 01_05)
+UPS,United Parcel Service,stock,Industrials,Large liquid stock
+LIN,Linde plc,stock,Materials,Large liquid stock
+NEE,NextEra Energy,stock,Utilities,2-for-1 split Oct 2020 (confirm in 01_05)
+AMT,American Tower Corp.,stock,Real estate,REIT with large dividends
+T,AT&T Inc.,stock,Communication services,Large dividend cut and WarnerMedia spin-off 2022 (price discontinuity)
+INTC,Intel Corp.,stock,Technology,Long underperformer; dividend suspended 2024
