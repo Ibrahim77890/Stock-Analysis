@@ -16,9 +16,9 @@ import psycopg
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
-from . import regimes, scan, sharpe_stats as ss, validation as v
+from . import metrics as mt, regimes, scan, sharpe_stats as ss, validation as v
 from .backtest import BacktestSpec, run_backtest
-from .read import get_bars
+from .read import get_bars, get_macro
 
 
 def _clean(obj):
@@ -38,6 +38,9 @@ class WindowIn(BaseModel):
     commission_bps: float = Field(0.0, ge=0, le=1000)
     slippage_bps: float = Field(0.0, ge=0, le=1000)
     initial_cash: float = Field(100_000.0, gt=0)
+    source: str = Field("alpaca", min_length=1, max_length=20, description="alpaca (from 2020) or tiingo (from 2005)")
+    price_basis: Literal["split", "split_dividend"] = Field("split", description="split = price return; split_dividend = total return")
+    risk_free: bool = Field(False, description="/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)")
 
     @model_validator(mode="after")
     def _dates(self):
@@ -47,7 +50,8 @@ class WindowIn(BaseModel):
 
     def spec(self, fast: int = 2, slow: int = 3) -> BacktestSpec:
         return BacktestSpec(symbol=self.symbol, start=self.start, end=self.end, fast=fast, slow=slow,
-                            commission_bps=self.commission_bps, slippage_bps=self.slippage_bps, initial_cash=self.initial_cash)
+                            commission_bps=self.commission_bps, slippage_bps=self.slippage_bps, initial_cash=self.initial_cash,
+                            source=self.source, price_basis=self.price_basis)
 
 
 class GridIn(WindowIn):
@@ -121,7 +125,7 @@ class BestOfNIn(ScanIn):
 class RegimeIn(WindowIn):
     fast: int = Field(20, ge=1)
     slow: int = Field(50, ge=2)
-    by: Literal["year", "vol"] = "year"
+    by: Literal["year", "vol", "vix"] = "year"
 
     @model_validator(mode="after")
     def _fs(self):
@@ -135,7 +139,7 @@ def make_router(conn_dep) -> APIRouter:
     Conn = Depends(conn_dep)
 
     def bars_for(conn, w: WindowIn) -> pl.DataFrame:
-        bars = get_bars(conn, w.symbol, w.start, w.end, adjustment="split")
+        bars = get_bars(conn, w.symbol, w.start, w.end, source=w.source, adjustment=w.price_basis)
         if bars.height < 2:
             raise HTTPException(404, f"fewer than 2 bars for {w.symbol} between {w.start} and {w.end}")
         return bars
@@ -153,7 +157,8 @@ def make_router(conn_dep) -> APIRouter:
         out["window"] = [bars["trade_date"][0], bars["trade_date"][-1]]
         if req.record:
             sid = v.create_study(conn, f"grid-search {req.symbol}", req.symbol)
-            v.record_trials(conn, sid, "train", out["rows"], (bars["trade_date"][0], bars["trade_date"][-1]))
+            v.record_trials(conn, sid, "train", out["rows"], (bars["trade_date"][0], bars["trade_date"][-1]),
+                            extra_params=v._extra(req.spec()))
             out["study_id"] = sid
         out["note"] = f"{out['trials']} trials were evaluated; report this number next to the best result."
         return _clean(out)
@@ -230,7 +235,23 @@ def make_router(conn_dep) -> APIRouter:
     @r.post("/regimes", summary="regime_breakdown: results by calendar year or volatility tercile (reconciled)")
     def regimes_endpoint(req: RegimeIn, conn: psycopg.Connection = Conn) -> dict:
         bars = bars_for(conn, req)
-        res = run_backtest(bars, req.spec(req.fast, req.slow))
-        return _clean(regimes.regime_breakdown(res, bars, req.by))
+        spec = req.spec(req.fast, req.slow)
+        res = run_backtest(bars, spec)
+        vix = None
+        if req.by == "vix":
+            try:
+                vix = get_macro(conn, "VIXCLS")
+            except LookupError as exc:
+                raise HTTPException(404, f"VIXCLS is not loaded: {exc}") from exc
+        out = regimes.regime_breakdown(res, bars, req.by, vix=vix)
+        if req.risk_free:
+            from .macro import daily_risk_free
+            try:
+                rf = daily_risk_free(conn, bars["trade_date"].to_list())
+            except LookupError as exc:
+                raise HTTPException(404, f"risk-free series unavailable: {exc}") from exc
+            out["sharpe"] = mt.sharpe(res.equity)
+            out["sharpe_excess"] = mt.excess_sharpe(res.equity, rf)
+        return _clean(out)
 
     return r

@@ -27,6 +27,8 @@ from .metrics import summarise
 
 ENGINE_VERSION = "1"
 FILL_MODELS = ("next_open", "same_close")
+PRICE_BASES = ("split", "split_dividend")  # 'split' is the Sprint 03 default; dividends enter only with 'split_dividend'
+DEFAULT_SOURCE = "alpaca"
 REQUIRED_COLUMNS = ("trade_date", "open", "high", "low", "close")
 TRADE_SCHEMA = {
     "trade_no": pl.Int64, "entry_date": pl.Date, "exit_date": pl.Date, "entry_price": pl.Float64,
@@ -45,6 +47,8 @@ class BacktestSpec:
     commission_bps: float = 0.0
     slippage_bps: float = 0.0
     initial_cash: float = 100_000.0
+    source: str = DEFAULT_SOURCE
+    price_basis: str = "split"
 
     def __post_init__(self) -> None:
         if not self.symbol:
@@ -59,10 +63,19 @@ class BacktestSpec:
             raise ValueError("costs must be >= 0")
         if self.initial_cash <= 0:
             raise ValueError("initial_cash must be > 0")
+        if self.price_basis not in PRICE_BASES:
+            raise ValueError(f"price_basis must be one of {PRICE_BASES}")
+        if not self.source:
+            raise ValueError("source is required")
 
     def to_dict(self) -> dict:
         d = asdict(self)
         d["start"], d["end"] = self.start.isoformat(), self.end.isoformat()
+        # defaults are left out so that Sprint 03 specs (and their hashes) look exactly as before
+        if self.source == DEFAULT_SOURCE:
+            d.pop("source")
+        if self.price_basis == "split":
+            d.pop("price_basis")
         return d
 
 
@@ -174,20 +187,30 @@ def buy_and_hold(bars: pl.DataFrame, spec: BacktestSpec) -> BacktestResult:
     return run_backtest(bars, spec, targets=ones)
 
 
-def backtest_from_db(conn, spec: BacktestSpec) -> tuple[pl.DataFrame, BacktestResult]:
-    """Load split-adjusted bars as of spec.end and run the strategy. Returns (bars, result)."""
+def spec_bars(conn, spec: BacktestSpec, start: date | None = None, end: date | None = None) -> pl.DataFrame:
+    """Bars for a spec: its source and price basis, adjusted as of `end` (default spec.end)."""
     from .read import get_bars
 
-    bars = get_bars(conn, spec.symbol, spec.start, spec.end, adjustment="split")
+    return get_bars(conn, spec.symbol, start or spec.start, end or spec.end, source=spec.source,
+                    adjustment=spec.price_basis)
+
+
+def backtest_from_db(conn, spec: BacktestSpec) -> tuple[pl.DataFrame, BacktestResult]:
+    """Load bars (spec.source, spec.price_basis) adjusted as of spec.end and run the strategy."""
+    bars = spec_bars(conn, spec)
     return bars, run_backtest(bars, spec)
 
 
-def full_run(bars: pl.DataFrame, spec: BacktestSpec) -> dict:
-    """Strategy + benchmark with metrics. The shape used by the API and by persistence."""
+def full_run(bars: pl.DataFrame, spec: BacktestSpec, rf: Sequence[float] | None = None) -> dict:
+    """Strategy + benchmark with metrics. The shape used by the API and by persistence.
+
+    `rf` (one daily risk-free return per bar, known the day before) adds `sharpe_excess` to both metric
+    dicts; the default None leaves the output exactly as in Sprint 03/04. The engine's idle cash still
+    earns 0, so excess Sharpe of an in-and-out rule is biased down while rates are positive."""
     res = run_backtest(bars, spec)
     bench = buy_and_hold(bars, spec)
-    return {"result": res, "benchmark": bench, "metrics": summarise(res.equity, res.trades),
-            "benchmark_metrics": summarise(bench.equity, bench.trades)}
+    return {"result": res, "benchmark": bench, "metrics": summarise(res.equity, res.trades, rf),
+            "benchmark_metrics": summarise(bench.equity, bench.trades, rf)}
 
 
 def compare_fill_models(bars: pl.DataFrame, spec: BacktestSpec) -> dict:

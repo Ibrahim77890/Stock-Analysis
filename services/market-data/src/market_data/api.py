@@ -42,6 +42,10 @@ app = FastAPI(
         {"name": "Benchmark", "description": "Stored benchmark results (Sprint 01 and 02)."},
         {"name": "Backtest", "description": "Honest backtests: simulate, metrics, runs with hashes, fill-model comparison, "
                                             "cost sweep, shuffle test, causality check, reproduce. Only persist=true writes."},
+        {"name": "Sources", "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor "
+                                           "adjustment check, key check. Tiingo data are internal use only: keep this API on loopback."},
+        {"name": "Macro", "description": "FRED series DGS3MO (risk-free rate) and VIXCLS, read as of a date. "
+                                          "This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis."},
         {"name": "Validation", "description": "Grid search with trial counting, train/test split, one-use holdout, walk-forward, "
                                                "PSR/DSR, universe scan, best-of-N control, regime breakdown. Writes only with record=true."},
     ],
@@ -67,6 +71,10 @@ app.include_router(make_router(get_conn))
 from market_data.api_validation import make_router as make_validation_router  # noqa: E402
 
 app.include_router(make_validation_router(get_conn))
+
+from market_data.api_sources import make_router as make_sources_router  # noqa: E402
+
+app.include_router(make_sources_router(get_conn))
 
 
 @app.exception_handler(UnknownSymbolError)

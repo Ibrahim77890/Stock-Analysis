@@ -24,5 +24,10 @@ Per-period Sharpe `SR = mean/std` (ddof 1), `T` returns, skewness `g3 = m3/m2^1.
 ## Regimes
 By calendar year, or by trailing 20-day volatility terciles (label from the previous close; thresholds from the full sample, descriptive). Groups reconcile: the product of group growth factors equals the run's total growth (checked, else error). Cells with few trades (often 2 to 5) are anecdotes.
 
+## Sprint 05 additions
+- **Longer data.** With Tiingo the same questions can be asked on 21 years (`docs/02-domain/long-window-example.md`): more folds, more trades per block, regimes that include 2008 and 2020. The page repeats the questions in three set-ups (Alpaca 5.4 y; Tiingo 5.4 y; Tiingo 21 y total return) so the effect of the source and the effect of the window can be told apart. N (the trial count) does not shrink with more data.
+- **`source` and `price_basis`** are options of every validation request; when not the defaults they are stored in each trial's `params`, so the overfitting meter reloads the same bars.
+- **VIX regimes.** `by = vix` labels each day by the previous trading day's `VIXCLS` close in fixed buckets chosen in advance (`low` < 15, `medium` 15 to 25, `high` >= 25, `unknown` before the first observation). Unlike the volatility terciles, the thresholds do not depend on the sample. The group growth factors multiply to the run's total growth (checked on real SPY and AAPL). `risk_free: true` on `/validation/regimes` adds the run's plain and excess Sharpe. This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.
+
 ## Known limitations
 Short window (about 5.4 years, mostly one market cycle); few trades per block; correlated parameter pairs and symbols (effective N below N); no dividends in returns; risk-free rate 0; flat bps costs; one strategy family; survivor universe. Nothing here is investment advice.

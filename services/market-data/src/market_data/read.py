@@ -31,12 +31,14 @@ def instrument_id(conn: psycopg.Connection, symbol: str) -> int:
     return row[0]
 
 
-def list_instruments(conn: psycopg.Connection) -> list[dict]:
+def list_instruments(conn: psycopg.Connection, source: str = config.SOURCE) -> list[dict]:
+    """Instruments with bar counts and date range **of one source** (default alpaca)."""
     with conn.cursor() as cur:
         cur.execute(
             "SELECT i.symbol, i.name, i.asset_type, i.sector, count(b.*), min(b.trade_date), max(b.trade_date) "
-            "FROM market.instrument i LEFT JOIN market.bar_daily b USING (instrument_id) "
-            "GROUP BY i.instrument_id ORDER BY i.symbol")
+            "FROM market.instrument i LEFT JOIN market.bar_daily b "
+            "ON b.instrument_id = i.instrument_id AND b.source = %s "
+            "GROUP BY i.instrument_id ORDER BY i.symbol", (source,))
         return [dict(symbol=r[0], name=r[1], asset_type=r[2], sector=r[3], bars=r[4], first_date=r[5], last_date=r[6])
                 for r in cur.fetchall()]
 
@@ -112,3 +114,64 @@ def get_bars(
     actions = get_actions(conn, symbol, effective_end, source)
     adjusted = adjust_bars(history, actions, effective_end, mode)
     return adjusted.filter(pl.col("trade_date") >= start)
+
+
+# --------------------------------------------------------------------------- macro (Sprint 05)
+
+MACRO_COLUMNS = {"obs_date": pl.Date, "value": pl.Float64}
+
+
+def get_macro(conn: psycopg.Connection, series_id: str, start: date | None = None, end: date | None = None,
+              source: str = "fred") -> pl.DataFrame:
+    """Observations of a macro series (NULL values kept as None), ordered by date.
+
+    Raises LookupError if the series is unknown."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT obs_date, value::float8 FROM market.macro_observation WHERE series_id = %s AND source = %s "
+            "AND (%s::date IS NULL OR obs_date >= %s::date) AND (%s::date IS NULL OR obs_date <= %s::date) "
+            "ORDER BY obs_date", (series_id, source, start, start, end, end))
+        df = pl.DataFrame(cur.fetchall(), schema=MACRO_COLUMNS, orient="row")
+    if df.height == 0:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM market.macro_observation WHERE series_id = %s AND source = %s LIMIT 1",
+                        (series_id, source))
+            if cur.fetchone() is None:
+                raise LookupError(f"unknown macro series {series_id}")
+    return df
+
+
+def macro_asof(conn: psycopg.Connection, series_id: str, d: date, strict: bool = True,
+               source: str = "fred") -> dict:
+    """Latest non-null observation with obs_date < d (strict) or <= d. LookupError if none exists."""
+    op = "<" if strict else "<="
+    with conn.cursor() as cur:
+        cur.execute(
+            f"SELECT obs_date, value::float8 FROM market.macro_observation WHERE series_id = %s AND source = %s "
+            f"AND obs_date {op} %s AND value IS NOT NULL ORDER BY obs_date DESC LIMIT 1", (series_id, source, d))
+        row = cur.fetchone()
+        known = True
+        if row is None:
+            cur.execute("SELECT 1 FROM market.macro_observation WHERE series_id = %s AND source = %s LIMIT 1",
+                        (series_id, source))
+            known = cur.fetchone() is not None
+    if row is None:
+        where = "before" if strict else "on or before"
+        raise LookupError(f"no observation {where} {d} for {series_id}" if known
+                          else f"unknown macro series {series_id}")
+    return {"series_id": series_id, "query_date": d, "obs_date": row[0], "value": row[1], "strict": strict}
+
+
+def source_summary(conn: psycopg.Connection) -> list[dict]:
+    """Per price source: symbols, bars, first and last date, and corporate-action counts."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT source, count(DISTINCT instrument_id), count(*), min(trade_date), max(trade_date) "
+                    "FROM market.bar_daily GROUP BY source ORDER BY source")
+        bars = {r[0]: r[1:] for r in cur.fetchall()}
+        cur.execute("SELECT source, action_type, count(*) FROM market.corporate_action GROUP BY 1, 2")
+        acts: dict[str, dict] = {}
+        for src, kind, n in cur.fetchall():
+            acts.setdefault(src, {})[kind] = n
+    return [{"source": s, "symbols": b[0], "bars": b[1], "first_date": b[2], "last_date": b[3],
+             "splits": acts.get(s, {}).get("split", 0), "dividends": acts.get(s, {}).get("dividend", 0)}
+            for s, b in bars.items()]

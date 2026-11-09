@@ -32,6 +32,16 @@ class HoldoutAlreadyUsedError(RuntimeError):
 
 # ------------------------------------------------------------------ grid search
 
+def _extra(spec: BacktestSpec) -> dict | None:
+    """Trial params beyond (fast, slow): source and price_basis, only when not the defaults."""
+    d = {}
+    if spec.source != "alpaca":
+        d["source"] = spec.source
+    if spec.price_basis != "split":
+        d["price_basis"] = spec.price_basis
+    return d or None
+
+
 def make_grid(fast_values, slow_values) -> list[tuple[int, int]]:
     fast_values, slow_values = list(fast_values), list(slow_values)
     for name, vals in (("fast", fast_values), ("slow", slow_values)):
@@ -102,8 +112,10 @@ def _study(conn: psycopg.Connection, study_id: int) -> dict:
 
 
 def record_trials(conn: psycopg.Connection, study_id: int, phase: str, rows: list[dict],
-                  window: tuple[date, date], commit: bool = True) -> int:
-    """Append one trial per row (fast, slow, total_return, sharpe, trades). Never edits earlier rows."""
+                  window: tuple[date, date], commit: bool = True, extra_params: dict | None = None) -> int:
+    """Append one trial per row (fast, slow, total_return, sharpe, trades). Never edits earlier rows.
+
+    `extra_params` (e.g. source, price_basis when not the defaults) is stored with every trial's params."""
     if phase not in ("train", "test", "holdout"):
         raise ValueError("phase must be train, test or holdout")
     _study(conn, study_id)
@@ -111,7 +123,7 @@ def record_trials(conn: psycopg.Connection, study_id: int, phase: str, rows: lis
         cur.executemany(
             "INSERT INTO research.trial (study_id, phase, params, window_start, window_end, total_return, sharpe, trades) "
             "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
-            [(study_id, phase, Jsonb({"fast": r["fast"], "slow": r["slow"]}), window[0], window[1],
+            [(study_id, phase, Jsonb({"fast": r["fast"], "slow": r["slow"], **(extra_params or {})}), window[0], window[1],
               r["total_return"], r["sharpe"], r["trades"]) for r in rows])
     if commit:
         conn.commit()
@@ -202,9 +214,11 @@ def evaluate_split(bars: pl.DataFrame, base_spec: BacktestSpec, grid, train_bars
         "out_of_sample": _slim(m), "decay_sharpe": decay, "train_table": search["rows"],
     }
     if conn is not None and study_id is not None:
-        record_trials(conn, study_id, "train", search["rows"], (train["trade_date"][0], train["trade_date"][-1]), commit=False)
+        record_trials(conn, study_id, "train", search["rows"], (train["trade_date"][0], train["trade_date"][-1]), commit=False,
+                      extra_params=_extra(base_spec))
         record_trials(conn, study_id, "test", [{**best, "total_return": m["total_return"], "sharpe": m["sharpe"],
-                                                "trades": m["trades"]}], tuple(out["test_range"]))
+                                                "trades": m["trades"]}], tuple(out["test_range"]),
+                      extra_params=_extra(base_spec))
     return out
 
 
@@ -227,7 +241,8 @@ def final_holdout_evaluation(conn: psycopg.Connection, study_id: int, bars: pl.D
     m = oos["metrics"]
     window = (bars["trade_date"][start], bars["trade_date"][-1])
     record_trials(conn, study_id, "holdout", [{"fast": fast, "slow": slow, "total_return": m["total_return"],
-                                               "sharpe": m["sharpe"], "trades": m["trades"]}], window, commit=False)
+                                               "sharpe": m["sharpe"], "trades": m["trades"]}], window, commit=False,
+                  extra_params=_extra(base_spec))
     conn.commit()
     return {"study_id": study_id, "selected": {"fast": fast, "slow": slow}, "window": list(window),
             "out_of_sample": _slim(m), "holdout_used_at": got[0]}
@@ -287,9 +302,11 @@ def walk_forward(bars: pl.DataFrame, base_spec: BacktestSpec, grid, train: int, 
             "selected": {"fast": pair[0], "slow": pair[1]}, "is_sharpe": best["sharpe"], "oos_sharpe": m["sharpe"],
             "oos_return": m["total_return"], "oos_trades": m["trades"], "oos_growth": m["total_return"] + 1.0})
         if conn is not None and study_id is not None:
-            record_trials(conn, study_id, "train", search["rows"], (tr["trade_date"][0], tr["trade_date"][-1]), commit=False)
+            record_trials(conn, study_id, "train", search["rows"], (tr["trade_date"][0], tr["trade_date"][-1]), commit=False,
+                          extra_params=_extra(base_spec))
             record_trials(conn, study_id, "test", [{**best, "total_return": m["total_return"], "sharpe": m["sharpe"],
-                                                    "trades": m["trades"]}], tuple(results[-1]["test_range"]), commit=False)
+                                                    "trades": m["trades"]}], tuple(results[-1]["test_range"]), commit=False,
+                          extra_params=_extra(base_spec))
     if conn is not None and study_id is not None:
         conn.commit()
     if not pieces:

@@ -93,9 +93,11 @@ def overfitting_meter(conn, study_id: int) -> dict:
         raise ValueError("the study has no train trial with a defined Sharpe")
     per_period = [t["sharpe"] / math.sqrt(TRADING_DAYS) for t in scored]
     best = max(scored, key=lambda t: t["sharpe"])
-    bars = get_bars(conn, s["symbol"], best["window_start"], best["window_end"], adjustment="split")
     spec = BacktestSpec(symbol=s["symbol"], start=best["window_start"], end=best["window_end"],
-                        fast=best["params"]["fast"], slow=best["params"]["slow"])
+                        fast=best["params"]["fast"], slow=best["params"]["slow"],
+                        source=best["params"].get("source", "alpaca"),
+                        price_basis=best["params"].get("price_basis", "split"))
+    bars = get_bars(conn, spec.symbol, spec.start, spec.end, source=spec.source, adjustment=spec.price_basis)
     eq = run_backtest(bars, spec).equity["equity"].to_numpy()
     returns = eq[1:] / eq[:-1] - 1
     d = deflated_sharpe(returns, per_period)

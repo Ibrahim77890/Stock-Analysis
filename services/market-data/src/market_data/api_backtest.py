@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field, model_validator
 from . import metrics as mt, research
 from .backtest import (
     BacktestSpec, backtest_from_db, break_even, check_engine_truncation, compare_fill_models, cost_sweep,
-    full_run, run_backtest, DEFAULT_GRID,
+    full_run, run_backtest, spec_bars, DEFAULT_GRID,
 )
 from .luck import shuffle_test
 from .read import get_bars
@@ -52,6 +52,14 @@ class SpecIn(BaseModel):
     commission_bps: float = Field(0.0, ge=0, le=1000, description="Basis points of the fill value, every fill")
     slippage_bps: float = Field(0.0, ge=0, le=1000, description="Buy at price*(1+s), sell at price*(1-s)")
     initial_cash: float = Field(100_000.0, gt=0)
+    source: str = Field("alpaca", min_length=1, max_length=20,
+                        description="Price source to read: alpaca (IEX, from 2020) or tiingo (consolidated, from 2005). "
+                                    "Sources are never mixed.")
+    price_basis: Literal["split", "split_dividend"] = Field(
+        "split", description="split = price return (Sprint 03 default); split_dividend = total return, dividends "
+                             "adjusted as of the end date")
+    risk_free: bool = Field(False, description="true adds sharpe_excess (excess over the previous day's 3-month "
+                                               "Treasury yield, FRED DGS3MO) to /backtests/run metrics")
 
     @model_validator(mode="after")
     def _check(self):
@@ -62,7 +70,8 @@ class SpecIn(BaseModel):
         return self
 
     def spec(self) -> BacktestSpec:
-        keys = ("symbol", "start", "end", "fast", "slow", "fill_model", "commission_bps", "slippage_bps", "initial_cash")
+        keys = ("symbol", "start", "end", "fast", "slow", "fill_model", "commission_bps", "slippage_bps", "initial_cash",
+                "source", "price_basis")
         return BacktestSpec(**{k: getattr(self, k) for k in keys})
 
 
@@ -102,6 +111,17 @@ class MetricsRequest(BaseModel):
     equity: list[float] = Field(min_length=1, max_length=100_000, examples=[[100, 110, 99, 120]])
 
 
+class ExcessRequest(BaseModel):
+    equity: list[float] = Field(min_length=3, max_length=100_000, examples=[[100, 101, 100.5, 102, 103]])
+    rf_daily: list[float] = Field(min_length=3, max_length=100_000, examples=[[0.0002, 0.0002, 0.0002, 0.0002, 0.0002]])
+
+    @model_validator(mode="after")
+    def _len(self):
+        if len(self.rf_daily) != len(self.equity):
+            raise ValueError("rf_daily must have one value per equity point")
+        return self
+
+
 class RunRequest(SpecIn):
     persist: bool = Field(False, description="true writes the run to research.* (idempotent on the config hash)")
     include_equity: bool = False
@@ -132,7 +152,7 @@ def make_router(conn_dep) -> APIRouter:
     Conn = Depends(conn_dep)
 
     def _bars(conn, s: BacktestSpec) -> pl.DataFrame:
-        bars = get_bars(conn, s.symbol, s.start, s.end, adjustment="split")
+        bars = spec_bars(conn, s)
         if bars.height < 2:
             raise HTTPException(404, f"fewer than 2 bars for {s.symbol} between {s.start} and {s.end}")
         return bars
@@ -155,11 +175,24 @@ def make_router(conn_dep) -> APIRouter:
                        "annualised_volatility": mt.annualised_volatility(eq), "sharpe": mt.sharpe(eq),
                        "max_drawdown": mt.max_drawdown(eq), "conventions": "252 days, ddof=1, risk-free rate 0"})
 
+    @r.post("/excess-sharpe", summary="excess_sharpe: Sharpe over a risk-free series you type in (no database)")
+    def excess(req: ExcessRequest) -> dict:
+        return _clean({"sharpe": mt.sharpe(req.equity), "sharpe_excess": mt.excess_sharpe(req.equity, req.rf_daily),
+                       "convention": "rf_daily[i] is earned over the return from i-1 to i and must be known before day i; "
+                                     "the first value is unused"})
+
     @r.post("/run", summary="run_backtest on database bars (+ buy-and-hold); persist=true saves it with hashes")
     def run(req: RunRequest, conn: psycopg.Connection = Conn) -> dict:
         s = req.spec()
         bars = _bars(conn, s)
-        out = full_run(bars, s)
+        rf = None
+        if req.risk_free:
+            from .macro import daily_risk_free
+            try:
+                rf = daily_risk_free(conn, bars["trade_date"].to_list())
+            except LookupError as exc:
+                raise HTTPException(404, f"risk-free series unavailable: {exc}") from exc
+        out = full_run(bars, s, rf)
         res = out["result"]
         fp = research.dataset_fingerprint(bars)
         body = {"realisable": res.realisable, "bars_used": bars.height, "first_date": bars["trade_date"][0],
@@ -197,7 +230,7 @@ def make_router(conn_dep) -> APIRouter:
     def causality(req: CausalityRequest, conn: psycopg.Connection = Conn) -> dict:
         s = req.spec()
         _bars(conn, s)
-        mism = check_engine_truncation(s, lambda t: get_bars(conn, s.symbol, s.start, t, adjustment="split"),
+        mism = check_engine_truncation(s, lambda t: get_bars(conn, s.symbol, s.start, t, source=s.source, adjustment=s.price_basis),
                                        req.cut_points, req.seed)
         return _clean({"passed": not mism, "cut_points": req.cut_points, "mismatches": mism})
 

@@ -409,12 +409,28 @@
             "title": "Min Bars",
             "type": "integer"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return; split_dividend = total return",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
           "replicates": {
             "default": 50,
             "maximum": 500.0,
             "minimum": 1.0,
             "title": "Replicates",
             "type": "integer"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)",
+            "title": "Risk Free",
+            "type": "boolean"
           },
           "seed": {
             "default": 1,
@@ -434,6 +450,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "alpaca (from 2020) or tiingo (from 2005)",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2018-11-01",
@@ -557,6 +581,88 @@
         "title": "DownloadRequest",
         "type": "object"
       },
+      "ExcessRequest": {
+        "properties": {
+          "equity": {
+            "examples": [
+              [
+                100,
+                101,
+                100.5,
+                102,
+                103
+              ]
+            ],
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 100000,
+            "minItems": 3,
+            "title": "Equity",
+            "type": "array"
+          },
+          "rf_daily": {
+            "examples": [
+              [
+                0.0002,
+                0.0002,
+                0.0002,
+                0.0002,
+                0.0002
+              ]
+            ],
+            "items": {
+              "type": "number"
+            },
+            "maxItems": 100000,
+            "minItems": 3,
+            "title": "Rf Daily",
+            "type": "array"
+          }
+        },
+        "required": [
+          "equity",
+          "rf_daily"
+        ],
+        "title": "ExcessRequest",
+        "type": "object"
+      },
+      "FredDownloadIn": {
+        "properties": {
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "series": {
+            "default": [
+              "DGS3MO",
+              "VIXCLS"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Series",
+            "type": "array"
+          },
+          "start": {
+            "default": "2000-01-01",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "title": "FredDownloadIn",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -604,6 +710,22 @@
             "title": "Initial Cash",
             "type": "number"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return; split_dividend = total return",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "slippage_bps": {
             "default": 0.0,
             "maximum": 1000.0,
@@ -616,6 +738,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "alpaca (from 2020) or tiingo (from 2005)",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2018-11-01",
@@ -668,13 +798,69 @@
         "title": "MetricsRequest",
         "type": "object"
       },
+      "ReconcileIn": {
+        "properties": {
+          "a": {
+            "default": "alpaca",
+            "title": "A",
+            "type": "string"
+          },
+          "b": {
+            "default": "tiingo",
+            "title": "B",
+            "type": "string"
+          },
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "include_details": {
+            "default": false,
+            "description": "false returns totals and per-symbol counts only",
+            "title": "Include Details",
+            "type": "boolean"
+          },
+          "start": {
+            "default": "2020-07-27",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbols": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbols"
+          },
+          "write_report": {
+            "default": false,
+            "description": "true writes reconciliation-<run>.json/.md under data/reports/",
+            "title": "Write Report",
+            "type": "boolean"
+          }
+        },
+        "title": "ReconcileIn",
+        "type": "object"
+      },
       "RegimeIn": {
         "properties": {
           "by": {
             "default": "year",
             "enum": [
               "year",
-              "vol"
+              "vol",
+              "vix"
             ],
             "title": "By",
             "type": "string"
@@ -704,6 +890,22 @@
             "title": "Initial Cash",
             "type": "number"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return; split_dividend = total return",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "slippage_bps": {
             "default": 0.0,
             "maximum": 1000.0,
@@ -716,6 +918,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "alpaca (from 2020) or tiingo (from 2005)",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2018-11-01",
@@ -854,6 +1064,22 @@
             "title": "Persist",
             "type": "boolean"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return (Sprint 03 default); split_dividend = total return, dividends adjusted as of the end date",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "true adds sharpe_excess (excess over the previous day's 3-month Treasury yield, FRED DGS3MO) to /backtests/run metrics",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "slippage_bps": {
             "default": 0.0,
             "description": "Buy at price*(1+s), sell at price*(1-s)",
@@ -868,6 +1094,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "Price source to read: alpaca (IEX, from 2020) or tiingo (consolidated, from 2005). Sources are never mixed.",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2020-07-27",
@@ -920,6 +1154,22 @@
             "title": "Min Bars",
             "type": "integer"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return; split_dividend = total return",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "slippage_bps": {
             "default": 0.0,
             "maximum": 1000.0,
@@ -932,6 +1182,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "alpaca (from 2020) or tiingo (from 2005)",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2018-11-01",
@@ -1010,10 +1268,26 @@
             "title": "Metric",
             "type": "string"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return; split_dividend = total return",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
           "record": {
             "default": false,
             "description": "true creates a study and stores one trial per evaluated pair",
             "title": "Record",
+            "type": "boolean"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)",
+            "title": "Risk Free",
             "type": "boolean"
           },
           "slippage_bps": {
@@ -1037,6 +1311,14 @@
             "minItems": 1,
             "title": "Slow Values",
             "type": "array"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "alpaca (from 2020) or tiingo (from 2005)",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2018-11-01",
@@ -1271,6 +1553,22 @@
             "title": "N Paths",
             "type": "integer"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return (Sprint 03 default); split_dividend = total return, dividends adjusted as of the end date",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "true adds sharpe_excess (excess over the previous day's 3-month Treasury yield, FRED DGS3MO) to /backtests/run metrics",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "seed": {
             "default": 1,
             "minimum": 0.0,
@@ -1291,6 +1589,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "Price source to read: alpaca (IEX, from 2020) or tiingo (consolidated, from 2005). Sources are never mixed.",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2020-07-27",
@@ -1509,6 +1815,22 @@
             "title": "Initial Cash",
             "type": "number"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return (Sprint 03 default); split_dividend = total return, dividends adjusted as of the end date",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "true adds sharpe_excess (excess over the previous day's 3-month Treasury yield, FRED DGS3MO) to /backtests/run metrics",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "slippage_bps": {
             "default": 0.0,
             "description": "Buy at price*(1+s), sell at price*(1-s)",
@@ -1523,6 +1845,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "Price source to read: alpaca (IEX, from 2020) or tiingo (consolidated, from 2005). Sources are never mixed.",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2020-07-27",
@@ -1593,10 +1923,26 @@
             "title": "Metric",
             "type": "string"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return; split_dividend = total return",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
           "record": {
             "default": false,
             "description": "true creates a study and stores one trial per evaluated pair",
             "title": "Record",
+            "type": "boolean"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)",
+            "title": "Risk Free",
             "type": "boolean"
           },
           "slippage_bps": {
@@ -1620,6 +1966,14 @@
             "minItems": 1,
             "title": "Slow Values",
             "type": "array"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "alpaca (from 2020) or tiingo (from 2005)",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2018-11-01",
@@ -1721,6 +2075,22 @@
             "title": "Initial Cash",
             "type": "number"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return (Sprint 03 default); split_dividend = total return, dividends adjusted as of the end date",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "true adds sharpe_excess (excess over the previous day's 3-month Treasury yield, FRED DGS3MO) to /backtests/run metrics",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "slippage_bps": {
             "default": 0.0,
             "description": "Buy at price*(1+s), sell at price*(1-s)",
@@ -1735,6 +2105,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "Price source to read: alpaca (IEX, from 2020) or tiingo (consolidated, from 2005). Sources are never mixed.",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2020-07-27",
@@ -1751,6 +2129,53 @@
           }
         },
         "title": "SweepRequest",
+        "type": "object"
+      },
+      "TiingoDownloadIn": {
+        "properties": {
+          "end": {
+            "default": "2025-12-31",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "max_requests": {
+            "default": 45,
+            "description": "HTTP requests allowed in this call (free tier: 50 per hour)",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Max Requests",
+            "type": "integer"
+          },
+          "start": {
+            "default": "2005-01-03",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "symbols": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "default: the 53-symbol universe",
+            "title": "Symbols"
+          }
+        },
+        "title": "TiingoDownloadIn",
         "type": "object"
       },
       "ValidationError": {
@@ -1845,10 +2270,26 @@
             "title": "Metric",
             "type": "string"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return; split_dividend = total return",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
           "record": {
             "default": false,
             "description": "true creates a study and stores one trial per evaluated pair",
             "title": "Record",
+            "type": "boolean"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "/validation/regimes only: adds sharpe_excess of the run (FRED DGS3MO, previous day)",
+            "title": "Risk Free",
             "type": "boolean"
           },
           "slippage_bps": {
@@ -1872,6 +2313,14 @@
             "minItems": 1,
             "title": "Slow Values",
             "type": "array"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "alpaca (from 2020) or tiingo (from 2005)",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2018-11-01",
@@ -1980,6 +2429,22 @@
             "title": "Initial Cash",
             "type": "number"
           },
+          "price_basis": {
+            "default": "split",
+            "description": "split = price return (Sprint 03 default); split_dividend = total return, dividends adjusted as of the end date",
+            "enum": [
+              "split",
+              "split_dividend"
+            ],
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "risk_free": {
+            "default": false,
+            "description": "true adds sharpe_excess (excess over the previous day's 3-month Treasury yield, FRED DGS3MO) to /backtests/run metrics",
+            "title": "Risk Free",
+            "type": "boolean"
+          },
           "seed": {
             "default": 1,
             "minimum": 0.0,
@@ -2000,6 +2465,14 @@
             "minimum": 2.0,
             "title": "Slow",
             "type": "integer"
+          },
+          "source": {
+            "default": "alpaca",
+            "description": "Price source to read: alpaca (IEX, from 2020) or tiingo (consolidated, from 2005). Sources are never mixed.",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Source",
+            "type": "string"
           },
           "start": {
             "default": "2020-07-27",
@@ -2199,6 +2672,49 @@
           }
         },
         "summary": "cost_sweep: rerun across a grid of costs and estimate the break-even cost",
+        "tags": [
+          "Backtest"
+        ]
+      }
+    },
+    "/backtests/excess-sharpe": {
+      "post": {
+        "operationId": "excess_backtests_excess_sharpe_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExcessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Excess Backtests Excess Sharpe Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "excess_sharpe: Sharpe over a risk-free series you type in (no database)",
         "tags": [
           "Backtest"
         ]
@@ -3062,6 +3578,76 @@
         ]
       }
     },
+    "/ingestion/fred/download": {
+      "post": {
+        "operationId": "fred_download_ingestion_fred_download_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FredDownloadIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Fred Download Ingestion Fred Download Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "download_fred: DGS3MO and VIXCLS raw files with manifests (calls the vendor). This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+        "tags": [
+          "Sources",
+          "Macro",
+          "Ingestion"
+        ]
+      }
+    },
+    "/ingestion/fred/load": {
+      "post": {
+        "operationId": "fred_load_ingestion_fred_load_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Fred Load Ingestion Fred Load Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "load_fred: idempotent load into market.macro_observation (writes). This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+        "tags": [
+          "Sources",
+          "Macro",
+          "Ingestion"
+        ]
+      }
+    },
     "/ingestion/jobs": {
       "get": {
         "operationId": "ingestion_jobs_ingestion_jobs_get",
@@ -3225,6 +3811,70 @@
         ]
       }
     },
+    "/ingestion/tiingo/download": {
+      "post": {
+        "operationId": "tiingo_download_ingestion_tiingo_download_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TiingoDownloadIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "download_tiingo: resumable raw download, 1 request per symbol (calls the vendor)",
+        "tags": [
+          "Sources",
+          "Ingestion"
+        ]
+      }
+    },
+    "/ingestion/tiingo/load": {
+      "post": {
+        "operationId": "tiingo_load_ingestion_tiingo_load_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Tiingo Load Ingestion Tiingo Load Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "load_tiingo_universe: idempotent load of raw Tiingo files as source='tiingo' (writes)",
+        "tags": [
+          "Sources",
+          "Ingestion"
+        ]
+      }
+    },
     "/ingestion/verify": {
       "post": {
         "operationId": "verify_ingestion_verify_post",
@@ -3332,6 +3982,254 @@
         "summary": "lineage: provider, feed, manifest hash, jobs, quality counts, caveats",
         "tags": [
           "Lineage"
+        ]
+      }
+    },
+    "/macro/derived/risk-free": {
+      "get": {
+        "operationId": "risk_free_macro_derived_risk_free_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Risk Free Macro Derived Risk Free Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "daily_risk_free: rf for a date = previous observation / 100 / 252. This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+        "tags": [
+          "Sources",
+          "Macro"
+        ]
+      }
+    },
+    "/macro/derived/vix-bucket": {
+      "get": {
+        "operationId": "vix_bucket_macro_derived_vix_bucket_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Vix Bucket Macro Derived Vix Bucket Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "vix_labels: bucket of the previous day's VIX (low < 15, medium 15-25, high >= 25)",
+        "tags": [
+          "Sources",
+          "Macro"
+        ]
+      }
+    },
+    "/macro/{series_id}": {
+      "get": {
+        "operationId": "observations_macro__series_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "series_id",
+            "required": true,
+            "schema": {
+              "title": "Series Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "maximum": 20000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Observations Macro  Series Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "get_macro: observations of a series (null = FRED had no value that day). This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+        "tags": [
+          "Sources",
+          "Macro"
+        ]
+      }
+    },
+    "/macro/{series_id}/asof": {
+      "get": {
+        "operationId": "asof_macro__series_id__asof_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "series_id",
+            "required": true,
+            "schema": {
+              "title": "Series Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "strict",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Strict",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Asof Macro  Series Id  Asof Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "macro_asof: latest non-null value before (strict) or on/before a date. This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+        "tags": [
+          "Sources",
+          "Macro"
         ]
       }
     },
@@ -3747,6 +4645,161 @@
         "summary": "visible_bars (+ blind_view): bars up to the cursor only",
         "tags": [
           "Replay"
+        ]
+      }
+    },
+    "/sources": {
+      "get": {
+        "operationId": "sources_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sources Sources Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "source_summary: per price source, symbols, bars, date range, action counts",
+        "tags": [
+          "Sources"
+        ]
+      }
+    },
+    "/sources/adjustment-check/{symbol}": {
+      "get": {
+        "operationId": "adjustment_check_sources_adjustment_check__symbol__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "symbol",
+            "required": true,
+            "schema": {
+              "title": "Symbol",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Adjustment Check Sources Adjustment Check  Symbol  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "adjustment_vs_vendor: our as-of split+dividend close vs Tiingo's adjusted close",
+        "tags": [
+          "Sources"
+        ]
+      }
+    },
+    "/sources/keys": {
+      "get": {
+        "operationId": "keys_sources_keys_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "ping",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Ping",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Keys Sources Keys Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "check_keys: which API keys are set (never shown); ping=true tests them",
+        "tags": [
+          "Sources"
+        ]
+      }
+    },
+    "/sources/reconcile": {
+      "post": {
+        "operationId": "reconcile_sources_reconcile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReconcileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reconcile Sources Reconcile Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "reconcile_universe: Alpaca vs Tiingo prices and actions; tolerances from ADR 0013",
+        "tags": [
+          "Sources"
         ]
       }
     },
@@ -4255,6 +5308,14 @@
     {
       "description": "Honest backtests: simulate, metrics, runs with hashes, fill-model comparison, cost sweep, shuffle test, causality check, reproduce. Only persist=true writes.",
       "name": "Backtest"
+    },
+    {
+      "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor adjustment check, key check. Tiingo data are internal use only: keep this API on loopback.",
+      "name": "Sources"
+    },
+    {
+      "description": "FRED series DGS3MO (risk-free rate) and VIXCLS, read as of a date. This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.",
+      "name": "Macro"
     },
     {
       "description": "Grid search with trial counting, train/test split, one-use holdout, walk-forward, PSR/DSR, universe scan, best-of-N control, regime breakdown. Writes only with record=true.",

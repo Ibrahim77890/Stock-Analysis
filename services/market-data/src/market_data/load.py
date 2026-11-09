@@ -59,6 +59,45 @@ def normalise_bars(raw: pl.DataFrame, default_symbol: str | None = None) -> pl.D
     )
 
 
+def _tiingo_dates(raw: pl.DataFrame) -> pl.Expr:
+    """Tiingo's `date` is already the trading date at midnight UTC: take the date part, no time-zone shift."""
+    return pl.col("date").cast(pl.String).str.slice(0, 10).str.to_date(strict=False)
+
+
+def normalise_tiingo_bars(raw: pl.DataFrame, symbol: str) -> pl.DataFrame:
+    """Raw Tiingo records -> the same normalised columns as normalise_bars.
+
+    Only the raw fields open/high/low/close/volume are read. Every adj* field is ignored on purpose
+    (ADR 0013): adjustment is computed as of a date from raw prices and actions.
+    """
+    return raw.select(
+        pl.lit(symbol).alias("symbol"),
+        _tiingo_dates(raw).alias("trade_date"),
+        pl.col("open").cast(pl.Float64).round(6).alias("open"),
+        pl.col("high").cast(pl.Float64).round(6).alias("high"),
+        pl.col("low").cast(pl.Float64).round(6).alias("low"),
+        pl.col("close").cast(pl.Float64).round(6).alias("close"),
+        pl.col("volume").cast(pl.Int64).alias("volume"),
+        pl.lit(None, pl.Int64).alias("trade_count"),
+        pl.lit(None, pl.Float64).alias("vwap"),
+    )
+
+
+def normalise_tiingo_actions(raw: pl.DataFrame, symbol: str) -> pl.DataFrame:
+    """divCash > 0 -> dividend; splitFactor != 1 -> split (from 1 to splitFactor). Same columns as normalise_actions."""
+    div = raw.filter(pl.col("divCash").fill_null(0.0) > 0).select(
+        pl.lit(symbol).alias("symbol"), pl.lit("dividend").alias("action_type"),
+        _tiingo_dates(raw).alias("ex_date"),
+        pl.lit(None, pl.Float64).alias("split_from"), pl.lit(None, pl.Float64).alias("split_to"),
+        pl.col("divCash").cast(pl.Float64).alias("cash_amount"))
+    spl = raw.filter(pl.col("splitFactor").fill_null(1.0) != 1.0).select(
+        pl.lit(symbol).alias("symbol"), pl.lit("split").alias("action_type"),
+        _tiingo_dates(raw).alias("ex_date"),
+        pl.lit(1.0).alias("split_from"), pl.col("splitFactor").cast(pl.Float64).alias("split_to"),
+        pl.lit(None, pl.Float64).alias("cash_amount"))
+    return pl.concat([spl, div]) if (spl.height or div.height) else div
+
+
 def validate_bars(df: pl.DataFrame, known_symbols: set[str]) -> tuple[pl.DataFrame, pl.DataFrame]:
     """Split normalised bars into (valid, rejected). Rejected has a `reason` column.
 
@@ -238,7 +277,7 @@ def load_bars(
     ids = instrument_ids(conn)
 
     raw = pl.read_parquet(raw_file)
-    norm = normalise_bars(raw, default_symbol)
+    norm = normalise_tiingo_bars(raw, default_symbol) if source == "tiingo" else normalise_bars(raw, default_symbol)
     valid, rejected = validate_bars(norm, set(ids))
 
     def work(cur: psycopg.Cursor, job_id: int) -> dict:
@@ -295,12 +334,17 @@ def load_corporate_actions(conn: psycopg.Connection, raw_file: Path) -> dict:
     source = manifest["provider"]
     ids = instrument_ids(conn)
     raw = pl.read_parquet(raw_file)
-    valid, rejected = validate_actions(merge_same_day_dividends(normalise_actions(raw)), set(ids))
+    if source == "tiingo":  # actions travel inside the daily record file
+        acts = normalise_tiingo_actions(raw, manifest["parameters"]["symbol"])
+    else:
+        acts = normalise_actions(raw)
+    n_read = acts.height
+    valid, rejected = validate_actions(merge_same_day_dividends(acts), set(ids))
 
     def work(cur: psycopg.Cursor, job_id: int) -> dict:
         _quarantine(cur, job_id, rejected, ["symbol", "ex_date"])
-        merged_away = raw.height - valid.height - rejected.height
-        counts = {"read": raw.height, "inserted": 0, "updated": 0, "unchanged": merged_away,
+        merged_away = n_read - valid.height - rejected.height
+        counts = {"read": n_read, "inserted": 0, "updated": 0, "unchanged": merged_away,
                   "rejected": rejected.height}
         for r in valid.iter_rows(named=True):
             cur.execute(
@@ -346,4 +390,23 @@ def load_universe_files(conn: psycopg.Connection, universe: pl.DataFrame, data_d
     actions = raw_files(data_dir / "raw" / "alpaca" / "corporate_actions", "corporate_actions")
     if actions:
         results.append({"symbol": "*corporate_actions*", **load_corporate_actions(conn, actions[-1])})
+    return results
+
+
+def load_tiingo_universe(conn: psycopg.Connection, universe: pl.DataFrame, data_dir: Path | None = None) -> list[dict]:
+    """Load the latest Tiingo raw file of each symbol: bars (source='tiingo') and its corporate actions."""
+    from market_data.download import raw_files
+
+    data_dir = data_dir or config.DATA_DIR
+    upsert_instruments(conn, universe)
+    bars_dir = data_dir / "raw" / "tiingo" / "bars_1d"
+    results = []
+    for sym in universe["symbol"].to_list():
+        files = raw_files(bars_dir, sym)
+        if not files:
+            results.append({"symbol": sym, "skipped": "no raw file"})
+            continue
+        b = load_bars(conn, files[-1])
+        a = load_corporate_actions(conn, files[-1])
+        results.append({"symbol": sym, "bars": b, "actions": a})
     return results

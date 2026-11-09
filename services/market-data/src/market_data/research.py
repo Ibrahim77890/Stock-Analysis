@@ -17,7 +17,7 @@ import polars as pl
 import psycopg
 from psycopg.types.json import Jsonb
 
-from .backtest import ENGINE_VERSION, BacktestSpec, full_run
+from .backtest import DEFAULT_SOURCE, ENGINE_VERSION, BacktestSpec, full_run, spec_bars
 from .read import get_bars
 
 BAR_COLS = ("trade_date", "open", "high", "low", "close", "volume")
@@ -33,10 +33,16 @@ def _dec(x: float) -> str:
 
 
 def canonical_spec(spec: BacktestSpec) -> dict:
-    return {"symbol": spec.symbol, "start": spec.start.isoformat(), "end": spec.end.isoformat(),
-            "fast": spec.fast, "slow": spec.slow, "fill_model": spec.fill_model,
-            "commission_bps": _dec(spec.commission_bps), "slippage_bps": _dec(spec.slippage_bps),
-            "initial_cash": _dec(spec.initial_cash)}
+    d = {"symbol": spec.symbol, "start": spec.start.isoformat(), "end": spec.end.isoformat(),
+         "fast": spec.fast, "slow": spec.slow, "fill_model": spec.fill_model,
+         "commission_bps": _dec(spec.commission_bps), "slippage_bps": _dec(spec.slippage_bps),
+         "initial_cash": _dec(spec.initial_cash)}
+    # Added in Sprint 05: present only when not the default, so every Sprint 03 hash is unchanged.
+    if spec.source != DEFAULT_SOURCE:
+        d["source"] = spec.source
+    if spec.price_basis != "split":
+        d["price_basis"] = spec.price_basis
+    return d
 
 
 def _sha(text: str) -> str:
@@ -138,7 +144,8 @@ def spec_from_dict(d: dict) -> BacktestSpec:
     return BacktestSpec(symbol=d["symbol"], start=date.fromisoformat(d["start"]), end=date.fromisoformat(d["end"]),
                         fast=d["fast"], slow=d["slow"], fill_model=d["fill_model"],
                         commission_bps=float(d["commission_bps"]), slippage_bps=float(d["slippage_bps"]),
-                        initial_cash=float(d["initial_cash"]))
+                        initial_cash=float(d["initial_cash"]), source=d.get("source", DEFAULT_SOURCE),
+                        price_basis=d.get("price_basis", "split"))
 
 
 def reproduce_run(conn: psycopg.Connection, run_id: int) -> dict:
@@ -149,7 +156,7 @@ def reproduce_run(conn: psycopg.Connection, run_id: int) -> dict:
     """
     run = get_run(conn, run_id)
     spec = spec_from_dict(run["spec"])
-    bars = get_bars(conn, spec.symbol, spec.start, spec.end, adjustment="split")
+    bars = spec_bars(conn, spec)
     fp = dataset_fingerprint(bars) if bars.height else None
     base = {"run_id": run_id, "stored_fingerprint": run["dataset_fingerprint"], "current_fingerprint": fp,
             "stored_result_hash": run["result_hash"], "engine_version": run["engine_version"],

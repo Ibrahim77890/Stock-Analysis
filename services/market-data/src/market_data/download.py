@@ -142,7 +142,7 @@ def _write_raw(df: pl.DataFrame, target: Path, now: datetime) -> Path:
 def raw_files(raw_dir: Path, stem: str) -> list[Path]:
     """All raw files for a stem, newest last (plain name sorts first, then timestamps)."""
     out = [p for p in raw_dir.glob(f"{stem}*.parquet") if p.stem == stem or p.stem.startswith(stem + ".")]
-    return sorted(out)
+    return sorted(out, key=lambda p: (p.stem != stem, p.name))  # plain name first, then timestamped, newest last
 
 
 def _latest_matching(raw_dir: Path, stem: str, parameters: dict) -> Path | None:

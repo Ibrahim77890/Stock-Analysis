@@ -70,29 +70,36 @@ def test_bad_adjustment_and_raw_shape_unchanged(real):
     assert raw.columns == ["trade_date", "open", "high", "low", "close", "volume"] and raw.height == 9
 
 
-def _copy_upto(real, test_conn, symbol, upto):
-    """Copy a symbol's bars and actions dated <= upto into the throwaway test database."""
+def _copy_upto(real, test_conn, symbol, upto, source="alpaca", reset=True):
+    """Copy a symbol's bars and actions of one source dated <= upto into the throwaway test database.
+
+    reset=False keeps what is already there (used to copy a second source next to the first)."""
     with test_conn.cursor() as cur:
-        cur.execute("TRUNCATE market.bar_daily, market.corporate_action, market.ingestion_job, market.instrument "
-                    "RESTART IDENTITY CASCADE")
-        cur.execute("INSERT INTO market.instrument (symbol,name,asset_type) VALUES (%s,%s,'stock') RETURNING instrument_id",
-                    (symbol, symbol))
+        if reset:
+            cur.execute("TRUNCATE market.bar_daily, market.corporate_action, market.ingestion_job, market.instrument "
+                        "RESTART IDENTITY CASCADE")
+            cur.execute("INSERT INTO market.instrument (symbol,name,asset_type) VALUES (%s,%s,'stock') RETURNING instrument_id",
+                        (symbol, symbol))
+        else:
+            cur.execute("SELECT instrument_id FROM market.instrument WHERE symbol=%s", (symbol,))
         iid = cur.fetchone()[0]
         cur.execute("INSERT INTO market.ingestion_job (kind,source,file_name,file_sha256,status) VALUES "
-                    "('bars','alpaca','x','x','succeeded') RETURNING ingestion_job_id")
+                    "('bars',%s,'x','x','succeeded') RETURNING ingestion_job_id", (source,))
         jid = cur.fetchone()[0]
         with real.cursor() as rc:
             rc.execute("SELECT b.trade_date,b.open,b.high,b.low,b.close,b.volume FROM market.bar_daily b "
-                       "JOIN market.instrument i USING (instrument_id) WHERE i.symbol=%s AND b.trade_date<=%s", (symbol, upto))
+                       "JOIN market.instrument i USING (instrument_id) WHERE i.symbol=%s AND b.trade_date<=%s "
+                       "AND b.source=%s", (symbol, upto, source))
             rows = rc.fetchall()
             rc.execute("SELECT a.action_type,a.ex_date,a.split_from,a.split_to,a.cash_amount FROM market.corporate_action a "
-                       "JOIN market.instrument i USING (instrument_id) WHERE i.symbol=%s AND a.ex_date<=%s", (symbol, upto))
+                       "JOIN market.instrument i USING (instrument_id) WHERE i.symbol=%s AND a.ex_date<=%s "
+                       "AND a.source=%s", (symbol, upto, source))
             acts = rc.fetchall()
         cur.executemany("INSERT INTO market.bar_daily (instrument_id,trade_date,source,open,high,low,close,volume,ingestion_job_id) "
-                        "VALUES (%s,%s,'alpaca',%s,%s,%s,%s,%s,%s)",
-                        [(iid, r[0], r[1], r[2], r[3], r[4], r[5], jid) for r in rows])
+                        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                        [(iid, r[0], source, r[1], r[2], r[3], r[4], r[5], jid) for r in rows])
         cur.executemany("INSERT INTO market.corporate_action (instrument_id,action_type,ex_date,split_from,split_to,cash_amount,source,ingestion_job_id) "
-                        "VALUES (%s,%s,%s,%s,%s,%s,'alpaca',%s)", [(iid, *a, jid) for a in acts])
+                        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)", [(iid, *a, source, jid) for a in acts])
     test_conn.commit()
 
 

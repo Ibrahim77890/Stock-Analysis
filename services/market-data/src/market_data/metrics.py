@@ -59,13 +59,29 @@ def annualised_volatility(equity) -> float | None:
     return None if s is None else s * math.sqrt(TRADING_DAYS)
 
 
-def sharpe(equity) -> float | None:
-    """mean(r) / std(r) * sqrt(252), risk-free rate 0; None when std is zero or fewer than 2 returns."""
-    r = daily_returns(equity)
+def _annualised_ratio(r: Sequence[float]) -> float | None:
     s = _std(r)
     if s is None or s < ZERO_STD:
         return None
     return (sum(r) / len(r)) / s * math.sqrt(TRADING_DAYS)
+
+
+def sharpe(equity) -> float | None:
+    """mean(r) / std(r) * sqrt(252), risk-free rate 0; None when std is zero or fewer than 2 returns."""
+    return _annualised_ratio(daily_returns(equity))
+
+
+def excess_sharpe(equity, rf_daily: Sequence[float]) -> float | None:
+    """mean(r - rf) / std(r - rf, ddof=1) * sqrt(252).
+
+    `rf_daily` has one value per equity date (same length as `equity`); the value at position i is the
+    risk-free return earned over the return from i-1 to i (it must be known BEFORE day i, e.g. the
+    previous day's yield / 252). The first value is not used. None when std is zero or < 2 returns."""
+    v = _values(equity)
+    if len(rf_daily) != len(v):
+        raise ValueError(f"rf_daily must have one value per equity date ({len(v)}), got {len(rf_daily)}")
+    ex = [(b / a - 1) - rf for a, b, rf in zip(v, v[1:], rf_daily[1:]) if a > 0]
+    return _annualised_ratio(ex)
 
 
 def max_drawdown(equity) -> float:
@@ -105,9 +121,10 @@ def turnover(trades: pl.DataFrame, equity) -> float | None:
     return traded / avg if avg > 0 else None
 
 
-def summarise(equity: pl.DataFrame, trades: pl.DataFrame) -> dict:
-    """All metrics for one run as a plain dict (JSON-friendly)."""
+def summarise(equity: pl.DataFrame, trades: pl.DataFrame, rf_daily: Sequence[float] | None = None) -> dict:
+    """All metrics for one run as a plain dict (JSON-friendly). `rf_daily` adds `sharpe_excess`."""
     ts = trade_stats(trades)
+    extra = {} if rf_daily is None else {"sharpe_excess": excess_sharpe(equity, rf_daily)}
     return {
         "bars": equity.height,
         "total_return": total_return(equity),
@@ -118,4 +135,5 @@ def summarise(equity: pl.DataFrame, trades: pl.DataFrame) -> dict:
         "exposure": exposure(equity),
         "turnover": turnover(trades, equity),
         **ts,
+        **extra,
     }

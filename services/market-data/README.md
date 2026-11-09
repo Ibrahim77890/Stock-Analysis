@@ -51,9 +51,9 @@ Workflow for a schema change:
 
 Alembic's version table is `market.alembic_version`, so nothing is created outside the `market` schema.
 
-## How to reproduce Sprints 1 to 4 (from an empty machine)
+## How to reproduce Sprints 1 to 5 (from an empty machine)
 
-Run from `services/market-data`. Steps marked (needs keys) need `ALPACA_API_KEY_ID`/`ALPACA_API_SECRET_KEY` in `.env`.
+Run from `services/market-data`. Steps marked (needs keys) need `ALPACA_API_KEY_ID`/`ALPACA_API_SECRET_KEY` (Sprint 1) or `TIINGO_API_KEY`/`FRED_API_KEY` (Sprint 5) in the git-ignored `.env`; `uv run market-data check-keys [--ping]` reports which keys are set without printing them.
 
 ```bash
 uv sync                                   # Python 3.14 environment
@@ -73,6 +73,15 @@ uv run market-data bench-index-experiment # Sprint 02: effect of a (trade_date, 
 uv run python scripts/window_audit.py     # Sprint 04: per-symbol bar counts into data-profile-v1.md
 uv run python scripts/validation_worked_example.py  # Sprint 04: search, split, walk-forward, DSR, scan, regimes (writes studies; about 1 minute)
 uv run python scripts/backtest_worked_example.py  # Sprint 03: real-data backtest example + saved runs (needs loaded data and migration 0007)
+uv run market-data check-keys --ping     # Sprint 05: which keys are set (never printed) and whether the vendors accept them
+uv run market-data tiingo-download        # (needs TIINGO_API_KEY) at most 45 requests per run; rerun about an hour later until 'remaining' is 0 (exit code 3 = quota reached, nothing lost)
+uv run market-data tiingo-load            # raw Tiingo files -> source='tiingo' (idempotent; run twice, second run inserts 0)
+uv run market-data fred-download          # (needs FRED_API_KEY) DGS3MO and VIXCLS raw files (migration 0009 first: uv run poe migration-run)
+uv run market-data fred-load              # idempotent load into market.macro_observation
+uv run market-data quality --run --source tiingo   # data-quality rules on the second source
+uv run market-data reconcile              # Alpaca vs Tiingo report under ../../data/reports/ (ADR 0013, Appendix A tolerances)
+uv run python scripts/price_basis_table.py        # Sprint 05: split vs split+dividend table into backtest.md
+uv run python scripts/long_window_example.py      # Sprint 05: 21-year validation page (about 2 minutes; writes studies)
 uv run market-data export-openapi         # refresh docs/02-domain/openapi-market-data.json (a test compares it)
 uv run market-data serve                  # HTTP API + Swagger UI: http://127.0.0.1:8000/docs
 ```
@@ -92,6 +101,8 @@ Open http://127.0.0.1:8000/docs (binds to 127.0.0.1 only; no authentication). Se
 | Data quality | stored results, `POST /quality/rules/check` (your bars), `POST /quality/run` (writes) |
 | Ingestion | job history, quarantine, raw files, `verify`; `download` (needs Alpaca keys) and `load` write data |
 | Benchmark | stored benchmark results |
+| Sources | `GET /sources` (per source: symbols, bars, dates, action counts; macro series), `GET /sources/keys?ping=` (presence only), `POST /sources/reconcile` (Alpaca vs Tiingo; `write_report` writes a file), `GET /sources/adjustment-check/{symbol}` (our split+dividend close vs the vendor's), `POST /ingestion/tiingo/download` (**calls the vendor**, `max_requests` default 45, 429 on quota, 400 if the key is missing) and `POST /ingestion/tiingo/load` (**writes** `market.*`) |
+| Macro | `GET /macro/{series_id}` (DGS3MO, VIXCLS; null = no value that day), `GET /macro/{series_id}/asof?date=&strict=` (404 before the first observation), `GET /macro/derived/risk-free?date=`, `GET /macro/derived/vix-bucket?date=`, `POST /ingestion/fred/download` (**calls the vendor**) and `POST /ingestion/fred/load` (**writes** `market.macro_observation`). This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. |
 | Validation | `POST /validation/grid-search` (`record=true` stores each pair as a trial), `/validation/split-evaluation`, `/validation/holdout` (one use per study, 409 on a second call), `/validation/walk-forward`, `/validation/sharpe-stats` (your own returns, no database), `GET /validation/studies` and `/studies/{id}` (with the overfitting meter), `/validation/universe-scan`, `/validation/best-of-n`, `/validation/regimes` |
 | Backtest | `POST /backtests/simulate` (your bars, prefilled golden example), `/backtests/metrics` (your equity values), `/backtests/run` (database bars, `persist=true` saves with hashes), `/backtests/fill-model-comparison` (look-ahead detector), `/backtests/cost-sweep`, `/backtests/shuffle-test`, `/backtests/causality-check`, `GET /backtests`, `/backtests/{id}`, `/{id}/trades`, `/{id}/equity`, `POST /{id}/reproduce` |
 
@@ -99,7 +110,9 @@ Sprint 03 (backtest): `uv run poe migration-run` applies `0007` (schema `researc
 
 Sprint 04 (validation): `uv run poe migration-run` applies `0008` (`research.study`, `research.trial`). Try in Swagger: `POST /validation/grid-search` with `record: true` twice (two studies, trials counted), `GET /validation/studies/{id}` for the overfitting meter, `POST /validation/split-evaluation` with `record: true`, then `POST /validation/holdout` for that study twice (second call returns 409). Method, formulas and limits: `docs/02-domain/validation.md`; real numbers: `docs/02-domain/validation-worked-example.md`. Data window: the contiguous window of the whole universe is 2020-07-27 to 2025-12-31 (see the audit table in `docs/02-domain/data-profile-v1.md`).
 
-Environment note: `ALPACA_API_KEY_ID` and `ALPACA_API_SECRET_KEY` in `.env` are only needed by `download`. Nothing else needs credentials besides the PostgreSQL login in `DATABASE_URL`.
+Sprint 05 (second source, total return, risk-free rate): `uv run poe migration-run` applies `0009` (`market.macro_observation`). Keys: put `TIINGO_API_KEY` (free account, Starter plan: 50 requests/hour, 1,000/day, 500 symbols/month, **internal use only**) and `FRED_API_KEY` (free, https://fred.stlouisfed.org/docs/api/api_key.html) in `.env` (placeholders are in `.env.example`; `.env` is git-ignored and the code never prints a key). **Two-run download procedure:** the universe is 53 symbols and one request is made per symbol, so `uv run market-data tiingo-download` stops after 45 requests; run it again after the hourly window has passed (the first run's files are kept and skipped) until it reports `remaining: 0`. A 429 from the vendor stops the run with exit code 3 and the message "quota reached; rerun later". Then `tiingo-load`, `fred-download`, `fred-load`, `reconcile`. In Swagger, `POST /backtests/run` and the validation endpoints take `source` (alpaca | tiingo), `price_basis` (split | split_dividend) and `risk_free` (adds `sharpe_excess`); the defaults leave every earlier response unchanged. Policy: `docs/04-adr/0013-second-source-and-macro-policy.md`; real results: `docs/02-domain/long-window-example.md`. The raw data and the database stay on this machine (licence: internal use only); the reports contain only derived statistics.
+
+Environment note: `ALPACA_API_KEY_ID` and `ALPACA_API_SECRET_KEY` in `.env` are only needed by `download`, `TIINGO_API_KEY` by `tiingo-download` and `FRED_API_KEY` by `fred-download`. Nothing else needs credentials besides the PostgreSQL login in `DATABASE_URL`.
 
 Database tests: create a throwaway database, set `TEST_DATABASE_URL=postgresql://...` and run `uv run poe test`
 (the fixture runs `alembic downgrade base` then `upgrade head` on it, so never point it at real data).

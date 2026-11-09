@@ -35,7 +35,7 @@ def load_universe(conn, spec: BacktestSpec, symbols=None, min_bars: int = 500):
         wanted = sorted(known)
     bars_by, skipped = {}, []
     for sym in wanted:
-        bars = get_bars(conn, sym, spec.start, spec.end, adjustment="split")
+        bars = get_bars(conn, sym, spec.start, spec.end, source=spec.source, adjustment=spec.price_basis)
         if bars.height < min_bars:
             skipped.append({"symbol": sym, "reason": f"only {bars.height} bars in the window (minimum {min_bars})"})
         else:

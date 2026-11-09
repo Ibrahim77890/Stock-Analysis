@@ -1,4 +1,4 @@
-# MarketLab glossary (Sprints 01 to 04)
+# MarketLab glossary (Sprints 01 to 05)
 
 All terms below are **mechanic** (established fact) unless labelled **interpretation**. Sources are
 first-party glossaries; deep links were not individually verified (marked `(unverified)`), so check the
@@ -74,3 +74,13 @@ Sources used: [Investor.gov glossary](https://www.investor.gov/introduction-inve
 | 64 | deflated Sharpe ratio | The probabilistic Sharpe ratio evaluated at the Sharpe a no-skill search of N trials is expected to reach. | DSR 0.86 means the winner is only weakly beyond luck. | advanced | mechanic | probabilistic Sharpe ratio, trial | Bailey and Lopez de Prado (unverified) |
 | 65 | best of N | The maximum of N results; a biased estimate of any single one. | Best Sharpe among 53 symbols. | intermediate | mechanic | selection bias, survivorship bias | Wikipedia: Selection bias |
 | 66 | regime | A period with a distinct statistical character, such as high volatility. | Year 2022 versus 2021. | intermediate | mechanic | non-stationarity | project definition |
+| 67 | second source | A different provider's data for the same instrument and dates, kept next to the first and never mixed with it. | Tiingo next to Alpaca. | intermediate | mechanic | reconciliation, source | project definition (ADR 0013) |
+| 68 | reconciliation | Comparing the same facts from two sources and classifying agreement, disagreement and one-sided items without repairing anything. | Alpaca and Tiingo closes on one date differ by 0.02% (agree) or by 3% (mismatch). | intermediate | mechanic | tolerance, second source | [Wikipedia: Data reconciliation](https://en.wikipedia.org/wiki/Data_reconciliation) (general sense) |
+| 69 | tolerance | The size of difference accepted as agreement, written down before looking at the data. | A close differing by more than 1.0% is a mismatch. | beginner | mechanic | reconciliation | project definition (ADR 0013, Appendix A) |
+| 70 | price basis | Which adjustments are applied to raw prices before a backtest: split only, or split and dividend. | `price_basis = split_dividend`. | intermediate | mechanic | total return, price return | project definition |
+| 71 | price return | Return from price changes alone, ignoring dividends. | AAPL buy and hold on split-adjusted prices. | beginner | mechanic | total return | [Investor.gov glossary: Total return](https://www.investor.gov/introduction-investing/investing-basics/glossary) (unverified) |
+| 72 | total return | Return including dividends and other distributions, as if each was kept in the position. | SPY: about 2 points of CAGR more than price return over 21 years. | beginner | mechanic | price return, dividend adjustment | [Investor.gov glossary](https://www.investor.gov/introduction-investing/investing-basics/glossary) (unverified) |
+| 73 | risk-free rate | The return of a safe asset over the same period; here the 3-month U.S. Treasury yield (FRED DGS3MO) divided by 252 per trading day. | y = 5.04 percent gives 0.0002 per day. | beginner | mechanic | excess return, Sharpe ratio | [Sharpe (1994)](https://web.stanford.edu/~wfsharpe/art/sr/sr.htm) |
+| 74 | excess return | Return minus the risk-free return for the same period. | Return 0.0005 minus 0.0002 is 0.0003. | beginner | mechanic | risk-free rate | [Sharpe (1994)](https://web.stanford.edu/~wfsharpe/art/sr/sr.htm) |
+| 75 | as-of lookup | Reading the latest value that was known before a given date, never a later one. | DGS3MO on the day before a trade date. | intermediate | mechanic | replay boundary, publication lag | project definition |
+| 76 | VIX | The CBOE index of 30-day implied volatility of the S&P 500; used here as a market-wide regime label in fixed buckets (below 15, 15 to 25, 25 or more). | VIX 30 is the high bucket. | intermediate | mechanic | regime, implied volatility | [Wikipedia: VIX](https://en.wikipedia.org/wiki/VIX) |

@@ -24,15 +24,39 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--feed", default="iex")
     d.add_argument("--force", action="store_true")
 
+    td = sub.add_parser("tiingo-download", help="download raw Tiingo daily records (resumable; free tier 50 req/hour)")
+    td.add_argument("--universe", default=str(config.UNIVERSE_FILE))
+    td.add_argument("--start", default=config.TIINGO_START)
+    td.add_argument("--end", default=config.DEFAULT_END)
+    td.add_argument("--max-requests", type=int, default=45)
+    td.add_argument("--force", action="store_true")
+    tl = sub.add_parser("tiingo-load", help="load raw Tiingo files into PostgreSQL as source='tiingo' (idempotent)")
+    tl.add_argument("--universe", default=str(config.UNIVERSE_FILE))
+
+    fd = sub.add_parser("fred-download", help="download FRED series DGS3MO and VIXCLS (needs FRED_API_KEY)")
+    fd.add_argument("--start", default="2000-01-01")
+    fd.add_argument("--end", default=config.DEFAULT_END)
+    fd.add_argument("--force", action="store_true")
+    sub.add_parser("fred-load", help="load raw FRED files into market.macro_observation (idempotent)")
+
     v = sub.add_parser("verify", help="check every raw file against its manifest hash")
     v.add_argument("--root", default=str(config.DATA_DIR / "raw"))
 
     l = sub.add_parser("load", help="load raw files into PostgreSQL (idempotent)")
     l.add_argument("--universe", default=str(config.UNIVERSE_FILE))
 
+    rc = sub.add_parser("reconcile", help="compare two price sources (default alpaca vs tiingo) and write a report")
+    rc.add_argument("--a", default="alpaca")
+    rc.add_argument("--b", default="tiingo")
+    rc.add_argument("--symbols", nargs="*")
+
     q = sub.add_parser("quality", help="run data-quality rules and write a report")
     q.add_argument("--run", action="store_true", required=True)
     q.add_argument("--threshold", type=float, default=0.40)
+    q.add_argument("--source", default=config.SOURCE)
+
+    ck = sub.add_parser("check-keys", help="report which API keys are set (never prints them); --ping tests them")
+    ck.add_argument("--ping", action="store_true")
 
     sv = sub.add_parser("serve", help="run the HTTP API + Swagger UI (http://127.0.0.1:8000/docs)")
     sv.add_argument("--port", type=int, default=8000)
@@ -56,6 +80,34 @@ def main(argv: list[str] | None = None) -> int:
         from market_data.universe import symbols
 
         print(download_universe(symbols(args.universe), args.start, args.end, feed=args.feed, force=args.force))
+    elif args.cmd == "tiingo-download":
+        from market_data.download_tiingo import EXIT_QUOTA, download_tiingo
+        from market_data.universe import symbols
+
+        summary = download_tiingo(symbols(args.universe), args.start, args.end,
+                                  max_requests=args.max_requests, force=args.force)
+        print({k: v for k, v in summary.items() if k != "failures"}, summary["failures"] or "")
+        if summary["stopped_by"] == "quota":
+            print("quota reached; rerun later")
+            return EXIT_QUOTA
+        return 1 if summary["failed"] else 0
+    elif args.cmd == "tiingo-load":
+        from market_data.load import load_tiingo_universe
+        from market_data.universe import load_universe
+
+        with _conn() as conn:
+            for r in load_tiingo_universe(conn, load_universe(args.universe)):
+                print(r)
+    elif args.cmd == "fred-download":
+        from market_data.macro import download_fred
+
+        print(download_fred(start=args.start, end=args.end, force=args.force))
+    elif args.cmd == "fred-load":
+        from market_data.macro import load_fred
+
+        with _conn() as conn:
+            for r in load_fred(conn):
+                print(r)
     elif args.cmd == "verify":
         from market_data.manifest import verify_tree
 
@@ -72,12 +124,27 @@ def main(argv: list[str] | None = None) -> int:
         with _conn() as conn:
             for r in load_universe_files(conn, load_universe(args.universe)):
                 print(r)
+    elif args.cmd == "reconcile":
+        from market_data.reconcile import reconcile_universe, write_report
+
+        with _conn() as conn:
+            rep = reconcile_universe(conn, args.symbols, args.a, args.b)
+        print(write_report(rep), rep["totals"])
     elif args.cmd == "quality":
         from market_data.quality import run_quality
 
         with _conn() as conn:
-            rep = run_quality(conn, threshold=args.threshold)
+            rep = run_quality(conn, source=args.source, threshold=args.threshold)
         print(rep["run_id"], rep["totals_per_rule"], f"{rep['seconds']}s")
+    elif args.cmd == "check-keys":
+        from market_data.keys import check_keys
+
+        rep = check_keys(do_ping=args.ping)
+        for name, info in rep["keys"].items():
+            print(f"{name:7s} {info['detail']}" + (f"  ping: {info['ping']}" if info["ping"] else ""))
+        if rep["missing_required"]:
+            print("missing required for Sprint 05:", ", ".join(rep["missing_required"]))
+            return 2
     elif args.cmd == "serve":
         import uvicorn
 

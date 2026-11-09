@@ -1,4 +1,4 @@
-"""Regime breakdown of a backtest by calendar year or trailing volatility (concept 04_06).
+"""Regime breakdown of a backtest by calendar year, trailing volatility or VIX bucket (concepts 04_06, 05_05).
 
 Growth factor of a group = product of (1 + daily equity return) over its days; the product over all groups
 equals the run's total growth (checked, else ValueError). Volatility labels use the trailing 20-day annualised
@@ -13,15 +13,22 @@ import polars as pl
 from . import indicators
 from .backtest import BacktestResult
 
-BY = ("year", "vol")
+BY = ("year", "vol", "vix")
 VOL_WINDOW = 20
 MIN_BARS_VOL = 25
-VOL_ORDER = ["warmup", "low", "medium", "high"]
+VOL_ORDER = ["warmup", "unknown", "low", "medium", "high"]
 
 
-def regime_labels(bars: pl.DataFrame, by: str) -> list[str]:
+def regime_labels(bars: pl.DataFrame, by: str, vix: pl.DataFrame | None = None) -> list[str]:
+    """`vix` (columns obs_date, value; from read.get_macro) is required for by='vix'."""
     if by not in BY:
         raise ValueError(f"by must be one of {BY}")
+    if by == "vix":
+        if vix is None:
+            raise ValueError("by='vix' needs the VIXCLS observations (vix=...)")
+        from .macro import vix_labels
+
+        return vix_labels(vix, bars["trade_date"].to_list())
     if by == "year":
         return [str(d.year) for d in bars["trade_date"].to_list()]
     if bars.height < MIN_BARS_VOL:
@@ -32,11 +39,11 @@ def regime_labels(bars: pl.DataFrame, by: str) -> list[str]:
     return ["warmup" if v is None else ("low" if v <= lo else ("medium" if v <= hi else "high")) for v in vol]
 
 
-def regime_breakdown(result: BacktestResult, bars: pl.DataFrame, by: str) -> dict:
+def regime_breakdown(result: BacktestResult, bars: pl.DataFrame, by: str, vix: pl.DataFrame | None = None) -> dict:
     eq = result.equity
     if eq["trade_date"].to_list() != bars["trade_date"].to_list():
         raise ValueError("equity and bars must cover the same dates")
-    labels = regime_labels(bars, by)
+    labels = regime_labels(bars, by, vix)
     cash = result.spec.initial_cash
     levels = eq["equity"].to_list()
     prev = [cash] + levels[:-1]
@@ -64,5 +71,8 @@ def regime_breakdown(result: BacktestResult, bars: pl.DataFrame, by: str) -> dic
                     "growth_factor": g["growth"], "return": g["growth"] - 1.0, "trades_started": g["trades"]})
     return {"by": by, "groups": out, "total_growth": total, "product_of_group_growth": product,
             "note": ("Calendar-year attribution." if by == "year" else
-                     "Volatility terciles use thresholds from the full sample (descriptive, hindsight); each day's label "
-                     "uses only volatility known at the previous close.")}
+                     ("VIX buckets are fixed in advance (low < 15, medium 15 to 25, high >= 25) and use the previous "
+                      "trading day's VIXCLS close; 'unknown' = no earlier observation. This product uses the FRED API "
+                      "but is not endorsed or certified by the Federal Reserve Bank of St. Louis." if by == "vix" else
+                      "Volatility terciles use thresholds from the full sample (descriptive, hindsight); each day's "
+                      "label uses only volatility known at the previous close."))}
