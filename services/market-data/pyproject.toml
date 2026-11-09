@@ -46,14 +46,14 @@ test = { cmd = "pytest -v", help = "Run all tests" }
 test-coverage = { cmd = "pytest --cov=market_data", help = "Run tests with coverage" }
 
 # --- local database (native PostgreSQL service on localhost:5432; no Docker) ---
-db-init = { cmd = "sudo -u postgres psql -v pw=${POSTGRES_PASSWORD} -f scripts/db_init.sql", help = "One-time: create role + database (asks for sudo)" }
+db-init = { cmd = "sudo -u postgres psql -v pw=${POSTGRES_PASSWORD} -f scripts/db/db_init.sql", help = "One-time: create role + database (asks for sudo)" }
 db-psql = { cmd = "psql ${DATABASE_URL}", help = "Open psql on the project database" }
 db-check = { cmd = "pg_isready -h localhost -p 5432", help = "Is the PostgreSQL service accepting connections?" }
 
 # --- migrations (Alembic, hand-written; no autogenerate) ---
 # poe forwards extra CLI words to `cmd` tasks, e.g.:
 #   uv run poe migration-new create instrument table
-migration-new = { cmd = "python scripts/new_migration.py", help = "Create the next numbered migration file: migration-new <message words>" }
+migration-new = { cmd = "python scripts/db/new_migration.py", help = "Create the next numbered migration file: migration-new <message words>" }
 migration-run = { cmd = "alembic upgrade head", help = "Apply all pending migrations" }
 migration-rollback = { cmd = "alembic downgrade -1", help = "Undo the latest migration" }
 migration-history = { cmd = "alembic history --verbose", help = "List all migrations" }

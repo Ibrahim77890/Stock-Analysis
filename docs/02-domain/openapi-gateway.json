@@ -1,0 +1,1583 @@
+{
+  "components": {
+    "schemas": {
+      "AdvanceDto": {
+        "properties": {
+          "n": {
+            "default": 1,
+            "maximum": 20,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "BarDto": {
+        "properties": {
+          "close": {
+            "type": "number"
+          },
+          "day": {
+            "type": "number"
+          },
+          "high": {
+            "type": "number"
+          },
+          "low": {
+            "type": "number"
+          },
+          "open": {
+            "type": "number"
+          },
+          "rel_volume": {
+            "description": "volume divided by the mean volume of the first visible days",
+            "type": "number"
+          }
+        },
+        "required": [
+          "day",
+          "open",
+          "high",
+          "low",
+          "close",
+          "rel_volume"
+        ],
+        "type": "object"
+      },
+      "BarsDto": {
+        "properties": {
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/BarDto"
+            },
+            "type": "array"
+          },
+          "episode_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "episode_id",
+          "bars"
+        ],
+        "type": "object"
+      },
+      "BinDto": {
+        "properties": {
+          "bin_high": {
+            "type": "number"
+          },
+          "bin_low": {
+            "type": "number"
+          },
+          "mean_forecast": {
+            "nullable": true,
+            "type": "number"
+          },
+          "n": {
+            "type": "number"
+          },
+          "observed": {
+            "nullable": true,
+            "type": "number"
+          },
+          "sparse": {
+            "type": "boolean"
+          },
+          "wilson_high": {
+            "nullable": true,
+            "type": "number"
+          },
+          "wilson_low": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "bin_low",
+          "bin_high",
+          "n",
+          "mean_forecast",
+          "observed",
+          "wilson_low",
+          "wilson_high",
+          "sparse"
+        ],
+        "type": "object"
+      },
+      "CountsDto": {
+        "properties": {
+          "pending": {
+            "type": "number"
+          },
+          "resolved": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "void": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "resolved",
+          "void",
+          "pending",
+          "total"
+        ],
+        "type": "object"
+      },
+      "CreateEpisodeDto": {
+        "properties": {
+          "initial_visible": {
+            "default": 60,
+            "description": "days you can see at the start",
+            "maximum": 499,
+            "minimum": 20,
+            "type": "number"
+          },
+          "kind": {
+            "default": "mixed",
+            "description": "mixed hides whether the series is real or made up until the reveal",
+            "enum": [
+              "mixed",
+              "real",
+              "synthetic"
+            ],
+            "type": "string"
+          },
+          "n_bars": {
+            "default": 250,
+            "maximum": 500,
+            "minimum": 60,
+            "type": "number"
+          },
+          "seed": {
+            "description": "optional: the same seed rebuilds the same episode",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "DataTrailDto": {
+        "properties": {
+          "adjustment": {
+            "type": "string"
+          },
+          "feed_caveat": {
+            "type": "string"
+          },
+          "file_hash_matches": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "licence": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "retrieved_at": {
+            "nullable": true,
+            "type": "string"
+          },
+          "stored_adjustment": {
+            "type": "string"
+          },
+          "universe_caveat": {
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "provider",
+          "retrieved_at",
+          "feed_caveat",
+          "universe_caveat",
+          "adjustment",
+          "stored_adjustment",
+          "file_hash_matches",
+          "warnings",
+          "licence"
+        ],
+        "type": "object"
+      },
+      "EpisodeListItemDto": {
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "day": {
+            "description": "the current day (cursor)",
+            "type": "number"
+          },
+          "episode_id": {
+            "type": "string"
+          },
+          "initial_visible": {
+            "type": "number"
+          },
+          "kind": {
+            "description": "present only when you asked for a specific kind, or after the reveal",
+            "enum": [
+              "real",
+              "synthetic"
+            ],
+            "type": "string"
+          },
+          "kind_requested": {
+            "enum": [
+              "mixed",
+              "real",
+              "synthetic"
+            ],
+            "type": "string"
+          },
+          "n_bars": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "revealed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "episode_id",
+          "n_bars",
+          "initial_visible",
+          "day",
+          "status",
+          "kind_requested",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "EpisodeStateDto": {
+        "properties": {
+          "day": {
+            "description": "the current day (cursor)",
+            "type": "number"
+          },
+          "episode_id": {
+            "type": "string"
+          },
+          "initial_visible": {
+            "type": "number"
+          },
+          "kind": {
+            "description": "present only when you asked for a specific kind, or after the reveal",
+            "enum": [
+              "real",
+              "synthetic"
+            ],
+            "type": "string"
+          },
+          "kind_requested": {
+            "enum": [
+              "mixed",
+              "real",
+              "synthetic"
+            ],
+            "type": "string"
+          },
+          "n_bars": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "revealed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "episode_id",
+          "n_bars",
+          "initial_visible",
+          "day",
+          "status",
+          "kind_requested"
+        ],
+        "type": "object"
+      },
+      "GlossaryTermDto": {
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "example": {
+            "nullable": true,
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "plain_definition": {
+            "type": "string"
+          },
+          "related": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "term",
+          "plain_definition",
+          "example",
+          "level",
+          "category",
+          "related",
+          "source"
+        ],
+        "type": "object"
+      },
+      "HealthDto": {
+        "properties": {
+          "database": {
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "type": "string"
+          },
+          "gateway": {
+            "enum": [
+              "ok"
+            ],
+            "type": "string"
+          },
+          "python": {
+            "enum": [
+              "ok",
+              "down"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "gateway",
+          "database",
+          "python"
+        ],
+        "type": "object"
+      },
+      "IdentityDto": {
+        "properties": {
+          "asset_type": {
+            "type": "string"
+          },
+          "first_date": {
+            "type": "string"
+          },
+          "last_date": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sector": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "asset_type",
+          "sector",
+          "first_date",
+          "last_date",
+          "source"
+        ],
+        "type": "object"
+      },
+      "KindScoreDto": {
+        "properties": {
+          "brier": {
+            "nullable": true,
+            "type": "number"
+          },
+          "n": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "n",
+          "brier"
+        ],
+        "type": "object"
+      },
+      "LearnerDto": {
+        "properties": {
+          "display_name": {
+            "type": "string"
+          },
+          "learner_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "learner_id",
+          "display_name"
+        ],
+        "type": "object"
+      },
+      "LoginDto": {
+        "properties": {
+          "display_name": {
+            "example": "Sam",
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "display_name",
+          "password"
+        ],
+        "type": "object"
+      },
+      "LuckDto": {
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "luck_probability": {
+            "nullable": true,
+            "type": "number"
+          },
+          "n_perm": {
+            "type": "number"
+          },
+          "not_reported": {
+            "description": "true while there are too few answered guesses to report it",
+            "type": "boolean"
+          },
+          "real_brier": {
+            "nullable": true,
+            "type": "number"
+          },
+          "seed": {
+            "type": "number"
+          },
+          "shuffled_quantiles": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "real_brier",
+          "luck_probability",
+          "n_perm",
+          "seed",
+          "count",
+          "not_reported",
+          "shuffled_quantiles"
+        ],
+        "type": "object"
+      },
+      "OverallDto": {
+        "properties": {
+          "baselines": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "brier": {
+            "nullable": true,
+            "type": "number"
+          },
+          "enough": {
+            "type": "boolean"
+          },
+          "log_loss": {
+            "nullable": true,
+            "type": "number"
+          },
+          "luck": {
+            "$ref": "#/components/schemas/LuckDto"
+          },
+          "min_enough": {
+            "type": "number"
+          },
+          "n": {
+            "type": "number"
+          },
+          "skill_vs_coin_flip": {
+            "nullable": true,
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "n",
+          "brier",
+          "skill_vs_coin_flip",
+          "log_loss",
+          "enough",
+          "min_enough",
+          "warnings",
+          "baselines",
+          "luck"
+        ],
+        "type": "object"
+      },
+      "OwnershipDto": {
+        "properties": {
+          "holds": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema",
+          "owner",
+          "holds"
+        ],
+        "type": "object"
+      },
+      "PredictionDto": {
+        "properties": {
+          "horizon": {
+            "description": "how many days ahead",
+            "enum": [
+              1,
+              5,
+              10
+            ],
+            "type": "number"
+          },
+          "p_up": {
+            "description": "chance that the price is higher then (0.01 to 0.99, at most 4 decimals)",
+            "example": 0.7,
+            "maximum": 0.99,
+            "minimum": 0.01,
+            "type": "number"
+          }
+        },
+        "required": [
+          "horizon",
+          "p_up"
+        ],
+        "type": "object"
+      },
+      "PredictionItemDto": {
+        "properties": {
+          "created": {
+            "description": "false when this exact guess already existed",
+            "type": "boolean"
+          },
+          "day": {
+            "description": "the day it was made",
+            "type": "number"
+          },
+          "horizon": {
+            "enum": [
+              1,
+              5,
+              10
+            ],
+            "type": "number"
+          },
+          "outcome": {
+            "description": "1 if the price went up, 0 if not; null until answered",
+            "nullable": true,
+            "type": "number"
+          },
+          "p_up": {
+            "type": "number"
+          },
+          "prediction_id": {
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "resolved",
+              "void"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "prediction_id",
+          "day",
+          "horizon",
+          "p_up",
+          "status",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "PredictionsDto": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/CountsDto"
+          },
+          "episode_id": {
+            "type": "string"
+          },
+          "predictions": {
+            "items": {
+              "$ref": "#/components/schemas/PredictionItemDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "episode_id",
+          "predictions",
+          "counts"
+        ],
+        "type": "object"
+      },
+      "ProgressDto": {
+        "properties": {
+          "by_horizon": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/KindScoreDto"
+            },
+            "description": "keys 1, 5 and 10",
+            "type": "object"
+          },
+          "by_kind": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/KindScoreDto"
+            },
+            "description": "revealed episodes only: keys real and synthetic",
+            "type": "object"
+          },
+          "episodes": {
+            "type": "number"
+          },
+          "overall": {
+            "$ref": "#/components/schemas/OverallDto"
+          }
+        },
+        "required": [
+          "overall",
+          "by_kind",
+          "by_horizon",
+          "episodes"
+        ],
+        "type": "object"
+      },
+      "RegisterDto": {
+        "properties": {
+          "display_name": {
+            "description": "2 to 40 characters",
+            "example": "Sam",
+            "type": "string"
+          },
+          "password": {
+            "description": "10 to 128 characters",
+            "example": "three random words here",
+            "type": "string"
+          }
+        },
+        "required": [
+          "display_name",
+          "password"
+        ],
+        "type": "object"
+      },
+      "RevealDto": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/CountsDto"
+          },
+          "data_trail": {
+            "$ref": "#/components/schemas/DataTrailDto"
+          },
+          "episode_id": {
+            "type": "string"
+          },
+          "identity": {
+            "$ref": "#/components/schemas/IdentityDto"
+          },
+          "kind": {
+            "enum": [
+              "real",
+              "synthetic"
+            ],
+            "type": "string"
+          },
+          "seed": {
+            "type": "number"
+          },
+          "statement": {
+            "type": "string"
+          },
+          "synthetic_volatility": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "episode_id",
+          "kind",
+          "seed",
+          "counts"
+        ],
+        "type": "object"
+      },
+      "ScoreDto": {
+        "properties": {
+          "baselines": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "bins": {
+            "items": {
+              "$ref": "#/components/schemas/BinDto"
+            },
+            "type": "array"
+          },
+          "brier": {
+            "description": "Brier score; lower is better; 0.25 is a coin flip",
+            "nullable": true,
+            "type": "number"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/CountsDto"
+          },
+          "enough": {
+            "type": "boolean"
+          },
+          "episode_id": {
+            "type": "string"
+          },
+          "log_loss": {
+            "nullable": true,
+            "type": "number"
+          },
+          "luck": {
+            "$ref": "#/components/schemas/LuckDto"
+          },
+          "min_enough": {
+            "type": "number"
+          },
+          "murphy": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "n": {
+            "type": "number"
+          },
+          "skill_vs_coin_flip": {
+            "nullable": true,
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "n",
+          "brier",
+          "skill_vs_coin_flip",
+          "log_loss",
+          "bins",
+          "murphy",
+          "baselines",
+          "luck",
+          "enough",
+          "min_enough",
+          "warnings"
+        ],
+        "type": "object"
+      },
+      "SystemDto": {
+        "properties": {
+          "app_migration": {
+            "nullable": true,
+            "type": "string"
+          },
+          "checked_at": {
+            "type": "string"
+          },
+          "health": {
+            "$ref": "#/components/schemas/HealthDto"
+          },
+          "ownership": {
+            "items": {
+              "$ref": "#/components/schemas/OwnershipDto"
+            },
+            "type": "array"
+          },
+          "python_migration": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "health",
+          "app_migration",
+          "python_migration",
+          "ownership",
+          "checked_at"
+        ],
+        "type": "object"
+      },
+      "TokenDto": {
+        "properties": {
+          "learner": {
+            "$ref": "#/components/schemas/LearnerDto"
+          },
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "learner"
+        ],
+        "type": "object"
+      },
+      "TraceEntryDto": {
+        "properties": {
+          "duration_ms": {
+            "type": "number"
+          },
+          "method": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number"
+          },
+          "time": {
+            "type": "string"
+          },
+          "upstream": {
+            "items": {
+              "$ref": "#/components/schemas/UpstreamEntryDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "request_id",
+          "time",
+          "method",
+          "route",
+          "status",
+          "duration_ms",
+          "upstream"
+        ],
+        "type": "object"
+      },
+      "UpstreamEntryDto": {
+        "properties": {
+          "duration_ms": {
+            "type": "number"
+          },
+          "route": {
+            "type": "string"
+          },
+          "service": {
+            "enum": [
+              "python"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "service",
+          "route",
+          "status",
+          "duration_ms"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {},
+    "description": "The only API the web app talks to. NestJS handles accounts, who-owns-what, validation, the glossary and a request trace; the Python service does every calculation. Charts are blind until you reveal an episode. For learning only; not investment advice.",
+    "title": "MarketLab gateway",
+    "version": "0.1.0"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Sign in; returns a bearer token (8 hours)",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Create a learner account on this machine",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/episodes": {
+      "get": {
+        "operationId": "LearningController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EpisodeListItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My episodes, newest first",
+        "tags": [
+          "Learning"
+        ]
+      },
+      "post": {
+        "operationId": "LearningController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEpisodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a blind episode (name, dates and price level are hidden until you reveal)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{id}": {
+      "get": {
+        "operationId": "LearningController_state",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "State of one of my episodes",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{id}/advance": {
+      "post": {
+        "operationId": "LearningController_advance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvanceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EpisodeStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move forward 1 to 20 days; waiting guesses are answered when their day arrives",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{id}/bars": {
+      "get": {
+        "operationId": "LearningController_bars",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BarsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The blind chart up to today (day numbers, price starts at 100)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{id}/predictions": {
+      "get": {
+        "operationId": "LearningController_predictions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My guesses in this episode",
+        "tags": [
+          "Learning"
+        ]
+      },
+      "post": {
+        "operationId": "LearningController_addPrediction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionItemDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send a guess. It cannot be changed afterwards.",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{id}/reveal": {
+      "post": {
+        "operationId": "LearningController_reveal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reveal what the episode was. One way: it ends the episode.",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{id}/score": {
+      "get": {
+        "operationId": "LearningController_score",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Score so far: Brier score, calibration groups, luck check, warnings",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/glossary": {
+      "get": {
+        "operationId": "GlossaryController_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "learning (words used on the screens) or general",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/GlossaryTermDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Words and their plain-language meaning (search with q, filter with category)",
+        "tags": [
+          "Glossary"
+        ]
+      }
+    },
+    "/glossary/{slug}": {
+      "get": {
+        "operationId": "GlossaryController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GlossaryTermDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "One word",
+        "tags": [
+          "Glossary"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "SystemController_getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Is the front desk running? And its database and the number service?",
+        "tags": [
+          "System"
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearnerDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Who am I?",
+        "tags": [
+          "Account"
+        ]
+      }
+    },
+    "/me/progress": {
+      "get": {
+        "operationId": "LearningController_progress",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgressDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My results across all my episodes",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/system": {
+      "get": {
+        "operationId": "SystemController_system",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Status, versions and who owns which database schema",
+        "tags": [
+          "System"
+        ]
+      }
+    },
+    "/trace": {
+      "get": {
+        "operationId": "SystemController_getTrace",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TraceEntryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What my recent requests did (route patterns, times and statuses only)",
+        "tags": [
+          "System"
+        ]
+      }
+    }
+  },
+  "servers": [],
+  "tags": []
+}

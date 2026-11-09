@@ -1,6 +1,6 @@
 # Long-window validation example (generated 2026-11-08 18:17 UTC)
 
-Produced by `scripts/long_window_example.py` from the loaded data; every number is copied from that run. It repeats the Sprint 04 questions on a much longer history and **is not evidence of a profitable strategy**. Sharpe values are annualised; costs are 1 bp commission + 2 bps slippage per fill; the universe is survivorship-biased; the engine's idle cash earns 0 while the excess-Sharpe column subtracts the previous day's 3-month Treasury yield (a downward bias for in-and-out rules). Environment: Windows-11-10.0.26300-SP0, Python 3.14.10. Grid: fast in 3, 5, 10, 20, 30 and slow in 20, 30, 50, 100, 150 with fast < slow = 22 pairs.
+Produced by `scripts/reports/long_window_example.py` from the loaded data; every number is copied from that run. It repeats the Sprint 04 questions on a much longer history and **is not evidence of a profitable strategy**. Sharpe values are annualised; costs are 1 bp commission + 2 bps slippage per fill; the universe is survivorship-biased; the engine's idle cash earns 0 while the excess-Sharpe column subtracts the previous day's 3-month Treasury yield (a downward bias for in-and-out rules). Environment: Windows-11-10.0.26300-SP0, Python 3.14.10. Grid: fast in 3, 5, 10, 20, 30 and slow in 20, 30, 50, 100, 150 with fast < slow = 22 pairs.
 
 Data: Alpaca IEX and Tiingo end-of-day (internal use only; no price data are in this page), FRED DGS3MO and VIXCLS. This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis.
 

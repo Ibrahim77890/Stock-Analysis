@@ -1,0 +1,95 @@
+import { HttpException, Inject, Injectable, Logger } from "@nestjs/common";
+import { APP_CONFIG, AppConfig, redact } from "../config/app-config";
+import { TraceService } from "../trace/trace.service";
+
+/** An upstream failure turned into a safe message for the browser (no URL, token or upstream body). */
+export class UpstreamError extends HttpException {
+  constructor(status: number, message: string) {
+    super({ statusCode: status, message }, status);
+  }
+}
+
+const SAFE: Record<number, string> = {
+  404: "That episode was not found.",
+  409: "This episode is already revealed.",
+  422: "That request does not fit the rules. Please check the numbers.",
+  502: "The number service had a problem. Please try again.",
+  504: "The number service took too long. Please try again.",
+};
+
+export const DEFAULT_TIMEOUT_MS = 5_000;
+export const SCORE_TIMEOUT_MS = 30_000;
+
+/** Thin typed client for the Python analytics service. The gateway computes nothing: it forwards and maps errors. */
+@Injectable()
+export class PythonClient {
+  private readonly log = new Logger("PythonClient");
+
+  constructor(@Inject(APP_CONFIG) private readonly cfg: AppConfig, private readonly trace: TraceService) {}
+
+  private async call<T>(method: "GET" | "POST", path: string, pattern: string, body?: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
+    const t0 = process.hrtime.bigint();
+    const done = (status: number) =>
+      this.trace.addUpstream({ service: "python", route: `${method} ${pattern}`, status, duration_ms: Math.round(Number(process.hrtime.bigint() - t0) / 1e5) / 10 });
+    let res: Response;
+    try {
+      res = await fetch(this.cfg.pythonApiUrl + path, {
+        method,
+        headers: { "content-type": "application/json", "x-internal-token": this.cfg.internalToken },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (e: any) {
+      const timedOut = e?.name === "TimeoutError" || e?.name === "AbortError";
+      done(timedOut ? 504 : 502);
+      this.log.warn(redact(`upstream ${method} ${pattern} failed: ${e?.name ?? "error"}`, this.cfg));
+      throw new UpstreamError(timedOut ? 504 : 502, SAFE[timedOut ? 504 : 502]);
+    }
+    done(res.status);
+    if (res.ok) return (await res.json()) as T;
+    // upstream 4xx keep their status with a safe message; 5xx become 502
+    const status = res.status >= 500 ? 502 : res.status;
+    this.log.warn(`upstream ${method} ${pattern} answered ${res.status}`);
+    throw new UpstreamError(status, SAFE[status] ?? "The request could not be completed.");
+  }
+
+  async health(timeoutMs = 2_000): Promise<boolean> {
+    try {
+      const res = await fetch(this.cfg.pythonApiUrl + "/health", { signal: AbortSignal.timeout(timeoutMs) });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  createEpisode(body: { kind: string; n_bars: number; initial_visible: number; seed?: number }) {
+    return this.call<any>("POST", "/episodes", "/episodes", body);
+  }
+  states(ids: string[]) {
+    return this.call<{ episodes: any[] }>("POST", "/episodes/states", "/episodes/states", { episode_ids: ids });
+  }
+  getEpisode(id: string) {
+    return this.call<any>("GET", `/episodes/${encodeURIComponent(id)}`, "/episodes/:id");
+  }
+  bars(id: string) {
+    return this.call<any>("GET", `/episodes/${encodeURIComponent(id)}/bars`, "/episodes/:id/bars");
+  }
+  advance(id: string, n: number) {
+    return this.call<any>("POST", `/episodes/${encodeURIComponent(id)}/advance`, "/episodes/:id/advance", { n });
+  }
+  addPrediction(id: string, horizon: number, p_up: number) {
+    return this.call<any>("POST", `/episodes/${encodeURIComponent(id)}/predictions`, "/episodes/:id/predictions", { horizon, p_up });
+  }
+  predictions(id: string) {
+    return this.call<any>("GET", `/episodes/${encodeURIComponent(id)}/predictions`, "/episodes/:id/predictions");
+  }
+  score(id: string) {
+    return this.call<any>("GET", `/episodes/${encodeURIComponent(id)}/score`, "/episodes/:id/score", undefined, SCORE_TIMEOUT_MS);
+  }
+  reveal(id: string) {
+    return this.call<any>("POST", `/episodes/${encodeURIComponent(id)}/reveal`, "/episodes/:id/reveal");
+  }
+  summary(ids: string[]) {
+    return this.call<any>("POST", "/learning/summary", "/learning/summary", { episode_ids: ids }, SCORE_TIMEOUT_MS);
+  }
+}

@@ -1,0 +1,26 @@
+# ADR 0014: NestJS gateway and the web app stack
+
+Status: accepted (Sprint 06, 2026-11-09)
+
+## Context
+Until Sprint 05 the only interface was Swagger on the Python service. Sprint 06 adds learners and a web page. The blueprint (Section 24) splits the work: a NestJS gateway for users, ownership and progress; Python for data and every number. The owner asked for NestJS, a beginner-friendly light-coloured UI and more visibility into the system.
+
+## Decision
+- **Request path:** browser -> **NestJS gateway** (port 3000, `apps/api`) -> **Python analytics** (port 8000, `services/market-data`) -> PostgreSQL. The browser never talks to Python.
+- **Ownership rules:** NestJS never computes a score, indicator or backtest; Python never handles users or passwords. One database, separate schemas: `app` is created and migrated by NestJS, `market` and `research` by Python. A service may read another's schema (the gateway reads `market.alembic_version` for its status page) but only the owner writes or migrates.
+- **Internal link:** the gateway calls Python on loopback with the header `X-Internal-Token` (random value in `.env`, `INTERNAL_API_TOKEN`). When that variable is set, every Python Learning endpoint refuses calls without it (401); when unset (plain Swagger use) the check is off.
+- **Gateway stack (exact versions in `apps/api/package-lock.json`):** NestJS 12.2, TypeScript 5.9, `pg` (no ORM), `@nestjs/jwt`, `class-validator`, `@nestjs/swagger`, `node-pg-migrate` (plain SQL migrations, version table `app.pgmigrations`), Vitest + Supertest + SWC for tests, `openapi-typescript` for the typed Python client. Chosen as the newest versions at least two weeks old; TypeScript 7 and `@types/node` 26 were skipped on purpose (too new for decorators and for the Node 20 runtime). The Nest CLI generators need a newer Node than the machine has (20.19), so the project files were written by hand.
+- **Accounts:** register and sign in with a display name and password (10 to 128 characters). Passwords are hashed with `crypto.scrypt` (N = 2^17, r = 8, p = 1, 16-byte salt, self-describing string) using Node's built-in module, so no native add-on is needed; OWASP lists scrypt with these parameters as acceptable (Argon2id is preferred but needs a native build on Windows). A signed JWT (HS256, 8 hours, `JWT_SECRET`) is sent as a bearer token. Login and registration are limited to 5 tries per minute per client and name. Wrong name and wrong password give the same message and status. Accounts only separate learners on one machine; there is no reset, email or OAuth.
+- **Ownership:** every episode route checks `(learner, episode)` in `app.learner_episode`; another learner's id and an unknown id give the same 404 and make no call to Python.
+- **Validation and whitelisting:** request bodies are validated before anything is forwarded (unknown fields rejected, 422). Every learner-facing response is rebuilt from an explicit field list, so an unexpected upstream field (a symbol, a date) would be dropped even if Python leaked it. Upstream errors become short safe messages (504 timeout, 502 for upstream 5xx).
+- **Glossary and trace:** definitions are data (`app.glossary_term`, seeded from `docs/02-domain/glossary.md` plus beginner wording in `apps/api/seed/learning-terms.json`); a per-learner in-memory trace keeps route patterns, statuses and timings only (last 200).
+- **Web app (`apps/web`):** Vite 8 + React 19 + TypeScript, `react-router`, Lightweight Charts (TradingView credit shown on every page, a licence condition), no UI library. Types are generated from the gateway's OpenAPI file (`docs/02-domain/openapi-gateway.json`); the browser holds no business logic. Tests: Vitest + Testing Library on jsdom 27 (jsdom 30 and `jest-dom` need Node 22). Token in memory and `sessionStorage` only.
+- **Light theme only:** one palette as CSS variables (`src/styles/tokens.css`), `color-scheme: light`, no dark-mode rules; a test computes WCAG contrast for every token pair (it found borders at 2.1:1 and they were darkened). Dark mode is out of scope.
+- **CORS:** the gateway allows only `http://127.0.0.1:5173` and `http://localhost:5173` (`CORS_ORIGINS`), never `*`.
+- **Licence limitation:** the real episodes show charts derived from Tiingo data, which the free plan allows for internal use only. Accounts exist to separate learners on one machine; the gateway binds to loopback and the apps must not be deployed or shown to other people while they use that source.
+
+## Alternatives
+Python serving the pages (no users, no ownership boundary); Next.js (server rendering is not needed); a hosted auth provider (external service for a local tool); an ORM for `app` (hand-written SQL matches the Python side); Argon2id (native build); Express only (less structure for guards, validation and OpenAPI).
+
+## Consequences
+Three processes to start (README "Run MarketLab"). The OpenAPI files of both services are committed contracts: renaming a field breaks the TypeScript build, the generated-types checks and the contract tests. The gateway adds a small, measured latency (`docs/03-benchmarks/benchmark-02-learning-api-latency.md`). Session data live only in memory and `sessionStorage`, so restarting the gateway forgets the trace but not the learners or episodes.

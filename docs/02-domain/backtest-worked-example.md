@@ -1,6 +1,6 @@
 # Backtest worked example (generated 2026-11-08 13:42 UTC)
 
-Produced by `scripts/backtest_worked_example.py` on this machine from the loaded data; every number below is copied from that run. It demonstrates mechanics and caveats. **It is not evidence of a profitable strategy.**
+Produced by `scripts/reports/backtest_worked_example.py` on this machine from the loaded data; every number below is copied from that run. It demonstrates mechanics and caveats. **It is not evidence of a profitable strategy.**
 
 Environment: Windows-11-10.0.26300-SP0, Python 3.14.10. Engine version 1. Prices are split-adjusted as of the last date; dividends are not included in returns; risk-free rate 0; universe is survivorship-biased (see ADR 0009 and the data dictionary).
 

@@ -1,0 +1,47 @@
+{
+  "name": "marketlab-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MarketLab gateway (NestJS): logins, ownership, validation, glossary, request trace. Owns database schema `app`.",
+  "engines": { "node": ">=20.19.0" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/src/main.js",
+    "test": "vitest run",
+    "migrate:up": "node-pg-migrate up -m migrations --migrations-schema app --migrations-table pgmigrations --create-migrations-schema --database-url-var DATABASE_URL",
+    "migrate:down": "node-pg-migrate down -m migrations --migrations-schema app --migrations-table pgmigrations --database-url-var DATABASE_URL",
+    "gen:python-api": "openapi-typescript ../../docs/02-domain/openapi-market-data.json -o src/python/schema.d.ts",
+    "check:python-api": "node scripts/check-generated.mjs",
+    "export:openapi": "npm run build && node dist/scripts/export-openapi.js",
+    "seed:glossary": "npm run build && node dist/scripts/seed-glossary.js",
+    "latency": "npm run build && node dist/scripts/latency.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "12.2.0",
+    "@nestjs/core": "12.2.0",
+    "@nestjs/jwt": "12.0.3",
+    "@nestjs/platform-express": "12.2.0",
+    "@nestjs/swagger": "12.0.4",
+    "class-transformer": "0.5.1",
+    "class-validator": "0.15.1",
+    "dotenv": "18.0.9",
+    "pg": "8.23.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "12.2.0",
+    "@swc/core": "1.16.20",
+    "@types/express": "5.0.6",
+    "@types/node": "20.19.43",
+    "@types/pg": "8.23.1",
+    "@types/supertest": "7.2.1",
+    "ajv": "8.20.0",
+    "node-pg-migrate": "9.0.0",
+    "openapi-typescript": "7.13.0",
+    "supertest": "7.3.1",
+    "typescript": "5.9.3",
+    "unplugin-swc": "2.0.0",
+    "vitest": "4.1.12"
+  }
+}

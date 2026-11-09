@@ -1,0 +1,47 @@
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+html { font-size: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 1rem; line-height: 1.6; }
+h1, h2, h3 { line-height: 1.25; margin: 0 0 0.6rem; }
+h1 { font-size: 1.8rem; } h2 { font-size: 1.35rem; } h3 { font-size: 1.1rem; }
+p { margin: 0 0 0.8rem; }
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.page { max-width: 62rem; margin: 0 auto; padding: 1.2rem 1rem 3rem; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; margin-bottom: 1rem; }
+.row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.btn { font: inherit; padding: 0.55rem 1.1rem; border-radius: 8px; border: 2px solid var(--accent); background: var(--accent); color: var(--accent-text); cursor: pointer; min-height: 2.5rem; }
+.btn.secondary { background: var(--surface); color: var(--accent); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.callout { border-radius: var(--radius); padding: 0.7rem 1rem; margin: 0 0 1rem; border-left: 6px solid currentColor; }
+.callout strong.label { text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.8rem; margin-right: 0.5rem; }
+.callout.info { background: var(--info-bg); color: var(--info-text); }
+.callout.tip { background: var(--tip-bg); color: var(--tip-text); }
+.callout.careful { background: var(--careful-bg); color: var(--careful-text); }
+.stat { text-align: center; }
+.stat .big { font-size: 2.4rem; font-weight: 700; line-height: 1.1; }
+.stat .meaning { color: var(--muted); }
+.muted { color: var(--muted); }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); }
+.topbar .inner { max-width: 62rem; margin: 0 auto; padding: 0.6rem 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+.topbar nav { display: flex; gap: 1rem; flex-wrap: wrap; flex: 1; }
+.footer { border-top: 1px solid var(--border); background: var(--surface); padding: 1rem; text-align: center; color: var(--muted); font-size: 0.9rem; }
+.term-btn { font: inherit; background: none; border: none; border-bottom: 2px dotted var(--accent); color: inherit; padding: 0; cursor: help; }
+.term-panel { display: block; background: var(--info-bg); color: var(--info-text); border-radius: 8px; padding: 0.5rem 0.8rem; margin: 0.3rem 0; font-size: 0.95rem; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+input[type="text"], input[type="password"], input[type="number"], select { font: inherit; padding: 0.5rem; border: 2px solid var(--border); border-radius: 8px; width: 100%; max-width: 24rem; background: var(--surface); color: var(--text); }
+.steps { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 0.6rem; padding: 0; list-style: none; }
+.steps li { padding: 0.35rem 0.8rem; border: 2px solid var(--border); border-radius: 999px; background: var(--surface); }
+.steps li[aria-current="step"] { border-color: var(--accent); background: var(--info-bg); font-weight: 700; }
+.up { color: var(--up); } .down { color: var(--down); }
+.radio-cards { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.radio-cards label { border: 2px solid var(--border); border-radius: 10px; padding: 0.5rem 0.9rem; font-weight: 600; background: var(--surface); cursor: pointer; }
+.radio-cards input:checked + span { color: var(--accent); }
+.meter { position: relative; height: 1.6rem; background: linear-gradient(90deg, var(--tip-bg), var(--careful-bg)); border: 2px solid var(--border); border-radius: 999px; margin: 1.8rem 0 2.2rem; }
+.meter .mark { position: absolute; top: -0.2rem; width: 4px; height: 2.1rem; background: var(--text); }
+.meter .mark span { position: absolute; top: 2.2rem; transform: translateX(-50%); white-space: nowrap; font-size: 0.85rem; }
+.meter .mark.you span { top: -1.6rem; font-weight: 700; }

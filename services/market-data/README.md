@@ -51,18 +51,18 @@ Workflow for a schema change:
 
 Alembic's version table is `market.alembic_version`, so nothing is created outside the `market` schema.
 
-## How to reproduce Sprints 1 to 5 (from an empty machine)
+## How to reproduce Sprints 1 to 6 (from an empty machine)
 
 Run from `services/market-data`. Steps marked (needs keys) need `ALPACA_API_KEY_ID`/`ALPACA_API_SECRET_KEY` (Sprint 1) or `TIINGO_API_KEY`/`FRED_API_KEY` (Sprint 5) in the git-ignored `.env`; `uv run market-data check-keys [--ping]` reports which keys are set without printing them.
 
 ```bash
 uv sync                                   # Python 3.14 environment
-uv run poe db-init                        # once: role + database (on Windows run scripts/db_init.sql with psql as the postgres user)
+uv run poe db-init                        # once: role + database (on Windows run scripts/db/db_init.sql with psql as the postgres user)
 uv run poe migration-run                  # creates schema market + 6 tables
 uv run poe test                           # unit tests; DB tests are skipped unless TEST_DATABASE_URL is set
 uv run market-data download               # (needs keys) raw bars + corporate actions + manifests into ../../data/raw
 uv run market-data verify                 # every raw file matches its manifest hash
-uv run python scripts/profile_raw.py      # writes docs/02-domain/data-profile-v1.md
+uv run python scripts/reports/profile_raw.py      # writes docs/02-domain/data-profile-v1.md
 uv run market-data load                   # idempotent load; run twice, second run reports 0 inserted/updated
 uv run market-data quality --run          # writes data/reports/quality-report-<run_id>.md/.json
 uv run market-data bench-generate         # 5000 symbols x 2520 sessions, seeded -> data/synthetic
@@ -70,9 +70,9 @@ uv run market-data bench-load             # schema bench (separate from market)
 uv run market-data bench-run              # warm; restart PostgreSQL, then: bench-run --cold
 uv run market-data bench-report           # writes docs/03-benchmarks/benchmark-01-postgres-daily-bars.md
 uv run market-data bench-index-experiment # Sprint 02: effect of a (trade_date, instrument_id) index (long)
-uv run python scripts/window_audit.py     # Sprint 04: per-symbol bar counts into data-profile-v1.md
-uv run python scripts/validation_worked_example.py  # Sprint 04: search, split, walk-forward, DSR, scan, regimes (writes studies; about 1 minute)
-uv run python scripts/backtest_worked_example.py  # Sprint 03: real-data backtest example + saved runs (needs loaded data and migration 0007)
+uv run python scripts/reports/window_audit.py     # Sprint 04: per-symbol bar counts into data-profile-v1.md
+uv run python scripts/reports/validation_worked_example.py  # Sprint 04: search, split, walk-forward, DSR, scan, regimes (writes studies; about 1 minute)
+uv run python scripts/reports/backtest_worked_example.py  # Sprint 03: real-data backtest example + saved runs (needs loaded data and migration 0007)
 uv run market-data check-keys --ping     # Sprint 05: which keys are set (never printed) and whether the vendors accept them
 uv run market-data tiingo-download        # (needs TIINGO_API_KEY) at most 45 requests per run; rerun about an hour later until 'remaining' is 0 (exit code 3 = quota reached, nothing lost)
 uv run market-data tiingo-load            # raw Tiingo files -> source='tiingo' (idempotent; run twice, second run inserts 0)
@@ -80,8 +80,10 @@ uv run market-data fred-download          # (needs FRED_API_KEY) DGS3MO and VIXC
 uv run market-data fred-load              # idempotent load into market.macro_observation
 uv run market-data quality --run --source tiingo   # data-quality rules on the second source
 uv run market-data reconcile              # Alpaca vs Tiingo report under ../../data/reports/ (ADR 0013, Appendix A tolerances)
-uv run python scripts/price_basis_table.py        # Sprint 05: split vs split+dividend table into backtest.md
-uv run python scripts/long_window_example.py      # Sprint 05: 21-year validation page (about 2 minutes; writes studies)
+uv run python scripts/reports/price_basis_table.py        # Sprint 05: split vs split+dividend table into backtest.md
+uv run python scripts/reports/long_window_example.py      # Sprint 05: 21-year validation page (about 2 minutes; writes studies)
+uv run market-data serve                  # Sprint 06: Swagger now has a 'Learning' section (internal: the gateway calls it)
+# Sprint 06 also needs the gateway and the web app: see docs/02-domain/system-overview.md ("Start everything")
 uv run market-data export-openapi         # refresh docs/02-domain/openapi-market-data.json (a test compares it)
 uv run market-data serve                  # HTTP API + Swagger UI: http://127.0.0.1:8000/docs
 ```
@@ -101,6 +103,7 @@ Open http://127.0.0.1:8000/docs (binds to 127.0.0.1 only; no authentication). Se
 | Data quality | stored results, `POST /quality/rules/check` (your bars), `POST /quality/run` (writes) |
 | Ingestion | job history, quarantine, raw files, `verify`; `download` (needs Alpaca keys) and `load` write data |
 | Benchmark | stored benchmark results |
+| Learning | **Internal (called by the NestJS gateway, never by the browser).** `POST /episodes` (blind episode; **writes**), `POST /episodes/states` (public state of several), `GET /episodes/{id}`, `/bars` (blind: day numbers, price starts at 100, relative volume), `POST /advance` (**writes**; resolves due guesses), `POST|GET /predictions` (**writes**; append-only), `GET /score` (Brier, calibration, luck check), `POST /reveal` (**writes**; one way, shows identity and data trail), `GET|POST /learning/summary`. With `INTERNAL_API_TOKEN` set every call needs the header `X-Internal-Token`. |
 | Sources | `GET /sources` (per source: symbols, bars, dates, action counts; macro series), `GET /sources/keys?ping=` (presence only), `POST /sources/reconcile` (Alpaca vs Tiingo; `write_report` writes a file), `GET /sources/adjustment-check/{symbol}` (our split+dividend close vs the vendor's), `POST /ingestion/tiingo/download` (**calls the vendor**, `max_requests` default 45, 429 on quota, 400 if the key is missing) and `POST /ingestion/tiingo/load` (**writes** `market.*`) |
 | Macro | `GET /macro/{series_id}` (DGS3MO, VIXCLS; null = no value that day), `GET /macro/{series_id}/asof?date=&strict=` (404 before the first observation), `GET /macro/derived/risk-free?date=`, `GET /macro/derived/vix-bucket?date=`, `POST /ingestion/fred/download` (**calls the vendor**) and `POST /ingestion/fred/load` (**writes** `market.macro_observation`). This product uses the FRED API but is not endorsed or certified by the Federal Reserve Bank of St. Louis. |
 | Validation | `POST /validation/grid-search` (`record=true` stores each pair as a trial), `/validation/split-evaluation`, `/validation/holdout` (one use per study, 409 on a second call), `/validation/walk-forward`, `/validation/sharpe-stats` (your own returns, no database), `GET /validation/studies` and `/studies/{id}` (with the overfitting meter), `/validation/universe-scan`, `/validation/best-of-n`, `/validation/regimes` |
@@ -111,6 +114,8 @@ Sprint 03 (backtest): `uv run poe migration-run` applies `0007` (schema `researc
 Sprint 04 (validation): `uv run poe migration-run` applies `0008` (`research.study`, `research.trial`). Try in Swagger: `POST /validation/grid-search` with `record: true` twice (two studies, trials counted), `GET /validation/studies/{id}` for the overfitting meter, `POST /validation/split-evaluation` with `record: true`, then `POST /validation/holdout` for that study twice (second call returns 409). Method, formulas and limits: `docs/02-domain/validation.md`; real numbers: `docs/02-domain/validation-worked-example.md`. Data window: the contiguous window of the whole universe is 2020-07-27 to 2025-12-31 (see the audit table in `docs/02-domain/data-profile-v1.md`).
 
 Sprint 05 (second source, total return, risk-free rate): `uv run poe migration-run` applies `0009` (`market.macro_observation`). Keys: put `TIINGO_API_KEY` (free account, Starter plan: 50 requests/hour, 1,000/day, 500 symbols/month, **internal use only**) and `FRED_API_KEY` (free, https://fred.stlouisfed.org/docs/api/api_key.html) in `.env` (placeholders are in `.env.example`; `.env` is git-ignored and the code never prints a key). **Two-run download procedure:** the universe is 53 symbols and one request is made per symbol, so `uv run market-data tiingo-download` stops after 45 requests; run it again after the hourly window has passed (the first run's files are kept and skipped) until it reports `remaining: 0`. A 429 from the vendor stops the run with exit code 3 and the message "quota reached; rerun later". Then `tiingo-load`, `fred-download`, `fred-load`, `reconcile`. In Swagger, `POST /backtests/run` and the validation endpoints take `source` (alpaca | tiingo), `price_basis` (split | split_dividend) and `risk_free` (adds `sharpe_excess`); the defaults leave every earlier response unchanged. Policy: `docs/04-adr/0013-second-source-and-macro-policy.md`; real results: `docs/02-domain/long-window-example.md`. The raw data and the database stay on this machine (licence: internal use only); the reports contain only derived statistics.
+
+Sprint 06 (learning loop): `uv run poe migration-run` applies `0010` (`research.episode`) and `0011` (`research.prediction` with its append-only trigger). In Swagger try `POST /episodes` (`kind: synthetic`, `seed: 1`), `GET /episodes/{id}/bars`, `POST /episodes/{id}/predictions` (horizon 1, p_up 0.7), `POST /episodes/{id}/advance`, `GET /episodes/{id}/score`, then `POST /episodes/{id}/reveal` twice (the second answer is identical). Protocol: `docs/04-adr/0015-blind-episode-and-prediction-protocol.md`; scoring: `docs/02-domain/scoring.md`. **Run MarketLab (three terminals):** this service (`serve`), the gateway (`apps/api`: `npm start`) and the web app (`apps/web`: `npm run dev`, http://127.0.0.1:5173); details and secrets in `docs/02-domain/system-overview.md`. The package layout is explained in the Layout section below and in ADR 0016.
 
 Environment note: `ALPACA_API_KEY_ID` and `ALPACA_API_SECRET_KEY` in `.env` are only needed by `download`, `TIINGO_API_KEY` by `tiingo-download` and `FRED_API_KEY` by `fred-download`. Nothing else needs credentials besides the PostgreSQL login in `DATABASE_URL`.
 
@@ -125,12 +130,29 @@ Database tests: create a throwaway database, set `TEST_DATABASE_URL=postgresql:/
 
 ```
 services/market-data/
-├── pyproject.toml        dependencies, poe tasks
+├── pyproject.toml            dependencies, poe tasks, entry point `market-data`
 ├── alembic.ini
-├── migrations/           env.py, script.py.mako, versions/NNNN_*.py
-├── scripts/              new_migration.py (numbered migration generator), db_init.sql
-├── src/market_data/      package (download, load, quality, read ... added by sprint tasks)
-└── tests/
+├── migrations/               env.py, script.py.mako, versions/NNNN_*.py (hand-written SQL)
+├── config/                   universe_v1.csv
+├── scripts/
+│   ├── db/                   new_migration.py, db_init.sql, fresh_db_repro.py
+│   └── reports/              profile_raw, window_audit, *_worked_example, price_basis_table, long_window_example
+├── src/market_data/
+│   ├── cli.py                `market-data <command>` (thin: parses arguments, calls the packages below)
+│   ├── core/                 config, keys, manifest, universe (no database, no network except keys ping)
+│   ├── ingestion/            download, download_tiingo, load, macro, quality (files in, `market.*` rows out)
+│   ├── market/               read (the only reader of bars), adjust, adjust_check, replay, indicators, lineage,
+│   │                         reconcile, synthetic (as-of reads and checks on `market.*`)
+│   ├── backtesting/          backtest, metrics, luck, research (engine, metrics, controls, saved runs)
+│   ├── validation/           protocol (studies, splits, walk-forward), sharpe_stats, scan, regimes
+│   ├── learning/             episode (blind episodes, guesses, reveal), scoring (pure functions)
+│   ├── api/                  app.py (FastAPI app, Reference/Bars/Replay/... routes), routers/ (backtest, sources, validation, learning)
+│   └── bench/                benchmark (Sprint 01/02 PostgreSQL benchmark)
+└── tests/                    mirrors the packages: core/, ingestion/, market/, backtesting/, validation/, api/
 ```
+
+Rules of the layout (ADR 0016): dependencies point downwards only (`api` -> `validation`/`backtesting` -> `market` -> `core`;
+`ingestion` -> `market`/`core`); only `market/read.py`, `ingestion/load.py` and `ingestion/quality.py` run SQL on
+`market.bar_daily` (a structural test enforces it); packages mirror database ownership (`market`, `research`).
 
 Repository-level file used by this service: `../../.env` (loaded by poe and by `migrations/env.py`).

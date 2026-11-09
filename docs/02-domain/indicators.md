@@ -1,6 +1,6 @@
 # Returns and indicators (Sprint 02)
 
-Implemented in `services/market-data/src/market_data/indicators.py`. All functions are pure, take a date-sorted frame with `trade_date` and `close`, return a Series of the same length, and leave the warm-up as null (never filled). Feed **adjusted** prices (see the data dictionary, Adjustment modes): raw prices across a split give a fake return such as -74%.
+Implemented in `services/market-data/src/market_data/market/indicators.py`. All functions are pure, take a date-sorted frame with `trade_date` and `close`, return a Series of the same length, and leave the warm-up as null (never filled). Feed **adjusted** prices (see the data dictionary, Adjustment modes): raw prices across a split give a fake return such as -74%.
 
 | Function | Formula | First defined at |
 |---|---|---|

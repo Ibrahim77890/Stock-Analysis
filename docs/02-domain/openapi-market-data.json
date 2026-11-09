@@ -132,6 +132,19 @@
         "title": "Adjustment",
         "type": "string"
       },
+      "AdvanceIn": {
+        "properties": {
+          "n": {
+            "default": 1,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "title": "AdvanceIn",
+        "type": "object"
+      },
       "AdvanceRequest": {
         "properties": {
           "n_sessions": {
@@ -538,6 +551,51 @@
         "title": "ComputeRequest",
         "type": "object"
       },
+      "CreateEpisodeIn": {
+        "properties": {
+          "initial_visible": {
+            "default": 60,
+            "maximum": 499.0,
+            "minimum": 20.0,
+            "title": "Initial Visible",
+            "type": "integer"
+          },
+          "kind": {
+            "default": "mixed",
+            "description": "mixed hides whether the series is real or generated until the reveal",
+            "enum": [
+              "mixed",
+              "real",
+              "synthetic"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "n_bars": {
+            "default": 250,
+            "maximum": 500.0,
+            "minimum": 60.0,
+            "title": "N Bars",
+            "type": "integer"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "maximum": 2147483647.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "optional: the same seed rebuilds the same episode",
+            "title": "Seed"
+          }
+        },
+        "title": "CreateEpisodeIn",
+        "type": "object"
+      },
       "DownloadRequest": {
         "properties": {
           "end": {
@@ -796,6 +854,33 @@
           "equity"
         ],
         "title": "MetricsRequest",
+        "type": "object"
+      },
+      "PredictionIn": {
+        "properties": {
+          "horizon": {
+            "description": "bars ahead",
+            "enum": [
+              1,
+              5,
+              10
+            ],
+            "title": "Horizon",
+            "type": "integer"
+          },
+          "p_up": {
+            "description": "probability that the close then is higher than the close now",
+            "maximum": 0.99,
+            "minimum": 0.01,
+            "title": "P Up",
+            "type": "number"
+          }
+        },
+        "required": [
+          "horizon",
+          "p_up"
+        ],
+        "title": "PredictionIn",
         "type": "object"
       },
       "ReconcileIn": {
@@ -2012,6 +2097,40 @@
         "title": "SplitIn",
         "type": "object"
       },
+      "StatesIn": {
+        "properties": {
+          "episode_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Episode Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "episode_ids"
+        ],
+        "title": "StatesIn",
+        "type": "object"
+      },
+      "SummaryIn": {
+        "properties": {
+          "episode_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Episode Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "episode_ids"
+        ],
+        "title": "SummaryIn",
+        "type": "object"
+      },
       "SweepRequest": {
         "properties": {
           "commission_bps": {
@@ -2353,7 +2472,7 @@
         "title": "WalkIn",
         "type": "object"
       },
-      "market_data__api__CausalityRequest": {
+      "market_data__api__app__CausalityRequest": {
         "properties": {
           "closes": {
             "items": {
@@ -2383,7 +2502,7 @@
         "title": "CausalityRequest",
         "type": "object"
       },
-      "market_data__api_backtest__CausalityRequest": {
+      "market_data__api__routers__backtest__CausalityRequest": {
         "properties": {
           "commission_bps": {
             "default": 0.0,
@@ -2598,7 +2717,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/market_data__api_backtest__CausalityRequest"
+                "$ref": "#/components/schemas/market_data__api__routers__backtest__CausalityRequest"
               }
             }
           },
@@ -3328,6 +3447,578 @@
         ]
       }
     },
+    "/episodes": {
+      "post": {
+        "operationId": "create_episodes_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEpisodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Episodes Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "create_episode: open a blind episode (writes)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/states": {
+      "post": {
+        "operationId": "states_episodes_states_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response States Episodes States Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "get_public_many: public state of several episodes in one call (unknown ids are skipped)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{episode_id}": {
+      "get": {
+        "operationId": "get_episodes__episode_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Episodes  Episode Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "get_public: state of an episode, no identity",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{episode_id}/advance": {
+      "post": {
+        "operationId": "advance_episodes__episode_id__advance_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvanceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Advance Episodes  Episode Id  Advance Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "advance_episode: move the cursor forward 1 to 20 bars and resolve due guesses (writes)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{episode_id}/bars": {
+      "get": {
+        "operationId": "bars_episodes__episode_id__bars_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Bars Episodes  Episode Id  Bars Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "episode_bars: blind bars up to the cursor (day, rebased OHLC, relative volume)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{episode_id}/predictions": {
+      "get": {
+        "operationId": "predictions_episodes__episode_id__predictions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Predictions Episodes  Episode Id  Predictions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "list_predictions: guesses of an episode (outcome only when resolved)",
+        "tags": [
+          "Learning"
+        ]
+      },
+      "post": {
+        "operationId": "add_prediction_episodes__episode_id__predictions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Add Prediction Episodes  Episode Id  Predictions Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "add_prediction: store a guess at the server's cursor; append-only, idempotent (writes)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{episode_id}/reveal": {
+      "post": {
+        "operationId": "reveal_episodes__episode_id__reveal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Reveal Episodes  Episode Id  Reveal Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "reveal: one-way, idempotent; shows identity and the data trail; voids pending guesses (writes)",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
+    "/episodes/{episode_id}/score": {
+      "get": {
+        "operationId": "score_episodes__episode_id__score_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "permutations",
+            "required": false,
+            "schema": {
+              "default": 5000,
+              "maximum": 20000,
+              "minimum": 100,
+              "title": "Permutations",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Score Episodes  Episode Id  Score Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "episode_score: Brier score, calibration bins, baselines, permutation luck check",
+        "tags": [
+          "Learning"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",
@@ -3358,7 +4049,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/market_data__api__CausalityRequest"
+                "$ref": "#/components/schemas/market_data__api__app__CausalityRequest"
               }
             }
           },
@@ -3921,6 +4612,140 @@
         "summary": "list_instruments: symbols with bar counts and date range",
         "tags": [
           "Reference"
+        ]
+      }
+    },
+    "/learning/summary": {
+      "get": {
+        "operationId": "summary_learning_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "permutations",
+            "required": false,
+            "schema": {
+              "default": 5000,
+              "maximum": 20000,
+              "minimum": 100,
+              "title": "Permutations",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Summary Learning Summary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "learning_summary: score over all episodes; real/made-up split uses revealed episodes only",
+        "tags": [
+          "Learning"
+        ]
+      },
+      "post": {
+        "operationId": "summary_for_learning_summary_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "permutations",
+            "required": false,
+            "schema": {
+              "default": 5000,
+              "maximum": 20000,
+              "minimum": 100,
+              "title": "Permutations",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummaryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Summary For Learning Summary Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "learning_summary for the listed episode ids only (the gateway passes the ids one learner owns)",
+        "tags": [
+          "Learning"
         ]
       }
     },
@@ -5308,6 +6133,10 @@
     {
       "description": "Honest backtests: simulate, metrics, runs with hashes, fill-model comparison, cost sweep, shuffle test, causality check, reproduce. Only persist=true writes.",
       "name": "Backtest"
+    },
+    {
+      "description": "INTERNAL (called by the NestJS gateway): blind episodes, precommitted guesses, scores and the reveal. With INTERNAL_API_TOKEN set every call needs the header X-Internal-Token. Writes: POST /episodes, /advance, /predictions, /reveal.",
+      "name": "Learning"
     },
     {
       "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor adjustment check, key check. Tiingo data are internal use only: keep this API on loopback.",

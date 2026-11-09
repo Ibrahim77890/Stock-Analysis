@@ -1,0 +1,23 @@
+/* MarketLab design tokens: ONE light palette. There is deliberately no dark theme in this sprint. */
+:root {
+  color-scheme: light;
+  --bg: #f6f8fb;
+  --surface: #ffffff;
+  --text: #1b2330;
+  --muted: #4a5568;
+  --border: #7a879b;
+  --accent: #1f5fbf;
+  --accent-text: #ffffff;
+  --up: #14663a;
+  --down: #a12020;
+  --info-bg: #e7f0fc;
+  --info-text: #17325c;
+  --tip-bg: #e6f5ec;
+  --tip-text: #123d27;
+  --careful-bg: #fff3d1;
+  --careful-text: #5c3d00;
+  --focus: #0b57d0;
+  --radius: 10px;
+  --space: 1rem;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}

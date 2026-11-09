@@ -6,7 +6,7 @@ from pathlib import Path
 
 import psycopg
 
-from market_data import config
+from market_data.core import config
 
 
 def _conn() -> psycopg.Connection:
@@ -76,13 +76,13 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
     if args.cmd == "download":
-        from market_data.download import download_universe
-        from market_data.universe import symbols
+        from market_data.ingestion.download import download_universe
+        from market_data.core.universe import symbols
 
         print(download_universe(symbols(args.universe), args.start, args.end, feed=args.feed, force=args.force))
     elif args.cmd == "tiingo-download":
-        from market_data.download_tiingo import EXIT_QUOTA, download_tiingo
-        from market_data.universe import symbols
+        from market_data.ingestion.download_tiingo import EXIT_QUOTA, download_tiingo
+        from market_data.core.universe import symbols
 
         summary = download_tiingo(symbols(args.universe), args.start, args.end,
                                   max_requests=args.max_requests, force=args.force)
@@ -92,24 +92,24 @@ def main(argv: list[str] | None = None) -> int:
             return EXIT_QUOTA
         return 1 if summary["failed"] else 0
     elif args.cmd == "tiingo-load":
-        from market_data.load import load_tiingo_universe
-        from market_data.universe import load_universe
+        from market_data.ingestion.load import load_tiingo_universe
+        from market_data.core.universe import load_universe
 
         with _conn() as conn:
             for r in load_tiingo_universe(conn, load_universe(args.universe)):
                 print(r)
     elif args.cmd == "fred-download":
-        from market_data.macro import download_fred
+        from market_data.ingestion.macro import download_fred
 
         print(download_fred(start=args.start, end=args.end, force=args.force))
     elif args.cmd == "fred-load":
-        from market_data.macro import load_fred
+        from market_data.ingestion.macro import load_fred
 
         with _conn() as conn:
             for r in load_fred(conn):
                 print(r)
     elif args.cmd == "verify":
-        from market_data.manifest import verify_tree
+        from market_data.core.manifest import verify_tree
 
         results = verify_tree(Path(args.root))
         bad = [r for r in results if not r[1]]
@@ -118,26 +118,26 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{len(results) - len(bad)} ok, {len(bad)} failed")
         return 1 if bad else 0
     elif args.cmd == "load":
-        from market_data.load import load_universe_files
-        from market_data.universe import load_universe
+        from market_data.ingestion.load import load_universe_files
+        from market_data.core.universe import load_universe
 
         with _conn() as conn:
             for r in load_universe_files(conn, load_universe(args.universe)):
                 print(r)
     elif args.cmd == "reconcile":
-        from market_data.reconcile import reconcile_universe, write_report
+        from market_data.market.reconcile import reconcile_universe, write_report
 
         with _conn() as conn:
             rep = reconcile_universe(conn, args.symbols, args.a, args.b)
         print(write_report(rep), rep["totals"])
     elif args.cmd == "quality":
-        from market_data.quality import run_quality
+        from market_data.ingestion.quality import run_quality
 
         with _conn() as conn:
             rep = run_quality(conn, source=args.source, threshold=args.threshold)
         print(rep["run_id"], rep["totals_per_rule"], f"{rep['seconds']}s")
     elif args.cmd == "check-keys":
-        from market_data.keys import check_keys
+        from market_data.core.keys import check_keys
 
         rep = check_keys(do_ping=args.ping)
         for name, info in rep["keys"].items():
@@ -155,13 +155,13 @@ def main(argv: list[str] | None = None) -> int:
     elif args.cmd == "export-openapi":
         import json
 
-        from market_data.api import openapi_schema
+        from market_data.api.app import openapi_schema
 
         out = config.DOCS_DIR / "02-domain" / "openapi-market-data.json"
         out.write_text(json.dumps(openapi_schema(), indent=2, sort_keys=True), encoding="utf-8")
         print(out)
     elif args.cmd.startswith("bench-"):
-        from market_data import bench
+        from market_data.bench import benchmark as bench
 
         if args.cmd == "bench-generate":
             print(bench.generate())

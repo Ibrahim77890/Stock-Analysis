@@ -1,6 +1,6 @@
 # Validation worked example (generated 2026-11-08 14:14 UTC)
 
-Produced by `scripts/validation_worked_example.py` from the loaded data; every number is copied from that run. It shows mechanics and caveats and is **not evidence of a profitable strategy**. Sharpe values are annualised; costs are 1 bp commission + 2 bps slippage per fill; prices are split-adjusted; dividends are not in returns; the universe is survivorship-biased. Environment: Windows-11-10.0.26300-SP0, Python 3.14.10. Grid: fast in 3, 5, 10, 20, 30 and slow in 20, 30, 50, 100, 150 with fast < slow = 22 pairs.
+Produced by `scripts/reports/validation_worked_example.py` from the loaded data; every number is copied from that run. It shows mechanics and caveats and is **not evidence of a profitable strategy**. Sharpe values are annualised; costs are 1 bp commission + 2 bps slippage per fill; prices are split-adjusted; dividends are not in returns; the universe is survivorship-biased. Environment: Windows-11-10.0.26300-SP0, Python 3.14.10. Grid: fast in 3, 5, 10, 20, 30 and slow in 20, 30, 50, 100, 150 with fast < slow = 22 pairs.
 
 ## SPY (1366 bars, 2020-07-27 to 2025-12-31)
 
