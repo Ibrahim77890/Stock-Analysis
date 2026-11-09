@@ -685,6 +685,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lab/stocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** eligible_symbols: stocks with at least 3,000 stored trading days */
+        get: operations["stocks_lab_stocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** create_lab_study: open a study with a practice window and a locked vault (writes) */
+        post: operations["create_lab_studies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** list_studies_info: short cards for several study ids (unknown ids are skipped) */
+        post: operations["info_lab_studies_info_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies/{study_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** study_overview: ideas tried and whether the vault is open; never vault dates */
+        get: operations["overview_lab_studies__study_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies/{study_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** run_practice: the rule vs buy and hold on the practice years; a new rule counts as one idea tried (writes) */
+        post: operations["run_lab_studies__study_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies/{study_id}/vault": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** vault_result: the saved result of an opened vault (422 while it is closed) */
+        get: operations["saved_vault_lab_studies__study_id__vault_get"];
+        put?: never;
+        /** open_vault: spend the single vault use on one rule that was run on practice (writes, once) */
+        post: operations["vault_lab_studies__study_id__vault_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/learning/summary": {
         parameters: {
             query?: never;
@@ -1482,6 +1585,19 @@ export interface components {
              */
             seed?: number | null;
         };
+        /** CreateStudyIn */
+        CreateStudyIn: {
+            /** Name */
+            name?: string | null;
+            /** Symbol */
+            symbol: string;
+            /**
+             * Vault Bars
+             * @description trading days locked in the vault
+             * @default 1000
+             */
+            vault_bars: number;
+        };
         /** DownloadRequest */
         DownloadRequest: {
             /**
@@ -1640,6 +1756,11 @@ export interface components {
              * @default SPY
              */
             symbol: string;
+        };
+        /** InfoIn */
+        InfoIn: {
+            /** Study Ids */
+            study_ids: number[];
         };
         /** MetricsRequest */
         MetricsRequest: {
@@ -1835,6 +1956,36 @@ export interface components {
              * @default 0.4
              */
             threshold: number;
+        };
+        /** RunIn */
+        RunIn: {
+            /**
+             * Cost Bps
+             * @description cost per trade in basis points (0.01 percent)
+             * @default 2
+             */
+            cost_bps: number;
+            /**
+             * Fast
+             * @description short average, in trading days
+             */
+            fast: number;
+            /**
+             * N Paths
+             * @description mixed-up histories for the luck check
+             * @default 100
+             */
+            n_paths: number;
+            /**
+             * Seed
+             * @default 1
+             */
+            seed: number;
+            /**
+             * Slow
+             * @description long average, in trading days (longer than fast)
+             */
+            slow: number;
         };
         /** RunRequest */
         RunRequest: {
@@ -2726,6 +2877,18 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VaultIn */
+        VaultIn: {
+            /**
+             * Cost Bps
+             * @default 2
+             */
+            cost_bps: number;
+            /** Fast */
+            fast: number;
+            /** Slow */
+            slow: number;
         };
         /** WalkIn */
         WalkIn: {
@@ -4266,6 +4429,261 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     }[];
+                };
+            };
+        };
+    };
+    stocks_lab_stocks_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_lab_studies_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStudyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    info_lab_studies_info_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InfoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_lab_studies__study_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path: {
+                study_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_lab_studies__study_id__runs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path: {
+                study_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_vault_lab_studies__study_id__vault_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path: {
+                study_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    vault_lab_studies__study_id__vault_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path: {
+                study_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VaultIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

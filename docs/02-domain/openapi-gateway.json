@@ -105,6 +105,36 @@
         ],
         "type": "object"
       },
+      "CostRowDto": {
+        "properties": {
+          "buy_hold_total_return": {
+            "nullable": true,
+            "type": "number"
+          },
+          "cost_bps": {
+            "type": "number"
+          },
+          "sharpe": {
+            "nullable": true,
+            "type": "number"
+          },
+          "total_return": {
+            "nullable": true,
+            "type": "number"
+          },
+          "trades": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "cost_bps",
+          "total_return",
+          "sharpe",
+          "trades",
+          "buy_hold_total_return"
+        ],
+        "type": "object"
+      },
       "CountsDto": {
         "properties": {
           "pending": {
@@ -158,6 +188,24 @@
             "type": "number"
           }
         },
+        "type": "object"
+      },
+      "CreateStudyDto": {
+        "properties": {
+          "name": {
+            "description": "optional label, up to 80 characters",
+            "example": "My first idea",
+            "type": "string"
+          },
+          "symbol": {
+            "description": "a stock from GET /lab/stocks",
+            "example": "AAPL",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
         "type": "object"
       },
       "DataTrailDto": {
@@ -353,6 +401,37 @@
         ],
         "type": "object"
       },
+      "GrowthDto": {
+        "properties": {
+          "buy_hold": {
+            "description": "growth of 100 for buy and hold",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "dates": {
+            "description": "at most 300 points; first and last day always kept",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rule": {
+            "description": "growth of 100 for the rule",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "dates",
+          "rule",
+          "buy_hold"
+        ],
+        "type": "object"
+      },
       "HealthDto": {
         "properties": {
           "database": {
@@ -436,6 +515,186 @@
         "required": [
           "n",
           "brier"
+        ],
+        "type": "object"
+      },
+      "LabLuckDto": {
+        "properties": {
+          "fraction_as_good": {
+            "description": "share of mixed-up histories that did as well or better",
+            "nullable": true,
+            "type": "number"
+          },
+          "median": {
+            "nullable": true,
+            "type": "number"
+          },
+          "method": {
+            "type": "string"
+          },
+          "n_paths": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          },
+          "p5": {
+            "nullable": true,
+            "type": "number"
+          },
+          "p95": {
+            "nullable": true,
+            "type": "number"
+          },
+          "percentile_rank": {
+            "nullable": true,
+            "type": "number"
+          },
+          "real_total_return": {
+            "nullable": true,
+            "type": "number"
+          },
+          "seed": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "method",
+          "n_paths",
+          "seed",
+          "real_total_return",
+          "percentile_rank",
+          "fraction_as_good",
+          "median",
+          "p5",
+          "p95",
+          "note"
+        ],
+        "type": "object"
+      },
+      "LabMetricsDto": {
+        "properties": {
+          "cagr": {
+            "description": "per year, compounded",
+            "nullable": true,
+            "type": "number"
+          },
+          "exposure": {
+            "description": "share of days invested",
+            "nullable": true,
+            "type": "number"
+          },
+          "max_drawdown": {
+            "description": "largest fall from a peak, negative",
+            "nullable": true,
+            "type": "number"
+          },
+          "sharpe": {
+            "nullable": true,
+            "type": "number"
+          },
+          "total_return": {
+            "description": "0.25 means up 25%",
+            "nullable": true,
+            "type": "number"
+          },
+          "trades": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "total_return",
+          "cagr",
+          "max_drawdown",
+          "exposure",
+          "trades",
+          "sharpe"
+        ],
+        "type": "object"
+      },
+      "LabRunDto": {
+        "properties": {
+          "buy_hold": {
+            "$ref": "#/components/schemas/LabMetricsDto"
+          },
+          "config_hash": {
+            "type": "string"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostRowDto"
+            },
+            "type": "array"
+          },
+          "counted": {
+            "description": "false when the same rule and cost had already been run: it is recomputed, not counted again",
+            "type": "boolean"
+          },
+          "growth": {
+            "$ref": "#/components/schemas/GrowthDto"
+          },
+          "luck": {
+            "$ref": "#/components/schemas/LabLuckDto"
+          },
+          "overfitting_meter": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OverfitMeterDto"
+              }
+            ],
+            "description": "present from the second idea tried"
+          },
+          "params": {
+            "$ref": "#/components/schemas/RunParamsDto"
+          },
+          "practice_bars": {
+            "type": "number"
+          },
+          "practice_years": {
+            "type": "number"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/LabMetricsDto"
+          },
+          "study_id": {
+            "type": "number"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "trial_count": {
+            "description": "ideas tried so far in this study",
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "yearly": {
+            "items": {
+              "$ref": "#/components/schemas/YearlyDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "study_id",
+          "symbol",
+          "counted",
+          "trial_count",
+          "params",
+          "practice_years",
+          "practice_bars",
+          "rule",
+          "buy_hold",
+          "growth",
+          "yearly",
+          "costs",
+          "luck",
+          "warnings",
+          "config_hash"
         ],
         "type": "object"
       },
@@ -559,6 +818,36 @@
           "warnings",
           "baselines",
           "luck"
+        ],
+        "type": "object"
+      },
+      "OverfitMeterDto": {
+        "properties": {
+          "best_sharpe": {
+            "nullable": true,
+            "type": "number"
+          },
+          "dsr": {
+            "nullable": true,
+            "type": "number"
+          },
+          "expected_best_sharpe_by_luck": {
+            "nullable": true,
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          },
+          "trials": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "trials",
+          "best_sharpe",
+          "expected_best_sharpe_by_luck",
+          "dsr",
+          "note"
         ],
         "type": "object"
       },
@@ -765,6 +1054,77 @@
         ],
         "type": "object"
       },
+      "RunDto": {
+        "properties": {
+          "cost_bps": {
+            "default": 2,
+            "description": "cost per trade in basis points (1 basis point = 0.01%)",
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "fast": {
+            "description": "short average, in trading days",
+            "example": 20,
+            "maximum": 299,
+            "minimum": 2,
+            "type": "number"
+          },
+          "n_paths": {
+            "default": 100,
+            "description": "how many mixed-up histories the luck check uses",
+            "maximum": 200,
+            "minimum": 10,
+            "type": "number"
+          },
+          "seed": {
+            "default": 1,
+            "description": "the same seed gives the same luck check",
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "number"
+          },
+          "slow": {
+            "description": "long average, in trading days; longer than the short one",
+            "example": 100,
+            "maximum": 300,
+            "minimum": 3,
+            "type": "number"
+          }
+        },
+        "required": [
+          "fast",
+          "slow"
+        ],
+        "type": "object"
+      },
+      "RunParamsDto": {
+        "properties": {
+          "cost_bps": {
+            "type": "number"
+          },
+          "fast": {
+            "type": "number"
+          },
+          "n_paths": {
+            "type": "number"
+          },
+          "seed": {
+            "type": "number"
+          },
+          "slow": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "fast",
+          "slow",
+          "cost_bps",
+          "seed",
+          "n_paths"
+        ],
+        "type": "object"
+      },
       "ScoreDto": {
         "properties": {
           "baselines": {
@@ -831,6 +1191,180 @@
           "enough",
           "min_enough",
           "warnings"
+        ],
+        "type": "object"
+      },
+      "StockDto": {
+        "properties": {
+          "bars": {
+            "type": "number"
+          },
+          "first_date": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sector": {
+            "nullable": true,
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "years": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "sector",
+          "first_date",
+          "bars",
+          "years"
+        ],
+        "type": "object"
+      },
+      "StocksDto": {
+        "properties": {
+          "stocks": {
+            "items": {
+              "$ref": "#/components/schemas/StockDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "stocks"
+        ],
+        "type": "object"
+      },
+      "StudyCreatedDto": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "practice_bars": {
+            "type": "number"
+          },
+          "practice_years": {
+            "type": "number"
+          },
+          "study_id": {
+            "type": "number"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "vault_bars": {
+            "type": "number"
+          },
+          "vault_open": {
+            "type": "boolean"
+          },
+          "vault_years": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "study_id",
+          "symbol",
+          "name",
+          "practice_bars",
+          "practice_years",
+          "vault_bars",
+          "vault_years",
+          "vault_open"
+        ],
+        "type": "object"
+      },
+      "StudyListItemDto": {
+        "properties": {
+          "created_at": {
+            "type": "string"
+          },
+          "ideas_tried": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "practice_years": {
+            "type": "number"
+          },
+          "study_id": {
+            "type": "number"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "vault_open": {
+            "type": "boolean"
+          },
+          "vault_years": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "study_id",
+          "symbol",
+          "name",
+          "practice_years",
+          "vault_years",
+          "vault_open",
+          "ideas_tried",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "StudyOverviewDto": {
+        "properties": {
+          "ideas_tried": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "practice_bars": {
+            "type": "number"
+          },
+          "practice_years": {
+            "type": "number"
+          },
+          "study_id": {
+            "type": "number"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "trials": {
+            "items": {
+              "$ref": "#/components/schemas/TrialDto"
+            },
+            "type": "array"
+          },
+          "vault_bars": {
+            "type": "number"
+          },
+          "vault_open": {
+            "type": "boolean"
+          },
+          "vault_years": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "study_id",
+          "symbol",
+          "name",
+          "practice_years",
+          "practice_bars",
+          "vault_years",
+          "vault_bars",
+          "vault_open",
+          "ideas_tried",
+          "trials"
         ],
         "type": "object"
       },
@@ -919,6 +1453,44 @@
         ],
         "type": "object"
       },
+      "TrialDto": {
+        "properties": {
+          "cost_bps": {
+            "type": "number"
+          },
+          "fast": {
+            "type": "number"
+          },
+          "order": {
+            "type": "number"
+          },
+          "sharpe": {
+            "nullable": true,
+            "type": "number"
+          },
+          "slow": {
+            "type": "number"
+          },
+          "total_return": {
+            "nullable": true,
+            "type": "number"
+          },
+          "trades": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "required": [
+          "order",
+          "fast",
+          "slow",
+          "cost_bps",
+          "total_return",
+          "sharpe",
+          "trades"
+        ],
+        "type": "object"
+      },
       "UpstreamEntryDto": {
         "properties": {
           "duration_ms": {
@@ -942,6 +1514,158 @@
           "route",
           "status",
           "duration_ms"
+        ],
+        "type": "object"
+      },
+      "VaultDto": {
+        "properties": {
+          "confirm": {
+            "description": "must be true: opening the vault cannot be undone",
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "cost_bps": {
+            "description": "the same cost you used when you ran this rule on the practice years",
+            "maximum": 50,
+            "minimum": 0,
+            "type": "number"
+          },
+          "fast": {
+            "maximum": 299,
+            "minimum": 2,
+            "type": "number"
+          },
+          "slow": {
+            "maximum": 300,
+            "minimum": 3,
+            "type": "number"
+          }
+        },
+        "required": [
+          "fast",
+          "slow",
+          "cost_bps",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "VaultParamsDto": {
+        "properties": {
+          "cost_bps": {
+            "type": "number"
+          },
+          "fast": {
+            "type": "number"
+          },
+          "slow": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "fast",
+          "slow",
+          "cost_bps"
+        ],
+        "type": "object"
+      },
+      "VaultPracticeDto": {
+        "properties": {
+          "buy_hold": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabMetricsDto"
+              }
+            ],
+            "description": "buy and hold on the practice years"
+          },
+          "rule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LabMetricsDto"
+              }
+            ],
+            "description": "the same rule on the practice years"
+          },
+          "years": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "rule",
+          "buy_hold",
+          "years"
+        ],
+        "type": "object"
+      },
+      "VaultResultDto": {
+        "properties": {
+          "buy_hold": {
+            "$ref": "#/components/schemas/LabMetricsDto"
+          },
+          "growth": {
+            "$ref": "#/components/schemas/GrowthDto"
+          },
+          "ideas_tried": {
+            "description": "ideas tried in this study when the vault was opened",
+            "type": "number"
+          },
+          "params": {
+            "$ref": "#/components/schemas/VaultParamsDto"
+          },
+          "practice": {
+            "$ref": "#/components/schemas/VaultPracticeDto"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/LabMetricsDto"
+          },
+          "study_id": {
+            "type": "number"
+          },
+          "vault_bars": {
+            "type": "number"
+          },
+          "vault_years": {
+            "type": "number"
+          },
+          "yearly": {
+            "items": {
+              "$ref": "#/components/schemas/YearlyDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "study_id",
+          "params",
+          "rule",
+          "buy_hold",
+          "growth",
+          "yearly",
+          "vault_years",
+          "vault_bars",
+          "practice",
+          "ideas_tried"
+        ],
+        "type": "object"
+      },
+      "YearlyDto": {
+        "properties": {
+          "buy_hold": {
+            "type": "number"
+          },
+          "rule": {
+            "type": "number"
+          },
+          "year": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "year",
+          "rule",
+          "buy_hold"
         ],
         "type": "object"
       }
@@ -1454,6 +2178,260 @@
         "summary": "Is the front desk running? And its database and the number service?",
         "tags": [
           "System"
+        ]
+      }
+    },
+    "/lab/stocks": {
+      "get": {
+        "operationId": "LabController_stocks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StocksDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Stocks you can study (at least 12 years of daily prices)",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies": {
+      "get": {
+        "operationId": "LabController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StudyListItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My studies, newest first",
+        "tags": [
+          "Lab"
+        ]
+      },
+      "post": {
+        "operationId": "LabController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyCreatedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Start a study on one stock. Part of its history is locked in a vault.",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies/{id}": {
+      "get": {
+        "operationId": "LabController_overview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyOverviewDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One of my studies: ideas tried and whether the vault is open",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies/{id}/runs": {
+      "post": {
+        "operationId": "LabController_run",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabRunDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Try a rule on the practice years. A new rule counts as one idea tried.",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies/{id}/vault": {
+      "get": {
+        "operationId": "LabController_savedVault",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The saved result of a vault that was already opened",
+        "tags": [
+          "Lab"
+        ]
+      },
+      "post": {
+        "operationId": "LabController_vault",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VaultDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VaultResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Open the vault with one rule you already tried. It can be done only once.",
+        "tags": [
+          "Lab"
         ]
       }
     },

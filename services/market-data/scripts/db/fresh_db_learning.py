@@ -2,7 +2,7 @@
 then check the learning loop gives the same fingerprint as the real database and that the learning tests pass on it.
 
 Usage (from services/market-data):  python scripts/db/fresh_db_learning.py [--keep]
-Creates database `marketlab_fresh_learning`; migrates (0001 to 0011), verifies and loads Alpaca, Tiingo and FRED, runs the
+Creates database `marketlab_fresh_learning`; migrates (0001 to 0012), verifies and loads Alpaca, Tiingo and FRED, runs the
 fingerprint on the fresh and on the real database and compares them, then runs tests/learning with the fresh database as the
 'real' one. The gateway and web steps are listed in sprints/06_current/completed/06_13.md.
 """
@@ -47,7 +47,7 @@ def main() -> int:
 
     run(fresh, "-m", "alembic", "upgrade", "head")
     heads = run(fresh, "-m", "alembic", "heads").stdout
-    assert "0011" in heads, heads
+    assert "0012" in heads, heads
     for cmd in (["verify"], ["load"], ["tiingo-load"], ["fred-load"]):
         run(fresh, "-m", "market_data.cli", *cmd)
     fp_fresh = json.loads(run(fresh, "scripts/reports/learning_fingerprint.py").stdout)

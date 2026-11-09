@@ -6,6 +6,8 @@ import { AuthService, RateLimiter } from "./auth/auth.service";
 import { APP_CONFIG, AppConfig } from "./config/app-config";
 import { DbService } from "./db/db.service";
 import { GlossaryController, GlossaryService } from "./glossary/glossary.controller";
+import { LabController } from "./lab/lab.controller";
+import { LabLimiters, LabService } from "./lab/lab.service";
 import { LearningController } from "./learning/learning.controller";
 import { LearningService } from "./learning/learning.service";
 import { PythonClient } from "./python/python-client";
@@ -18,11 +20,12 @@ export class AppModule implements NestModule {
     return {
       module: AppModule,
       imports: [JwtModule.register({ secret: cfg.jwtSecret, signOptions: { expiresIn: "8h", algorithm: "HS256" } })],
-      controllers: [AuthController, LearningController, GlossaryController, SystemController],
+      controllers: [AuthController, LearningController, LabController, GlossaryController, SystemController],
       providers: [
         { provide: APP_CONFIG, useValue: cfg },
         { provide: RateLimiter, useValue: new RateLimiter(cfg.loginLimit) },
-        DbService, TraceService, PythonClient, AuthService, AuthGuard, LearningService, GlossaryService,
+        { provide: LabLimiters, useValue: new LabLimiters(cfg.labRunsPerMinute) },
+        DbService, TraceService, PythonClient, AuthService, AuthGuard, LearningService, LabService, GlossaryService,
       ],
     };
   }

@@ -1,23 +1,49 @@
-/* MarketLab design tokens: ONE light palette. There is deliberately no dark theme in this sprint. */
+/* MarketLab design tokens: ONE light palette. There is deliberately no dark theme.
+   Contrast is checked by test/foundation.test.tsx: 4.5:1 for text, 3:1 for control borders and focus rings. */
 :root {
   color-scheme: light;
-  --bg: #f6f8fb;
+
+  /* surfaces */
+  --bg: #f4f6fb;
   --surface: #ffffff;
-  --text: #1b2330;
-  --muted: #4a5568;
+  --surface-2: #eef1f8;
+  --line: #dde3ee;
+
+  /* text */
+  --text: #172033;
+  --muted: #515c75;
+
+  /* control borders must reach 3:1 against the surface */
   --border: #7a879b;
-  --accent: #1f5fbf;
+
+  /* brand */
+  --accent: #3347c9;
+  --accent-strong: #2736a3;
   --accent-text: #ffffff;
+  --accent-soft: #e8ecfd;
+  --teal: #0b6b62;
+  --teal-soft: #dff4ef;
+
+  /* meaning */
   --up: #14663a;
   --down: #a12020;
-  --info-bg: #e7f0fc;
-  --info-text: #17325c;
-  --tip-bg: #e6f5ec;
-  --tip-text: #123d27;
-  --careful-bg: #fff3d1;
+  --info-bg: #e8eefc;
+  --info-text: #1b2d6b;
+  --tip-bg: #e1f4ec;
+  --tip-text: #0f4a35;
+  --careful-bg: #fff2cf;
   --careful-text: #5c3d00;
-  --focus: #0b57d0;
-  --radius: 10px;
+  --focus: #2a3dbf;
+
+  /* chart colours (series that need to be told apart without relying on colour alone: lines also use dashes) */
+  --series-rule: #3347c9;
+  --series-hold: #6b7488;
+
+  /* shape and rhythm */
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow-sm: 0 1px 2px rgba(23, 32, 51, 0.06);
+  --shadow: 0 1px 2px rgba(23, 32, 51, 0.05), 0 8px 24px rgba(23, 32, 51, 0.07);
   --space: 1rem;
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font: "Inter Variable", Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }

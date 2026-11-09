@@ -596,6 +596,42 @@
         "title": "CreateEpisodeIn",
         "type": "object"
       },
+      "CreateStudyIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "symbol": {
+            "maxLength": 12,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9.\\-]+$",
+            "title": "Symbol",
+            "type": "string"
+          },
+          "vault_bars": {
+            "default": 1000,
+            "description": "trading days locked in the vault",
+            "maximum": 1500.0,
+            "minimum": 120.0,
+            "title": "Vault Bars",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "title": "CreateStudyIn",
+        "type": "object"
+      },
       "DownloadRequest": {
         "properties": {
           "end": {
@@ -828,6 +864,23 @@
           "study_id"
         ],
         "title": "HoldoutIn",
+        "type": "object"
+      },
+      "InfoIn": {
+        "properties": {
+          "study_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 200,
+            "title": "Study Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "study_ids"
+        ],
+        "title": "InfoIn",
         "type": "object"
       },
       "MetricsRequest": {
@@ -1097,6 +1150,53 @@
           "bars"
         ],
         "title": "RuleCheckRequest",
+        "type": "object"
+      },
+      "RunIn": {
+        "properties": {
+          "cost_bps": {
+            "default": 2.0,
+            "description": "cost per trade in basis points (0.01 percent)",
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Cost Bps",
+            "type": "number"
+          },
+          "fast": {
+            "description": "short average, in trading days",
+            "maximum": 299.0,
+            "minimum": 2.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "n_paths": {
+            "default": 100,
+            "description": "mixed-up histories for the luck check",
+            "maximum": 200.0,
+            "minimum": 10.0,
+            "title": "N Paths",
+            "type": "integer"
+          },
+          "seed": {
+            "default": 1,
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          },
+          "slow": {
+            "description": "long average, in trading days (longer than fast)",
+            "maximum": 300.0,
+            "minimum": 3.0,
+            "title": "Slow",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fast",
+          "slow"
+        ],
+        "title": "RunIn",
         "type": "object"
       },
       "RunRequest": {
@@ -2335,6 +2435,35 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VaultIn": {
+        "properties": {
+          "cost_bps": {
+            "default": 2.0,
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Cost Bps",
+            "type": "number"
+          },
+          "fast": {
+            "maximum": 299.0,
+            "minimum": 2.0,
+            "title": "Fast",
+            "type": "integer"
+          },
+          "slow": {
+            "maximum": 300.0,
+            "minimum": 3.0,
+            "title": "Slow",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fast",
+          "slow"
+        ],
+        "title": "VaultIn",
         "type": "object"
       },
       "WalkIn": {
@@ -4615,6 +4744,437 @@
         ]
       }
     },
+    "/lab/stocks": {
+      "get": {
+        "operationId": "stocks_lab_stocks_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Stocks Lab Stocks Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "eligible_symbols: stocks with at least 3,000 stored trading days",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies": {
+      "post": {
+        "operationId": "create_lab_studies_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStudyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Lab Studies Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "create_lab_study: open a study with a practice window and a locked vault (writes)",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies/info": {
+      "post": {
+        "operationId": "info_lab_studies_info_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Info Lab Studies Info Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "list_studies_info: short cards for several study ids (unknown ids are skipped)",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies/{study_id}": {
+      "get": {
+        "operationId": "overview_lab_studies__study_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "study_id",
+            "required": true,
+            "schema": {
+              "title": "Study Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Overview Lab Studies  Study Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "study_overview: ideas tried and whether the vault is open; never vault dates",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies/{study_id}/runs": {
+      "post": {
+        "operationId": "run_lab_studies__study_id__runs_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "study_id",
+            "required": true,
+            "schema": {
+              "title": "Study Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Run Lab Studies  Study Id  Runs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "run_practice: the rule vs buy and hold on the practice years; a new rule counts as one idea tried (writes)",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
+    "/lab/studies/{study_id}/vault": {
+      "get": {
+        "operationId": "saved_vault_lab_studies__study_id__vault_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "study_id",
+            "required": true,
+            "schema": {
+              "title": "Study Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Saved Vault Lab Studies  Study Id  Vault Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "vault_result: the saved result of an opened vault (422 while it is closed)",
+        "tags": [
+          "Lab"
+        ]
+      },
+      "post": {
+        "operationId": "vault_lab_studies__study_id__vault_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "study_id",
+            "required": true,
+            "schema": {
+              "title": "Study Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VaultIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Vault Lab Studies  Study Id  Vault Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "open_vault: spend the single vault use on one rule that was run on practice (writes, once)",
+        "tags": [
+          "Lab"
+        ]
+      }
+    },
     "/learning/summary": {
       "get": {
         "operationId": "summary_learning_summary_get",
@@ -6137,6 +6697,10 @@
     {
       "description": "INTERNAL (called by the NestJS gateway): blind episodes, precommitted guesses, scores and the reveal. With INTERNAL_API_TOKEN set every call needs the header X-Internal-Token. Writes: POST /episodes, /advance, /predictions, /reveal.",
       "name": "Learning"
+    },
+    {
+      "description": "INTERNAL (called by the NestJS gateway): Strategy Lab studies. Test one moving-average rule on the practice years of a stock, then open the vault (the most recent years) exactly once. With INTERNAL_API_TOKEN set every call needs the header X-Internal-Token. Writes: POST /lab/studies, /lab/studies/{id}/runs, /lab/studies/{id}/vault.",
+      "name": "Lab"
     },
     {
       "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor adjustment check, key check. Tiingo data are internal use only: keep this API on loopback.",

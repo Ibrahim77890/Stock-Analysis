@@ -9,9 +9,20 @@ export const home = {
   careful: "MarketLab is for learning only. It does not tell you what to buy or sell. A good score on a few guesses can be luck.",
   startSignedOut: "Create an account to start. It stays on this computer.",
   startSignedIn: "Start learning",
+  eyebrow: "A safe place to practise",
+  signUpButton: "Create an account",
+  stepsTitle: "How a round works",
+  pathsTitle: "Two ways to learn",
+  paths: [
+    { head: "Learn: guess and get scored", body: "Look at hidden charts. Say how sure you are. See how honest your guesses really are.", cta: "Start learning" },
+    { head: "Lab: test a rule, then doubt it", body: "Try a simple rule on old prices. Compare it with just holding the stock. Then open a locked vault of newer years, once.", cta: "Open the Lab" },
+  ],
+  points: ["Everything stays on this computer.", "No real money and no advice.", "Every hard word is explained on the spot."],
 };
 
 export const account = {
+  asideTitle: "Learn at your own pace",
+  asidePoints: ["Your account stays on this computer.", "Nothing here uses real money.", "You can leave and come back any time."],
   registerTitle: "Create your account",
   signInTitle: "Sign in",
   passwordRules: "Your password needs 10 or more characters. A few random words is fine.",

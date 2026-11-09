@@ -5,7 +5,8 @@ import { API_BASE } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { hood } from "../copy/hood";
 import { score as copy } from "../copy/score";
-import { Callout, Card, EmptyState, ErrorMessage, Loading, num } from "../components/ui";
+import { Icon } from "../components/Icon";
+import { Callout, Card, EmptyState, ErrorMessage, Loading, num, PageHead } from "../components/ui";
 import { ArchitectureDiagram, RequestTable, StatusLights, SystemMap, WhatTheServerKnows } from "../hood/HoodParts";
 import { CalibrationPlot, DataTrail, LuckPanel, RevealBox, ScoreCard } from "../score/ScoreParts";
 
@@ -36,7 +37,7 @@ export function ScorePage() {
   const revealed = ep.status === "revealed" || rev !== null;
   return (
     <>
-      <h1>{copy.title}</h1>
+      <PageHead title={copy.title} eyebrow={<><Icon name="target" />Score</>} />
       <Card><ScoreCard s={s} /></Card>
       {s.bins.some((b) => b.n > 0) && <Card><CalibrationPlot bins={s.bins} /></Card>}
       {s.enough && <Card><LuckPanel s={s} /></Card>}
@@ -63,19 +64,19 @@ export function ProgressPage() {
   const revealedAny = p.by_kind.real.n + p.by_kind.synthetic.n > 0;
   return (
     <>
-      <h1>{copy.progressTitle}</h1>
+      <PageHead title={copy.progressTitle} eyebrow={<><Icon name="chart" />Across all episodes</>} />
       {p.overall.n === 0 ? <EmptyState>{copy.progressEmpty}</EmptyState> : (
         <>
           <Card><ScoreCard s={{ ...p.overall, bins: [], murphy: {}, counts: undefined }} /></Card>
           <Card title="Real and made-up charts">
             {revealedAny ? (
-              <table aria-label="Real and made-up charts">
+              <div className="table-wrap"><table aria-label="Real and made-up charts">
                 <thead><tr><th>Kind</th><th>Answered guesses</th><th>Score</th></tr></thead>
                 <tbody>
                   <tr><td>Real charts</td><td>{p.by_kind.real.n}</td><td>{num(p.by_kind.real.brier)}</td></tr>
                   <tr><td>Made-up charts</td><td>{p.by_kind.synthetic.n}</td><td>{num(p.by_kind.synthetic.brier)}</td></tr>
                 </tbody>
-              </table>
+              </table></div>
             ) : <EmptyState>Reveal an episode to see this split.</EmptyState>}
             <p className="muted">{copy.madeUpNote}</p>
           </Card>
@@ -107,8 +108,7 @@ export function UnderTheHood() {
 
   return (
     <>
-      <h1>{hood.title}</h1>
-      <p>{hood.intro}</p>
+      <PageHead title={hood.title} intro={hood.intro} eyebrow={<><Icon name="layers" />Behind the screens</>} />
       <Card title="The four parts"><ArchitectureDiagram /></Card>
       <Card title={hood.statusTitle}>
         {error ? <ErrorMessage>{error}</ErrorMessage> : system ? <StatusLights system={system} /> : <Loading />}

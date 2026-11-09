@@ -1,26 +1,355 @@
 [
-  {"slug": "close", "term": "close", "plain_definition": "The price at the end of a trading day. Each candle has one close. It is the price most people look at.", "example": "If the close on day 10 is 104 and on day 11 is 106, the price went up.", "related": ["open", "candle"]},
-  {"slug": "open", "term": "open", "plain_definition": "The price at the start of a trading day.", "example": "A candle that opens at 100 and closes at 103 is an up day.", "related": ["close", "candle"]},
-  {"slug": "high-and-low", "term": "high and low", "plain_definition": "The highest and lowest prices reached during one day. They are the thin lines above and below a candle.", "example": "High 108 and low 99 means the price moved between 99 and 108 that day.", "related": ["candle"]},
-  {"slug": "candle", "term": "candle", "plain_definition": "One box on the chart that shows one day. It shows where the price started, where it ended, and how far it went up and down in between.", "example": "A tall candle means a day with a big move.", "related": ["open", "close", "high-and-low"]},
-  {"slug": "day", "term": "day", "plain_definition": "One trading day, counted from 1. We show 'Day 87' instead of a real date, so you cannot guess the year.", "example": "Day 60 is the day you can see today. Day 61 is tomorrow.", "related": ["blind-episode", "horizon"]},
-  {"slug": "horizon", "term": "horizon", "plain_definition": "How many days ahead your guess looks. With a horizon of 5, you guess if the price in 5 days will be higher than today.", "example": "On day 60, a guess with horizon 5 is answered on day 65.", "related": ["guess", "day"]},
-  {"slug": "probability", "term": "probability", "plain_definition": "How likely something is, from 0% (never) to 100% (always). If you say 70% ten times, you should be right about seven times.", "example": "70% means: I am fairly sure, but not certain.", "related": ["guess", "calibration"]},
-  {"slug": "guess", "term": "guess", "plain_definition": "Your answer to one question: will the price be higher in a few days? You also say how sure you are. You cannot change a guess after you send it.", "example": "I am 60% sure the price will be higher in 5 days.", "related": ["probability", "horizon", "brier-score"]},
-  {"slug": "brier-score", "term": "Brier score", "plain_definition": "A score for guesses made with percentages. Lower is better and zero is perfect. Saying 50% every time scores 0.25, so a score below 0.25 beats a coin flip.", "example": "A score of 0.23 is a little better than guessing. A score of 0.30 is worse.", "related": ["coin-flip", "sample-size", "calibration"]},
-  {"slug": "coin-flip", "term": "coin flip", "plain_definition": "Saying 50% every time. It always scores 0.25. This is the line to beat before you can say you did better than guessing.", "example": "If your score is 0.27, a coin flip would have done better.", "related": ["brier-score"]},
-  {"slug": "calibration", "term": "calibration", "plain_definition": "Calibration asks: when you said 70%, did it happen about 7 times out of 10? Good calibration means your confidence matches how often you are right.", "example": "Dots on the diagonal line of the plot mean you were well calibrated.", "related": ["overconfidence", "probability", "sample-size"]},
-  {"slug": "base-rate", "term": "base rate", "plain_definition": "How often something happens in general. If prices rise on 53 of 100 days, the base rate for 'up' is 53%. Start your thinking there.", "example": "With a base rate of 53%, saying 50% is already close to the truth.", "related": ["probability"]},
-  {"slug": "luck", "term": "luck", "plain_definition": "A good score can happen by chance. The luck check mixes up the answers many times and counts how often random answers score as well as you did.", "example": "If random answers match your score 4 times in 10, your score may be luck.", "related": ["sample-size", "brier-score"]},
-  {"slug": "blind-episode", "term": "blind episode", "plain_definition": "A stretch of price history with the name, the dates and the price level hidden. You only see 'Day 1, Day 2, ...', so you cannot rely on memory.", "example": "You do not know if it is a famous year or a made-up chart.", "related": ["reveal", "made-up-series", "hindsight-bias"]},
-  {"slug": "reveal", "term": "reveal", "plain_definition": "The moment you find out what the episode really was. It ends the episode. Guesses that are still waiting will not be counted.", "example": "After the reveal you see the stock name and the real dates.", "related": ["blind-episode", "data-trail"]},
-  {"slug": "made-up-series", "term": "made-up series", "plain_definition": "A price chart made by a random-number program. It looks real, but no one can predict it. It shows how easy it is to see patterns in noise.", "example": "If you do well on made-up charts, it was luck.", "related": ["blind-episode", "luck"]},
-  {"slug": "sample-size", "term": "sample size", "plain_definition": "How many answers a score is based on. A score from 10 guesses can change a lot. We wait for 30 answers before saying anything.", "example": "Ten coin flips can give 8 heads. A thousand almost never do.", "related": ["brier-score", "luck"]},
-  {"slug": "overconfidence", "term": "overconfidence", "plain_definition": "Feeling more sure than you should. If you say 90% but are right only 6 times out of 10, you are overconfident.", "example": "Many people say 90% when they are right about 70% of the time.", "related": ["calibration"]},
-  {"slug": "hindsight-bias", "term": "hindsight bias", "plain_definition": "The feeling, after you know what happened, that it was easy to see coming. Blind episodes avoid this by hiding the outcome.", "example": "After a crash, people say 'the signs were clear'. Before it, they were not.", "related": ["blind-episode"]},
-  {"slug": "data-trail", "term": "data trail", "plain_definition": "Where the numbers came from: who supplied them, when they were saved, and how they were adjusted. We show it after the reveal.", "example": "Prices were adjusted for splits as of the last day you saw.", "related": ["reveal", "survivorship-bias"]},
-  {"slug": "relative-volume", "term": "relative volume", "plain_definition": "How busy trading was compared with the first days you saw. A value of 1 means as busy as at the start. A value of 2 means twice as busy.", "example": "Relative volume 0.5 is a quiet day.", "related": ["day"]},
-  {"slug": "rebased-price", "term": "price starts at 100", "plain_definition": "In a blind chart the first price is always shown as 100. Only the changes matter. A price of 110 means 10% higher than at the start.", "example": "Price 95 means 5% lower than the first day.", "related": ["blind-episode"]},
-  {"slug": "survivorship-bias", "term": "survivorship bias", "plain_definition": "Looking only at companies that still exist today. The ones that failed are missing, so results can look better than they really were.", "example": "A list of today's big stocks leaves out the ones that went bust.", "related": ["data-trail"]},
-  {"slug": "overlapping-guesses", "term": "overlapping guesses", "plain_definition": "Guesses that look at the same days. A 10-day guess made each day shares most of its days with the next one, so they are not fully independent.", "example": "Ten guesses in a row may count as fewer than ten pieces of evidence.", "related": ["horizon", "sample-size"]}
+  {
+    "slug": "close",
+    "term": "close",
+    "plain_definition": "The price at the end of a trading day. Each candle has one close. It is the price most people look at.",
+    "example": "If the close on day 10 is 104 and on day 11 is 106, the price went up.",
+    "related": [
+      "open",
+      "candle"
+    ]
+  },
+  {
+    "slug": "open",
+    "term": "open",
+    "plain_definition": "The price at the start of a trading day.",
+    "example": "A candle that opens at 100 and closes at 103 is an up day.",
+    "related": [
+      "close",
+      "candle"
+    ]
+  },
+  {
+    "slug": "high-and-low",
+    "term": "high and low",
+    "plain_definition": "The highest and lowest prices reached during one day. They are the thin lines above and below a candle.",
+    "example": "High 108 and low 99 means the price moved between 99 and 108 that day.",
+    "related": [
+      "candle"
+    ]
+  },
+  {
+    "slug": "candle",
+    "term": "candle",
+    "plain_definition": "One box on the chart that shows one day. It shows where the price started, where it ended, and how far it went up and down in between.",
+    "example": "A tall candle means a day with a big move.",
+    "related": [
+      "open",
+      "close",
+      "high-and-low"
+    ]
+  },
+  {
+    "slug": "day",
+    "term": "day",
+    "plain_definition": "One trading day, counted from 1. We show 'Day 87' instead of a real date, so you cannot guess the year.",
+    "example": "Day 60 is the day you can see today. Day 61 is tomorrow.",
+    "related": [
+      "blind-episode",
+      "horizon"
+    ]
+  },
+  {
+    "slug": "horizon",
+    "term": "horizon",
+    "plain_definition": "How many days ahead your guess looks. With a horizon of 5, you guess if the price in 5 days will be higher than today.",
+    "example": "On day 60, a guess with horizon 5 is answered on day 65.",
+    "related": [
+      "guess",
+      "day"
+    ]
+  },
+  {
+    "slug": "probability",
+    "term": "probability",
+    "plain_definition": "How likely something is, from 0% (never) to 100% (always). If you say 70% ten times, you should be right about seven times.",
+    "example": "70% means: I am fairly sure, but not certain.",
+    "related": [
+      "guess",
+      "calibration"
+    ]
+  },
+  {
+    "slug": "guess",
+    "term": "guess",
+    "plain_definition": "Your answer to one question: will the price be higher in a few days? You also say how sure you are. You cannot change a guess after you send it.",
+    "example": "I am 60% sure the price will be higher in 5 days.",
+    "related": [
+      "probability",
+      "horizon",
+      "brier-score"
+    ]
+  },
+  {
+    "slug": "brier-score",
+    "term": "Brier score",
+    "plain_definition": "A score for guesses made with percentages. Lower is better and zero is perfect. Saying 50% every time scores 0.25, so a score below 0.25 beats a coin flip.",
+    "example": "A score of 0.23 is a little better than guessing. A score of 0.30 is worse.",
+    "related": [
+      "coin-flip",
+      "sample-size",
+      "calibration"
+    ]
+  },
+  {
+    "slug": "coin-flip",
+    "term": "coin flip",
+    "plain_definition": "Saying 50% every time. It always scores 0.25. This is the line to beat before you can say you did better than guessing.",
+    "example": "If your score is 0.27, a coin flip would have done better.",
+    "related": [
+      "brier-score"
+    ]
+  },
+  {
+    "slug": "calibration",
+    "term": "calibration",
+    "plain_definition": "Calibration asks: when you said 70%, did it happen about 7 times out of 10? Good calibration means your confidence matches how often you are right.",
+    "example": "Dots on the diagonal line of the plot mean you were well calibrated.",
+    "related": [
+      "overconfidence",
+      "probability",
+      "sample-size"
+    ]
+  },
+  {
+    "slug": "base-rate",
+    "term": "base rate",
+    "plain_definition": "How often something happens in general. If prices rise on 53 of 100 days, the base rate for 'up' is 53%. Start your thinking there.",
+    "example": "With a base rate of 53%, saying 50% is already close to the truth.",
+    "related": [
+      "probability"
+    ]
+  },
+  {
+    "slug": "luck",
+    "term": "luck",
+    "plain_definition": "A good score can happen by chance. The luck check mixes up the answers many times and counts how often random answers score as well as you did.",
+    "example": "If random answers match your score 4 times in 10, your score may be luck.",
+    "related": [
+      "sample-size",
+      "brier-score"
+    ]
+  },
+  {
+    "slug": "blind-episode",
+    "term": "blind episode",
+    "plain_definition": "A stretch of price history with the name, the dates and the price level hidden. You only see 'Day 1, Day 2, ...', so you cannot rely on memory.",
+    "example": "You do not know if it is a famous year or a made-up chart.",
+    "related": [
+      "reveal",
+      "made-up-series",
+      "hindsight-bias"
+    ]
+  },
+  {
+    "slug": "reveal",
+    "term": "reveal",
+    "plain_definition": "The moment you find out what the episode really was. It ends the episode. Guesses that are still waiting will not be counted.",
+    "example": "After the reveal you see the stock name and the real dates.",
+    "related": [
+      "blind-episode",
+      "data-trail"
+    ]
+  },
+  {
+    "slug": "made-up-series",
+    "term": "made-up series",
+    "plain_definition": "A price chart made by a random-number program. It looks real, but no one can predict it. It shows how easy it is to see patterns in noise.",
+    "example": "If you do well on made-up charts, it was luck.",
+    "related": [
+      "blind-episode",
+      "luck"
+    ]
+  },
+  {
+    "slug": "sample-size",
+    "term": "sample size",
+    "plain_definition": "How many answers a score is based on. A score from 10 guesses can change a lot. We wait for 30 answers before saying anything.",
+    "example": "Ten coin flips can give 8 heads. A thousand almost never do.",
+    "related": [
+      "brier-score",
+      "luck"
+    ]
+  },
+  {
+    "slug": "overconfidence",
+    "term": "overconfidence",
+    "plain_definition": "Feeling more sure than you should. If you say 90% but are right only 6 times out of 10, you are overconfident.",
+    "example": "Many people say 90% when they are right about 70% of the time.",
+    "related": [
+      "calibration"
+    ]
+  },
+  {
+    "slug": "hindsight-bias",
+    "term": "hindsight bias",
+    "plain_definition": "The feeling, after you know what happened, that it was easy to see coming. Blind episodes avoid this by hiding the outcome.",
+    "example": "After a crash, people say 'the signs were clear'. Before it, they were not.",
+    "related": [
+      "blind-episode"
+    ]
+  },
+  {
+    "slug": "data-trail",
+    "term": "data trail",
+    "plain_definition": "Where the numbers came from: who supplied them, when they were saved, and how they were adjusted. We show it after the reveal.",
+    "example": "Prices were adjusted for splits as of the last day you saw.",
+    "related": [
+      "reveal",
+      "survivorship-bias"
+    ]
+  },
+  {
+    "slug": "relative-volume",
+    "term": "relative volume",
+    "plain_definition": "How busy trading was compared with the first days you saw. A value of 1 means as busy as at the start. A value of 2 means twice as busy.",
+    "example": "Relative volume 0.5 is a quiet day.",
+    "related": [
+      "day"
+    ]
+  },
+  {
+    "slug": "rebased-price",
+    "term": "price starts at 100",
+    "plain_definition": "In a blind chart the first price is always shown as 100. Only the changes matter. A price of 110 means 10% higher than at the start.",
+    "example": "Price 95 means 5% lower than the first day.",
+    "related": [
+      "blind-episode"
+    ]
+  },
+  {
+    "slug": "survivorship-bias",
+    "term": "survivorship bias",
+    "plain_definition": "Looking only at companies that still exist today. The ones that failed are missing, so results can look better than they really were.",
+    "example": "A list of today's big stocks leaves out the ones that went bust.",
+    "related": [
+      "data-trail"
+    ]
+  },
+  {
+    "slug": "overlapping-guesses",
+    "term": "overlapping guesses",
+    "plain_definition": "Guesses that look at the same days. A 10-day guess made each day shares most of its days with the next one, so they are not fully independent.",
+    "example": "Ten guesses in a row may count as fewer than ten pieces of evidence.",
+    "related": [
+      "horizon",
+      "sample-size"
+    ]
+  },
+  {
+    "slug": "rule",
+    "term": "rule",
+    "plain_definition": "A clear instruction for when to buy and when to sell. A computer can follow it without any guessing.",
+    "example": "Buy when the short average is above the long average. Sell when it is not.",
+    "related": [
+      "moving-average",
+      "crossover"
+    ]
+  },
+  {
+    "slug": "moving-average",
+    "term": "moving average",
+    "plain_definition": "The average price over the last few days. Each day it moves forward by one day. It smooths out the daily ups and downs.",
+    "example": "The 20-day average on day 30 uses the prices from day 11 to day 30.",
+    "related": [
+      "crossover",
+      "close"
+    ]
+  },
+  {
+    "slug": "crossover",
+    "term": "crossover",
+    "plain_definition": "The moment when a short average moves above or below a long average. Many simple rules use this moment to buy or sell.",
+    "example": "The 20-day average rises above the 100-day average. The rule buys.",
+    "related": [
+      "moving-average",
+      "rule"
+    ]
+  },
+  {
+    "slug": "practice-years",
+    "term": "practice years",
+    "plain_definition": "The older part of a stock's history. You may try as many rules on it as you like. The newest years are locked in the vault.",
+    "example": "About 17 years of practice and 4 years in the vault.",
+    "related": [
+      "vault",
+      "idea-tried"
+    ]
+  },
+  {
+    "slug": "vault",
+    "term": "vault",
+    "plain_definition": "The newest years of a stock's history, locked away. You can open it once, for one rule. Then you see how that rule did on years it never saw.",
+    "example": "You try 20 rules on the practice years, then open the vault with your favourite.",
+    "related": [
+      "practice-years",
+      "overfitting"
+    ]
+  },
+  {
+    "slug": "idea-tried",
+    "term": "idea tried",
+    "plain_definition": "Each different rule you run on the practice years counts as one idea tried. Running the exact same rule again does not count twice.",
+    "example": "Rules 5/20 and 10/40 are two ideas. Running 5/20 again is still two.",
+    "related": [
+      "overfitting",
+      "vault"
+    ]
+  },
+  {
+    "slug": "growth-of-100",
+    "term": "growth of 100",
+    "plain_definition": "A chart where every line starts at 100. If a line ends at 187, then 100 turned into 187. It makes two lines easy to compare.",
+    "example": "The rule ends at 150 and buy and hold ends at 210.",
+    "related": [
+      "log-scale",
+      "buy-and-hold"
+    ]
+  },
+  {
+    "slug": "log-scale",
+    "term": "log scale",
+    "plain_definition": "A way to draw the up-and-down axis so that equal percent changes look equal. Without it, the last years of a long chart look far bigger.",
+    "example": "A rise from 100 to 110 looks as tall as a rise from 1,000 to 1,100.",
+    "related": [
+      "growth-of-100"
+    ]
+  },
+  {
+    "slug": "worst-fall",
+    "term": "worst fall",
+    "plain_definition": "The biggest drop from a high point to a later low point. It shows how much a holder had to sit through.",
+    "example": "A worst fall of 30% means 100 fell to 70 at some point.",
+    "related": [
+      "drawdown"
+    ]
+  },
+  {
+    "slug": "per-year-return",
+    "term": "per year",
+    "plain_definition": "The steady yearly rate that would give the same end result. It lets you compare windows of different length.",
+    "example": "100 turning into 250 in 10 years is about 9.6% a year.",
+    "related": [
+      "total-return"
+    ]
+  },
+  {
+    "slug": "time-in-the-stock",
+    "term": "time in the stock",
+    "plain_definition": "The share of days when the rule held the stock. Buy and hold is in the stock almost every day.",
+    "example": "56% means the rule was invested on 56 days out of 100.",
+    "related": [
+      "buy-and-hold"
+    ]
+  },
+  {
+    "slug": "mixed-up-histories",
+    "term": "mixed-up histories",
+    "plain_definition": "Made-up price histories built by shuffling blocks of the real daily moves. They show how often luck alone does as well as your rule.",
+    "example": "If 40 of 100 mixed-up histories do as well, your result is not special.",
+    "related": [
+      "luck",
+      "bootstrap"
+    ]
+  }
 ]

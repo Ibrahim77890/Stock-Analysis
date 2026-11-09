@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Bar, EpisodeListItem, EpisodeState, PredictionItem } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { episode as copy } from "../copy/episode";
-import { Button, Callout, Card, EmptyState, ErrorMessage, Loading } from "../components/ui";
+import { Icon } from "../components/Icon";
+import { Button, Callout, Card, Chip, EmptyState, ErrorMessage, Loading, PageHead, ProgressBar } from "../components/ui";
 import { EpisodeChart } from "../episode/EpisodeChart";
 import { GuessForm } from "../episode/GuessForm";
 import { GuessList } from "../episode/GuessList";
@@ -35,38 +36,53 @@ export function Learn() {
 
   return (
     <>
-      <h1>Learn</h1>
-      <Card title={copy.startTitle}>
-        <p>{copy.hiddenNote}</p>
-        <p><label htmlFor="kind">{copy.kindLabel}</label>
-          <select id="kind" value={kind} onChange={(e) => setKind(e.target.value as any)}>
-            {Object.entries(copy.kinds).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select></p>
-        <p><label htmlFor="length">{copy.lengthLabel}</label>
-          <select id="length" value={length} onChange={(e) => setLength(e.target.value)}>
-            {Object.entries(copy.lengths).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-          </select></p>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        <Button onClick={start} disabled={busy}>{copy.start}</Button>
-      </Card>
-      <Card title={copy.yourEpisodes}>
-        {!list && !error && <Loading />}
-        {list && list.length === 0 && <EmptyState>{copy.noEpisodes}</EmptyState>}
-        {list && list.length > 0 && (
-          <table aria-label={copy.yourEpisodes}>
-            <thead><tr><th>Started</th><th>Progress</th><th>Status</th><th /></tr></thead>
-            <tbody>
-              {list.map((e) => (
-                <tr key={e.episode_id}>
-                  <td>{new Date(e.created_at).toLocaleString()}</td><td>Day {e.day} of {e.n_bars}</td>
-                  <td>{e.status === "open" ? "Open" : "Revealed"}</td>
-                  <td>{e.status === "open" ? <Link to={`/learn/${e.episode_id}`}>{copy.resume}</Link> : <Link to={`/score/${e.episode_id}`}>{copy.see}</Link>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+      <PageHead title="Learn" eyebrow={<><Icon name="eye" />Guess and get scored</>} intro="Look at a hidden chart, guess what happens next, and see how honest your guesses are." />
+      <div className="episode-grid">
+        <Card title={copy.startTitle}>
+          <p>{copy.hiddenNote}</p>
+          <div className="field">
+            <label htmlFor="kind">{copy.kindLabel}</label>
+            <select id="kind" value={kind} onChange={(e) => setKind(e.target.value as any)}>
+              {Object.entries(copy.kinds).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="length">{copy.lengthLabel}</label>
+            <select id="length" value={length} onChange={(e) => setLength(e.target.value)}>
+              {Object.entries(copy.lengths).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+          </div>
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+          <Button size="big" onClick={start} disabled={busy}>{copy.start}<Icon name="arrow" /></Button>
+        </Card>
+        <Card title="How a round works">
+          <ol className="how-list">
+            <li><Icon name="eye" /><span><strong>Look.</strong> The chart has no name and no dates.</span></li>
+            <li><Icon name="target" /><span><strong>Guess.</strong> Pick a number from 1% to 99%.</span></li>
+            <li><Icon name="check" /><span><strong>Learn.</strong> Move forward and see what really happened.</span></li>
+          </ol>
+        </Card>
+      </div>
+      <h2 className="section-title">{copy.yourEpisodes}</h2>
+      {!list && !error && <Loading />}
+      {list && list.length === 0 && <EmptyState>{copy.noEpisodes}</EmptyState>}
+      {list && list.length > 0 && (
+        <div className="grid" aria-label={copy.yourEpisodes} role="list">
+          {list.map((e) => (
+            <article className="card" key={e.episode_id} role="listitem">
+              <div className="card-head">
+                <h3>{new Date(e.created_at).toLocaleDateString()}</h3>
+                {e.status === "open" ? <Chip kind="accent">Open</Chip> : <Chip kind="ok">Revealed</Chip>}
+              </div>
+              <p className="muted">Day {e.day} of {e.n_bars}</p>
+              <ProgressBar value={e.day} max={e.n_bars} label="Episode progress" />
+              <p style={{ marginTop: "0.9rem", marginBottom: 0 }}>
+                {e.status === "open" ? <Link className="btn secondary small" to={`/learn/${e.episode_id}`}>{copy.resume}</Link> : <Link className="btn secondary small" to={`/score/${e.episode_id}`}>{copy.see}</Link>}
+              </p>
+            </article>
+          ))}
+        </div>
+      )}
     </>
   );
 }
@@ -118,44 +134,48 @@ export function EpisodeScreen() {
 
   return (
     <div onKeyDown={(e) => { if (e.key === "ArrowRight" && !revealed && !atEnd && (e.target as HTMLElement).tagName !== "INPUT") void advance(1); }}>
-      <h1>{copy.chartTitle}</h1>
+      <PageHead title={copy.chartTitle} eyebrow={<><Icon name="eye" />Hidden chart</>} />
       <Coach phase={phase} answered={answered} />
       <StatusLine day={state.day} nBars={state.n_bars} waiting={waiting} revealed={revealed} />
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {answered && <Callout kind="tip">{copy.hintAfterAnswer}</Callout>}
-      <Card title={copy.chartTitle}>
-        <CandleHelp />
-        <EpisodeChart bars={bars} showVolume={showVolume} />
-        <details onToggle={(e) => setShowVolume((e.target as HTMLDetailsElement).open)}>
-          <summary>{copy.showMore}: {copy.showVolume}</summary>
-          <p className="muted">{copy.volumeNote}</p>
-        </details>
-      </Card>
-      <div className="grid">
-        <Card title={copy.askTitle}>
-          <GuessForm day={state.day} nBars={state.n_bars} disabled={revealed} onSend={send} onTouched={() => setPhase((p) => (p === 0 ? 1 : p))} />
-        </Card>
-        <Card title={copy.moveTitle}>
-          <div className="row">
-            <Button onClick={() => advance(1)} disabled={moving || atEnd || revealed}>{copy.nextDay}</Button>
-            <Button variant="secondary" onClick={() => advance(5)} disabled={moving || atEnd || revealed}>{copy.fiveDays}</Button>
-          </div>
-          {atEnd && <p>{copy.atEnd}</p>}
-          <p className="muted">{copy.keyHint}</p>
-        </Card>
+      <div className="episode-grid">
+        <div>
+          <Card title={copy.chartTitle}>
+            <CandleHelp />
+            <EpisodeChart bars={bars} showVolume={showVolume} />
+            <details onToggle={(e) => setShowVolume((e.target as HTMLDetailsElement).open)}>
+              <summary>{copy.showMore}: {copy.showVolume}</summary>
+              <p className="muted">{copy.volumeNote}</p>
+            </details>
+          </Card>
+          <Card title={copy.guessesTitle}><GuessList items={preds} /></Card>
+        </div>
+        <div className="sticky">
+          <Card title={copy.askTitle}>
+            <GuessForm day={state.day} nBars={state.n_bars} disabled={revealed} onSend={send} onTouched={() => setPhase((p) => (p === 0 ? 1 : p))} />
+          </Card>
+          <Card title={copy.moveTitle}>
+            <div className="row">
+              <Button onClick={() => advance(1)} disabled={moving || atEnd || revealed}>{copy.nextDay}</Button>
+              <Button variant="secondary" onClick={() => advance(5)} disabled={moving || atEnd || revealed}>{copy.fiveDays}</Button>
+            </div>
+            {atEnd && <p>{copy.atEnd}</p>}
+            <p className="hint">{copy.keyHint}</p>
+          </Card>
+          {!finishing ? (
+            <Button variant="secondary" onClick={() => setFinishing(true)}>{copy.finish}</Button>
+          ) : (
+            <Card title={copy.finishTitle}>
+              <p>{copy.finishBody}</p>
+              <div className="row">
+                <Button onClick={() => nav(`/score/${id}`)}>{copy.finishYes}</Button>
+                <Button variant="secondary" onClick={() => setFinishing(false)}>{copy.finishNo}</Button>
+              </div>
+            </Card>
+          )}
+        </div>
       </div>
-      <Card title={copy.guessesTitle}><GuessList items={preds} /></Card>
-      {!finishing ? (
-        <Button onClick={() => setFinishing(true)}>{copy.finish}</Button>
-      ) : (
-        <Card title={copy.finishTitle}>
-          <p>{copy.finishBody}</p>
-          <div className="row">
-            <Button onClick={() => nav(`/score/${id}`)}>{copy.finishYes}</Button>
-            <Button variant="secondary" onClick={() => setFinishing(false)}>{copy.finishNo}</Button>
-          </div>
-        </Card>
-      )}
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function verdict(p: PredictionItem): "right" | "off" | "none" {
 export function GuessList({ items }: { items: PredictionItem[] }) {
   if (items.length === 0) return <EmptyState>{copy.noGuesses}</EmptyState>;
   return (
-    <table aria-label={copy.guessesTitle}>
+    <div className="table-wrap"><table aria-label={copy.guessesTitle}>
       <thead><tr><th>Made on day</th><th>How far ahead</th><th>You said</th><th>Status</th><th>What happened</th></tr></thead>
       <tbody>
         {items.map((p) => {
@@ -36,6 +36,6 @@ export function GuessList({ items }: { items: PredictionItem[] }) {
           );
         })}
       </tbody>
-    </table>
+    </table></div>
   );
 }

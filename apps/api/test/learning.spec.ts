@@ -137,7 +137,7 @@ describe.skipIf(!HAS_DB)("learning gateway (database, fake Python)", () => {
     expect(r.status).toBe(200);
     expect(r.body.health.gateway).toBe("ok");
     expect(r.body.health.database).toBe("ok");
-    expect(r.body.app_migration).toMatch(/glossary-term/);
+    expect(r.body.app_migration).toMatch(/learner-study/);
     expect(r.body.ownership.map((o: any) => `${o.schema}:${o.owner}`)).toEqual(expect.arrayContaining(["app:NestJS gateway", "research:Python service", "market:Python service"]));
     expect((await h.http().get("/system")).status).toBe(401);
   });

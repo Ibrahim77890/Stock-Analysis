@@ -92,7 +92,7 @@ describe("calibration plot", () => {
     expect(dots).toHaveLength(2);
     const circles = dots.map((d) => d.querySelector("circle")!);
     expect(circles.map((c) => c.getAttribute("data-sparse"))).toEqual(["false", "true"]);
-    expect(circles[1].getAttribute("fill")).toBe("#ffffff");
+    expect((circles[1] as SVGElement).style.fill).toBe("var(--surface)"); // hollow dot
     expect(dots[1].textContent).toContain("only a few guesses");
     const table = screen.getByRole("table", { name: "The same numbers as a table" });
     const rows = within(table).getAllByRole("row").slice(1);

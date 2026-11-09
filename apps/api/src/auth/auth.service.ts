@@ -19,6 +19,13 @@ export class RateLimiter {
     this.hits.set(key, recent);
     return true;
   }
+
+  /** Whole seconds until the oldest counted attempt leaves the window (at least 1). */
+  retryAfterSeconds(key: string, now = Date.now()): number {
+    const recent = (this.hits.get(key) ?? []).filter((t) => now - t < this.windowMs);
+    if (!recent.length) return 1;
+    return Math.max(1, Math.ceil((this.windowMs - (now - Math.min(...recent))) / 1000));
+  }
 }
 
 const TOO_MANY = "Too many tries. Please wait a minute and try again.";

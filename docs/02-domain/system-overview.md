@@ -1,4 +1,4 @@
-# System overview (after Sprint 06)
+# System overview (after Sprint 07)
 
 ```mermaid
 flowchart LR
@@ -14,9 +14,11 @@ flowchart LR
 | Part | Folder | Port | Owns | Never does |
 |---|---|---|---|---|
 | Web app | `apps/web` | 5173 | pages, charts, words | compute scores, hold identity before the reveal |
-| Gateway | `apps/api` | 3000 | schema `app` (learners, `learner_episode`, glossary), logins, validation, trace | compute any number |
+| Gateway | `apps/api` | 3000 | schema `app` (learners, `learner_episode`, `learner_study`, glossary), logins, validation, trace | compute any number |
 | Python service | `services/market-data` | 8000 | schemas `market` and `research`, all data and scores, Swagger for every function | handle users or passwords |
 | PostgreSQL | native Windows service | 5432 | the three schemas | |
+
+**Strategy Lab data flow (Sprint 07).** `POST /lab/studies` (gateway: ownership row in `app.learner_study`, at most 20 studies per learner) -> Python `create_lab_study` (practice end fixed, vault locked) -> `POST /lab/studies/:id/runs` (validate, ownership, 20 runs a minute) -> Python `run_practice` (practice bars only, adjusted as of the practice end; rule, buy and hold, cost table, luck check, one trial) -> whitelisted reply with at most 300 chart points -> `POST /lab/studies/:id/vault` (type OPEN, `confirm: true`, 3 tries a minute) -> Python `open_vault` (one use) -> vault numbers. Decision record: ADR 0017; what the page shows: `lab.md`.
 
 **Request path:** browser -> gateway (token, ownership, validation) -> Python (work) -> gateway (whitelist the answer, map errors) -> browser. The Python Learning endpoints demand `X-Internal-Token` when `INTERNAL_API_TOKEN` is set, so the browser path is the only path. **Contracts:** `docs/02-domain/openapi-market-data.json` (Python) and `docs/02-domain/openapi-gateway.json` (gateway) are committed and checked by tests; the web and gateway TypeScript types are generated from them.
 

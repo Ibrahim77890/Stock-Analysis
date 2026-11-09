@@ -17,6 +17,14 @@ export type SystemInfo = S["SystemDto"];
 export type Health = S["HealthDto"];
 export type TokenReply = S["TokenDto"];
 export type Learner = S["LearnerDto"];
+export type Stock = S["StockDto"];
+export type StudyListItem = S["StudyListItemDto"];
+export type StudyCreated = S["StudyCreatedDto"];
+export type StudyOverview = S["StudyOverviewDto"];
+export type LabRun = S["LabRunDto"];
+export type VaultResult = S["VaultResultDto"];
+export type LabMetrics = S["LabMetricsDto"];
+export interface RuleInput { fast: number; slow: number; cost_bps: number; seed?: number; n_paths?: number }
 
 /** A server problem turned into a sentence a beginner can read. Never carries tokens or URLs. */
 export class ApiError extends Error {
@@ -84,6 +92,13 @@ export function createApi({ base = API_BASE, getToken, onUnauthorized }: ClientO
     term: (slug: string) => get<GlossaryTerm>(`/glossary/${encodeURIComponent(slug)}`),
     system: () => get<SystemInfo>("/system"),
     trace: (limit = 30) => get<TraceEntry[]>(`/trace?limit=${limit}`),
+    labStocks: () => get<{ stocks: Stock[] }>("/lab/stocks"),
+    labStudies: () => get<StudyListItem[]>("/lab/studies"),
+    labCreate: (symbol: string, name?: string) => post<StudyCreated>("/lab/studies", { symbol, ...(name ? { name } : {}) }),
+    labStudy: (id: string | number) => get<StudyOverview>(`/lab/studies/${id}`),
+    labRun: (id: string | number, rule: RuleInput) => post<LabRun>(`/lab/studies/${id}/runs`, rule),
+    labVault: (id: string | number, rule: Pick<RuleInput, "fast" | "slow" | "cost_bps">) => post<VaultResult>(`/lab/studies/${id}/vault`, { ...rule, confirm: true }),
+    labSavedVault: (id: string | number) => get<VaultResult>(`/lab/studies/${id}/vault`),
   };
 }
 

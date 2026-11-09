@@ -23,6 +23,8 @@ export function fakeApi(over: Partial<Record<keyof Api, any>> = {}): Api {
     progress: vi.fn(), glossary: vi.fn().mockResolvedValue([]),
     term: vi.fn().mockImplementation(async (slug: string) => ({ slug, term: slug, plain_definition: `Plain meaning of ${slug}.`, example: "An example.", level: "beginner", category: "learning", related: [], source: "project definition" })),
     system: vi.fn(), trace: vi.fn().mockResolvedValue([]),
+    labStocks: vi.fn().mockResolvedValue({ stocks: [] }), labStudies: vi.fn().mockResolvedValue([]), labCreate: vi.fn(), labStudy: vi.fn(),
+    labRun: vi.fn(), labVault: vi.fn(), labSavedVault: vi.fn(),
   };
   return { ...base, ...over } as unknown as Api;
 }

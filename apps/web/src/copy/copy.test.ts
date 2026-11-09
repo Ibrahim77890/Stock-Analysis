@@ -4,6 +4,7 @@ import { fleschReadingEase, flattenStrings, longestSentenceWords } from "../lib/
 import * as account from "./home";
 import { episode } from "./episode";
 import { hood } from "./hood";
+import { lab } from "./lab";
 import { score } from "./score";
 
 const blocks: Record<string, string[]> = {
@@ -11,6 +12,7 @@ const blocks: Record<string, string[]> = {
   episode: flattenStrings(episode),
   score: flattenStrings(score),
   hood: flattenStrings(hood),
+  lab: flattenStrings(lab),
 };
 
 describe("screen copy is plain language", () => {

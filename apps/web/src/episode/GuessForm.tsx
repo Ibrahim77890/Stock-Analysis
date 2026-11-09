@@ -48,9 +48,9 @@ export function GuessForm({ day, nBars, disabled, onSend, onTouched }: Props) {
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); void submit(); }} aria-label={copy.askTitle}>
-      <fieldset style={{ border: "none", padding: 0, margin: "0 0 1rem" }}>
-        <legend><strong>{copy.howFar}</strong></legend>
-        <div className="radio-cards">
+      <fieldset style={{ border: "none", padding: 0, margin: "0 0 1.1rem" }}>
+        <legend style={{ fontWeight: 600, marginBottom: "0.4rem" }}>{copy.howFar}</legend>
+        <div className="segmented">
           {HORIZONS.map((h) => {
             const late = day + h > nBars;
             return (
@@ -69,16 +69,16 @@ export function GuessForm({ day, nBars, disabled, onSend, onTouched }: Props) {
       <div className="row">
         <input id="percent-slider" aria-label={`${copy.howSure} (slider)`} type="range" min={1} max={99} value={valid ? percent : 50}
           onChange={(e) => { setText(e.target.value); touch(); }} />
-        <input id="percent-number" type="number" min={1} max={99} value={text} aria-invalid={!valid} style={{ width: "6rem" }}
+        <input id="percent-number" type="number" min={1} max={99} value={text} aria-invalid={!valid} style={{ width: "5.5rem" }}
           onChange={(e) => { setText(e.target.value); touch(); }} />
         <span aria-hidden="true">%</span>
       </div>
-      <p className="muted">{copy.noIdea}. {copy.verySure}.</p>
+      <p className="hint">{copy.noIdea}. {copy.verySure}.</p>
       {valid
         ? <p aria-live="polite">You are saying: {outOfTen(percent)} times I would be right about "higher".</p>
-        : <p role="alert" className="down">Please type a whole number from 1 to 99.</p>}
+        : <p role="alert" className="error-text">Please type a whole number from 1 to 99.</p>}
       <Callout kind="careful">{copy.noTakeBacks}</Callout>
-      <Button type="submit" disabled={!valid || tooLate || disabled || busy}>{busy ? copy.sending : copy.send}</Button>
+      <Button type="submit" size="big" disabled={!valid || tooLate || disabled || busy}>{busy ? copy.sending : copy.send}</Button>
       {message && <p role="status" style={{ marginTop: "0.6rem" }}>{message}</p>}
     </form>
   );

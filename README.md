@@ -11,7 +11,7 @@ An educational market-data and research platform. It stores daily stock prices, 
 | PostgreSQL | (system service) | Stores everything; schemas `market`, `research` (Python) and `app` (gateway) | 5432 |
 | Python service | `services/market-data` | Data download, validation, backtests, learning episodes and scoring. FastAPI with Swagger | 8000 |
 | NestJS gateway | `apps/api` | Logins, ownership, validation, glossary. The only API the web app calls. Swagger | 3000 |
-| Web app | `apps/web` | The beginner-friendly interface (Vite + React) | 5173 |
+| Web app | `apps/web` | The beginner-friendly interface (Vite + React): the learning loop and the Strategy Lab | 5173 |
 
 The browser talks to the gateway, the gateway talks to the Python service, and the Python service talks to PostgreSQL. More in `docs/02-domain/system-overview.md`.
 
@@ -87,9 +87,9 @@ npm run dev
 | What | Address |
 |---|---|
 | Web app (start here) | http://127.0.0.1:5173 |
-| Gateway Swagger (accounts, learning, glossary, system) | http://127.0.0.1:3000/docs |
+| Gateway Swagger (accounts, learning, Lab, glossary, system) | http://127.0.0.1:3000/docs |
 | Gateway health check | http://127.0.0.1:3000/health |
-| Python service Swagger (data, backtests, validation, learning) | http://127.0.0.1:8000/docs |
+| Python service Swagger (data, backtests, validation, learning, Lab) | http://127.0.0.1:8000/docs |
 
 All servers bind to `127.0.0.1` (this machine only).
 
@@ -107,6 +107,24 @@ curl http://127.0.0.1:3000/health
 ```
 
 In the web app, sign in and open "How does this work?" (the `/hood` page) to see the live status of each part.
+
+## Try the Strategy Lab
+
+Sign in, open **Lab** in the top bar, pick a stock (for example AAPL), start a study and run a rule on the practice years. Run a few more rules, then open the vault once. Needs price data in the database (Tiingo, see the Python README). Design: `docs/04-adr/0017-strategy-lab-practice-window-and-vault.md`.
+
+## Repeatable browser walk
+
+With the three servers running, `apps/web` has a scripted walk that drives a real browser (Microsoft Edge or Chrome; set `BROWSER_PATH` to choose):
+
+```bash
+cd apps/web
+npm run walk                      # the 14-step learning walkthrough
+npm run walk -- --keyboard        # steps 2 to 9 with the keyboard only (fails on any mouse click)
+npm run walk -- --lab             # the Strategy Lab walk
+npm run walk -- --lab --keyboard  # the Lab walk, keyboard only
+```
+
+It creates throwaway learners named `walk-...` in the real database and saves screenshots under `data/reports/walk/` (git-ignored).
 
 ## Tests
 

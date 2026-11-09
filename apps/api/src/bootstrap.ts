@@ -18,6 +18,8 @@ export class SafeExceptionFilter implements ExceptionFilter {
       const body: any = exception.getResponse();
       let message: string | string[] = typeof body === "string" ? body : body?.message ?? exception.message;
       if (Array.isArray(message)) message = message[0];
+      const retryAfter = (exception as any).retryAfter;
+      if (status === 429 && typeof retryAfter === "number") res.setHeader("Retry-After", String(retryAfter));
       res.status(status).json({ statusCode: status, message, request_id: requestId });
       return;
     }

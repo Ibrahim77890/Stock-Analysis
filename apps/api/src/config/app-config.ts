@@ -12,6 +12,7 @@ export interface AppConfig {
   jwtSecret: string;
   corsOrigins: string[];
   loginLimit: number; // attempts per minute per client and name
+  labRunsPerMinute: number; // Strategy Lab runs per minute per learner
 }
 
 /** Raised at start-up; the message names the variable and never a value. */
@@ -52,6 +53,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     jwtSecret: env.JWT_SECRET!,
     corsOrigins: origins,
     loginLimit: Number(env.LOGIN_LIMIT_PER_MINUTE ?? 5),
+    labRunsPerMinute: Number(env.LAB_RUNS_PER_MINUTE ?? 20),
   };
 }
 

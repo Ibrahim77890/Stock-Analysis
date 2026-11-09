@@ -71,7 +71,7 @@ def test_health_and_swagger_ui(client):
 
 def test_every_function_group_is_in_swagger(client):
     tags = {t["name"] for t in client.get("/openapi.json").json()["tags"]}
-    assert tags == {"Reference", "Bars", "Adjustment", "Indicators", "Replay", "Lineage", "Data quality", "Ingestion", "Benchmark", "Backtest", "Validation", "Sources", "Macro", "Learning"}
+    assert tags == {"Reference", "Bars", "Adjustment", "Indicators", "Replay", "Lineage", "Data quality", "Ingestion", "Benchmark", "Backtest", "Validation", "Sources", "Macro", "Learning", "Lab"}
     paths = client.get("/openapi.json").json()["paths"]
     for p in ["/bars", "/adjust/preview", "/indicators/compute", "/indicators/causality-check", "/replay/sessions",
               "/lineage/{symbol}", "/quality/rules/check", "/quality/run", "/ingestion/load", "/ingestion/download",

@@ -10,7 +10,7 @@ import { repoRoot } from "../src/config/paths";
 export async function generateDocument(): Promise<unknown> {
   const cfg: AppConfig = {
     port: 3000, databaseUrl: "postgresql://u:p@127.0.0.1:5432/none", pythonApiUrl: "http://127.0.0.1:8000",
-    internalToken: "export-only-token", jwtSecret: "export-only-secret", corsOrigins: ["http://127.0.0.1:5173"], loginLimit: 5,
+    internalToken: "export-only-token", jwtSecret: "export-only-secret", corsOrigins: ["http://127.0.0.1:5173"], loginLimit: 5, labRunsPerMinute: 20,
   };
   const app = await NestFactory.create(AppModule.register(cfg), { logger: false });
   const doc = swaggerDocument(app);

@@ -210,6 +210,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lab/stocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stocks you can study (at least 12 years of daily prices) */
+        get: operations["LabController_stocks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My studies, newest first */
+        get: operations["LabController_list"];
+        put?: never;
+        /** Start a study on one stock. Part of its history is locked in a vault. */
+        post: operations["LabController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of my studies: ideas tried and whether the vault is open */
+        get: operations["LabController_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies/{id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Try a rule on the practice years. A new rule counts as one idea tried. */
+        post: operations["LabController_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lab/studies/{id}/vault": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The saved result of a vault that was already opened */
+        get: operations["LabController_savedVault"];
+        put?: never;
+        /** Open the vault with one rule you already tried. It can be done only once. */
+        post: operations["LabController_vault"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -309,6 +396,13 @@ export interface components {
             wilson_high: number | null;
             wilson_low: number | null;
         };
+        CostRowDto: {
+            buy_hold_total_return: number | null;
+            cost_bps: number;
+            sharpe: number | null;
+            total_return: number | null;
+            trades: number;
+        };
         CountsDto: {
             pending: number;
             resolved: number;
@@ -331,6 +425,18 @@ export interface components {
             n_bars: number;
             /** @description optional: the same seed rebuilds the same episode */
             seed?: number;
+        };
+        CreateStudyDto: {
+            /**
+             * @description optional label, up to 80 characters
+             * @example My first idea
+             */
+            name?: string;
+            /**
+             * @description a stock from GET /lab/stocks
+             * @example AAPL
+             */
+            symbol: string;
         };
         DataTrailDto: {
             adjustment: string;
@@ -386,6 +492,14 @@ export interface components {
             source: string;
             term: string;
         };
+        GrowthDto: {
+            /** @description growth of 100 for buy and hold */
+            buy_hold: number[];
+            /** @description at most 300 points; first and last day always kept */
+            dates: string[];
+            /** @description growth of 100 for the rule */
+            rule: number[];
+        };
         HealthDto: {
             /** @enum {string} */
             database: "ok" | "down";
@@ -407,6 +521,52 @@ export interface components {
         KindScoreDto: {
             brier: number | null;
             n: number;
+        };
+        LabLuckDto: {
+            /** @description share of mixed-up histories that did as well or better */
+            fraction_as_good: number | null;
+            median: number | null;
+            method: string;
+            n_paths: number;
+            note: string;
+            p5: number | null;
+            p95: number | null;
+            percentile_rank: number | null;
+            real_total_return: number | null;
+            seed: number;
+        };
+        LabMetricsDto: {
+            /** @description per year, compounded */
+            cagr: number | null;
+            /** @description share of days invested */
+            exposure: number | null;
+            /** @description largest fall from a peak, negative */
+            max_drawdown: number | null;
+            sharpe: number | null;
+            /** @description 0.25 means up 25% */
+            total_return: number | null;
+            trades: number;
+        };
+        LabRunDto: {
+            buy_hold: components["schemas"]["LabMetricsDto"];
+            config_hash: string;
+            costs: components["schemas"]["CostRowDto"][];
+            /** @description false when the same rule and cost had already been run: it is recomputed, not counted again */
+            counted: boolean;
+            growth: components["schemas"]["GrowthDto"];
+            luck: components["schemas"]["LabLuckDto"];
+            /** @description present from the second idea tried */
+            overfitting_meter?: components["schemas"]["OverfitMeterDto"];
+            params: components["schemas"]["RunParamsDto"];
+            practice_bars: number;
+            practice_years: number;
+            rule: components["schemas"]["LabMetricsDto"];
+            study_id: number;
+            symbol: string;
+            /** @description ideas tried so far in this study */
+            trial_count: number;
+            warnings: string[];
+            yearly: components["schemas"]["YearlyDto"][];
         };
         LearnerDto: {
             display_name: string;
@@ -441,6 +601,13 @@ export interface components {
             n: number;
             skill_vs_coin_flip: number | null;
             warnings: string[];
+        };
+        OverfitMeterDto: {
+            best_sharpe: number | null;
+            dsr: number | null;
+            expected_best_sharpe_by_luck: number | null;
+            note: string;
+            trials: number;
         };
         OwnershipDto: {
             holds: string;
@@ -513,6 +680,40 @@ export interface components {
             statement?: string;
             synthetic_volatility?: number;
         };
+        RunDto: {
+            /**
+             * @description cost per trade in basis points (1 basis point = 0.01%)
+             * @default 2
+             */
+            cost_bps: number;
+            /**
+             * @description short average, in trading days
+             * @example 20
+             */
+            fast: number;
+            /**
+             * @description how many mixed-up histories the luck check uses
+             * @default 100
+             */
+            n_paths: number;
+            /**
+             * @description the same seed gives the same luck check
+             * @default 1
+             */
+            seed: number;
+            /**
+             * @description long average, in trading days; longer than the short one
+             * @example 100
+             */
+            slow: number;
+        };
+        RunParamsDto: {
+            cost_bps: number;
+            fast: number;
+            n_paths: number;
+            seed: number;
+            slow: number;
+        };
         ScoreDto: {
             baselines: {
                 [key: string]: unknown;
@@ -532,6 +733,49 @@ export interface components {
             n: number;
             skill_vs_coin_flip: number | null;
             warnings: string[];
+        };
+        StockDto: {
+            bars: number;
+            first_date: string;
+            name: string;
+            sector: string | null;
+            symbol: string;
+            years: number;
+        };
+        StocksDto: {
+            stocks: components["schemas"]["StockDto"][];
+        };
+        StudyCreatedDto: {
+            name: string;
+            practice_bars: number;
+            practice_years: number;
+            study_id: number;
+            symbol: string;
+            vault_bars: number;
+            vault_open: boolean;
+            vault_years: number;
+        };
+        StudyListItemDto: {
+            created_at: string;
+            ideas_tried: number;
+            name: string;
+            practice_years: number;
+            study_id: number;
+            symbol: string;
+            vault_open: boolean;
+            vault_years: number;
+        };
+        StudyOverviewDto: {
+            ideas_tried: number;
+            name: string;
+            practice_bars: number;
+            practice_years: number;
+            study_id: number;
+            symbol: string;
+            trials: components["schemas"]["TrialDto"][];
+            vault_bars: number;
+            vault_open: boolean;
+            vault_years: number;
         };
         SystemDto: {
             app_migration: string | null;
@@ -553,12 +797,62 @@ export interface components {
             time: string;
             upstream: components["schemas"]["UpstreamEntryDto"][];
         };
+        TrialDto: {
+            cost_bps: number;
+            fast: number;
+            order: number;
+            sharpe: number | null;
+            slow: number;
+            total_return: number | null;
+            trades: number | null;
+        };
         UpstreamEntryDto: {
             duration_ms: number;
             route: string;
             /** @enum {string} */
             service: "python";
             status: number;
+        };
+        VaultDto: {
+            /**
+             * @description must be true: opening the vault cannot be undone
+             * @enum {boolean}
+             */
+            confirm: true;
+            /** @description the same cost you used when you ran this rule on the practice years */
+            cost_bps: number;
+            fast: number;
+            slow: number;
+        };
+        VaultParamsDto: {
+            cost_bps: number;
+            fast: number;
+            slow: number;
+        };
+        VaultPracticeDto: {
+            /** @description buy and hold on the practice years */
+            buy_hold: components["schemas"]["LabMetricsDto"];
+            /** @description the same rule on the practice years */
+            rule: components["schemas"]["LabMetricsDto"];
+            years: number;
+        };
+        VaultResultDto: {
+            buy_hold: components["schemas"]["LabMetricsDto"];
+            growth: components["schemas"]["GrowthDto"];
+            /** @description ideas tried in this study when the vault was opened */
+            ideas_tried: number;
+            params: components["schemas"]["VaultParamsDto"];
+            practice: components["schemas"]["VaultPracticeDto"];
+            rule: components["schemas"]["LabMetricsDto"];
+            study_id: number;
+            vault_bars: number;
+            vault_years: number;
+            yearly: components["schemas"]["YearlyDto"][];
+        };
+        YearlyDto: {
+            buy_hold: number;
+            rule: number;
+            year: number;
         };
     };
     responses: never;
@@ -871,6 +1165,159 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthDto"];
+                };
+            };
+        };
+    };
+    LabController_stocks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StocksDto"];
+                };
+            };
+        };
+    };
+    LabController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyListItemDto"][];
+                };
+            };
+        };
+    };
+    LabController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStudyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyCreatedDto"];
+                };
+            };
+        };
+    };
+    LabController_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudyOverviewDto"];
+                };
+            };
+        };
+    };
+    LabController_run: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LabRunDto"];
+                };
+            };
+        };
+    };
+    LabController_savedVault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VaultResultDto"];
+                };
+            };
+        };
+    };
+    LabController_vault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VaultDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VaultResultDto"];
                 };
             };
         };

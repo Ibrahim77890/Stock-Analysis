@@ -20,10 +20,11 @@ export function EpisodeChart({ bars, showVolume }: { bars: Bar[]; showVolume: bo
     const chart = createChart(ref.current, {
       autoSize: true,
       height: 360,
-      layout: { background: { color: "#ffffff" }, textColor: "#1b2330" },
-      grid: { vertLines: { color: "#e3e8ef" }, horzLines: { color: "#e3e8ef" } },
+      layout: { background: { color: "#ffffff" }, textColor: "#172033", fontFamily: "Inter Variable, system-ui, sans-serif" },
+      grid: { vertLines: { color: "#eef1f8" }, horzLines: { color: "#eef1f8" } },
+      rightPriceScale: { borderColor: "#dde3ee" },
       localization: { timeFormatter: (t: number) => formatDay(t), priceFormatter: (p: number) => p.toFixed(1) },
-      timeScale: { tickMarkFormatter: (t: number) => formatDay(t), timeVisible: false, secondsVisible: false },
+      timeScale: { borderColor: "#dde3ee", tickMarkFormatter: (t: number) => formatDay(t), timeVisible: false, secondsVisible: false },
     });
     chartRef.current = chart;
     const candles = chart.addSeries(CandlestickSeries, { upColor: UP, downColor: DOWN, borderUpColor: UP, borderDownColor: DOWN, wickUpColor: UP, wickDownColor: DOWN });
@@ -40,11 +41,11 @@ export function EpisodeChart({ bars, showVolume }: { bars: Bar[]; showVolume: bo
   const last = bars.slice(-10);
   return (
     <div>
-      <div ref={ref} role="img" aria-label={`${copy.chartTitle}: ${bars.length} days. A table with the last 10 days follows.`} data-testid="chart" />
-      <p className="muted" aria-hidden="true">
-        <span className="up">▲ {copy.upDay}</span> &nbsp; <span className="down">▼ {copy.downDay}</span> &nbsp; {copy.priceAxis}
+      <div className="chart-frame"><div ref={ref} role="img" aria-label={`${copy.chartTitle}: ${bars.length} days. A table with the last 10 days follows.`} data-testid="chart" /></div>
+      <p className="legend" aria-hidden="true">
+        <span className="key up">▲ {copy.upDay}</span><span className="key down">▼ {copy.downDay}</span><span className="key">{copy.priceAxis}</span>
       </p>
-      <table aria-label={copy.lastDays}>
+      <div className="table-wrap"><table aria-label={copy.lastDays}>
         <caption>{copy.lastDays}</caption>
         <thead><tr><th>Day</th><th>Open</th><th>Close</th><th>Change</th></tr></thead>
         <tbody>
@@ -58,7 +59,7 @@ export function EpisodeChart({ bars, showVolume }: { bars: Bar[]; showVolume: bo
             );
           })}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }

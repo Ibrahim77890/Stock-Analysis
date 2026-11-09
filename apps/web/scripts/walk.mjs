@@ -1,0 +1,315 @@
+// Repeatable browser walk for MarketLab (Sprint 07, task 07_01 and 07_08).
+//
+//   npm run walk                     the 14-step learning walkthrough with mouse and keyboard
+//   npm run walk -- --keyboard       steps 2 to 9 with the keyboard only (Tab, Shift+Tab, Enter, Space, arrows, typing); fails on any click
+//   npm run walk -- --lab            the Strategy Lab walk (start a study, run rules, open the vault once)
+//   npm run walk -- --lab --keyboard the same, keyboard only
+//
+// Needs the three servers running (Python :8000, gateway :3000, web :5173). Uses the system Edge or Chrome
+// (set BROWSER_PATH to choose). It creates throwaway learners named walk-xxxx in the real database and saves screenshots
+// under data/reports/walk/ (git-ignored). The exit code is 1 if any step fails.
+import { existsSync, mkdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import puppeteer from "puppeteer-core";
+
+const args = new Set(process.argv.slice(2));
+const KEYBOARD = args.has("--keyboard");
+const LAB = args.has("--lab");
+const BASE = process.env.WEB_URL ?? "http://127.0.0.1:5173";
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+const OUT = path.join(ROOT, "data", "reports", "walk") + path.sep;
+mkdirSync(OUT, { recursive: true });
+
+const CANDIDATES = [
+  process.env.BROWSER_PATH,
+  "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "C:/Program Files/Microsoft/Edge/Application/msedge.exe",
+  "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  "/usr/bin/google-chrome", "/usr/bin/chromium", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+].filter(Boolean);
+const executablePath = CANDIDATES.find((p) => existsSync(p));
+if (!executablePath) { console.error("No Edge or Chrome found. Set BROWSER_PATH."); process.exit(2); }
+console.log(`browser: ${executablePath}\nmode: ${LAB ? "lab" : "learning"}${KEYBOARD ? " + keyboard only" : ""}\n`);
+
+const browser = await puppeteer.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
+const page = await browser.newPage();
+await page.setViewport({ width: 1280, height: 1500 });
+const problems = [];
+page.on("console", (m) => { if (m.type() === "error") problems.push(`console error: ${m.text().slice(0, 200)}`); });
+page.on("pageerror", (e) => problems.push("pageerror: " + e.message.slice(0, 200)));
+page.on("requestfailed", (r) => problems.push(`requestfailed: ${r.url()} ${r.failure()?.errorText}`));
+
+// ---------------------------------------------------------------------------------------------- helpers
+let clicks = 0;
+const results = [];
+async function step(n, name, fn) {
+  const t0 = Date.now();
+  try { const note = await fn(); results.push([n, name, "PASS", `${Date.now() - t0} ms`, note ?? ""]); }
+  catch (e) { results.push([n, name, "FAIL", `${Date.now() - t0} ms`, String(e.message).slice(0, 220)]); await page.screenshot({ path: `${OUT}fail-${LAB ? "lab-" : ""}${n}.png` }).catch(() => {}); }
+}
+const text = async (sel = "body") => page.$eval(sel, (el) => el.innerText);
+const waitText = (t, timeout = 20000) => page.waitForFunction((x) => document.body.innerText.includes(x), { timeout }, t);
+const shot = (name) => page.screenshot({ path: `${OUT}${LAB ? "lab-" : ""}${name}.png` });
+
+/** A mouse click. In keyboard mode this is a failure: the walk must never need the mouse. */
+async function mouse(handleOrSelector) {
+  if (KEYBOARD) throw new Error("a mouse click was needed in keyboard-only mode");
+  clicks++;
+  const h = typeof handleOrSelector === "string" ? await page.$(handleOrSelector) : handleOrSelector;
+  if (!h) throw new Error(`nothing to click: ${handleOrSelector}`);
+  await h.click();
+}
+const buttonByLabel = async (label) => { const [h] = await page.$$(`xpath/.//button[normalize-space(.)="${label}"] | .//a[normalize-space(.)="${label}"]`); if (!h) throw new Error(`button not found: ${label}`); return h; };
+
+/** Tab (never more than `max` presses) until the focused element satisfies `test`, which runs in the page. */
+async function tabTo(test, arg, max = 140) {
+  for (let i = 0; i < max; i++) {
+    const hit = await page.evaluate(({ t, a }) => { const el = document.activeElement; return el && el !== document.body ? new Function("el", "a", `return (${t})(el, a)`)(el, a) : false; }, { t: test.toString(), a: arg });
+    if (hit) return;
+    await page.keyboard.press("Tab");
+  }
+  throw new Error(`Tab never reached: ${arg}`);
+}
+const isButton = (el, label) => (el.tagName === "BUTTON" || el.tagName === "A") && el.innerText.trim() === label;
+const isId = (el, id) => el.id === id;
+
+/** Press a button or link: with the mouse, or by tabbing to it and pressing Enter (keyboard mode). */
+async function press(label) {
+  if (!KEYBOARD) return mouse(await buttonByLabel(label));
+  await tabTo(isButton, label);
+  await page.keyboard.press("Enter");
+}
+async function go(urlPath) {
+  await page.goto(BASE + urlPath, { waitUntil: "networkidle0" });
+  if (KEYBOARD) await page.evaluate(() => { document.activeElement?.blur?.(); window.scrollTo(0, 0); });
+}
+async function typeInto(id, value) {
+  if (KEYBOARD) await tabTo(isId, id); else await mouse(`#${id}`);
+  await page.keyboard.down("Control"); await page.keyboard.press("KeyA"); await page.keyboard.up("Control");
+  await page.keyboard.type(value);
+}
+
+/** Accessibility tree check (not a screen-reader test): every control has a name, images have text alternatives. */
+async function a11y(label) {
+  const snap = await page.accessibility.snapshot({ interestingOnly: false });
+  const need = new Set(["button", "link", "textbox", "combobox", "checkbox", "radio", "slider", "spinbutton", "searchbox", "img"]);
+  const bad = [];
+  (function walk(n) { if (!n) return; if (need.has(n.role) && !(n.name ?? "").trim()) bad.push(`${n.role} without a name`); (n.children ?? []).forEach(walk); })(snap);
+  if (bad.length) throw new Error(`${label}: ${[...new Set(bad)].join(", ")}`);
+  return `${label}: every control has a name`;
+}
+
+const name = "walk-" + Date.now().toString(36);
+const PASSWORD = "a few random words here";
+
+// ---------------------------------------------------------------------------------------------- shared: account and tour
+async function createAccount() {
+  await go("/sign-in");
+  await waitText("10 or more characters");
+  await typeInto("name", name);
+  await typeInto("password", PASSWORD);
+  if (KEYBOARD) await page.keyboard.press("Enter"); else await press("Create account");
+  await waitText("A quick tour");
+}
+async function skipTour() {
+  await press("Skip the tour");
+  await page.waitForFunction(() => !document.body.innerText.includes("A quick tour"));
+}
+
+// ---------------------------------------------------------------------------------------------- learning walk
+async function learningWalk() {
+  if (!KEYBOARD) {
+    await step(1, "open the home page", async () => {
+      await go("/");
+      await waitText("Learn to doubt your own guesses");
+      await shot("01-home");
+    });
+  }
+  await step(2, "create an account", createAccount);
+  if (!KEYBOARD) {
+    await step(3, "open a word's definition inside the tour", async () => {
+      await mouse(await buttonByLabel("candle"));
+      await waitText("One box on the chart that shows one day");
+      await shot("03-tour-term");
+    });
+    await step(4, "take the tour to the end", async () => {
+      for (let i = 0; i < 4; i++) await press("Next");
+      await press("Got it");
+      await page.waitForFunction(() => !document.body.innerText.includes("A quick tour"));
+    });
+  } else {
+    await step(3, "open a word's definition inside the tour with the keyboard", async () => {
+      await tabTo(isButton, "candle");
+      await page.keyboard.press("Enter");
+      await waitText("One box on the chart that shows one day");
+      await page.keyboard.press("Escape");
+    });
+    await step(4, "take the tour to the end with the keyboard", async () => {
+      for (let i = 0; i < 4; i++) await press("Next");
+      await press("Got it");
+      await page.waitForFunction(() => !document.body.innerText.includes("A quick tour"));
+    });
+  }
+  await step(5, "start a mixed episode", async () => {
+    await go("/learn");
+    if (KEYBOARD) {
+      await tabTo(isId, "length");
+      await page.keyboard.type("About s"); // type-ahead picks "About six months (120 days)"
+    } else await page.select("#length", "120");
+    await press("Start");
+    await page.waitForFunction(() => /Day 60 of 120/.test(document.body.innerText), { timeout: 20000 });
+    await page.waitForSelector("canvas", { timeout: 10000 });
+    await shot("05-episode");
+  });
+  await step(6, "the page shows no name, dates or years", async () => {
+    const body = await text();
+    const bad = body.match(/\b(19|20)\d{2}-\d{2}-\d{2}\b|\b(200[5-9]|201\d|202[0-5])\b|\bAAPL\b|symbol/);
+    if (bad) throw new Error("identity-like text on the page: " + bad[0]);
+    return "no dates, years or tickers in the visible text";
+  });
+  await step(7, "send a guess (5 days ahead, 65%)", async () => {
+    if (KEYBOARD) {
+      await tabTo((el) => el.type === "radio" && el.name === "horizon" && el.checked, "horizon");
+      await page.keyboard.press("ArrowRight"); // 1 day -> 5 days
+    } else await mouse('input[name="horizon"][value="5"]');
+    await typeInto("percent-number", "65");
+    await waitText("6.5 out of 10");
+    await press("Send my guess");
+    await waitText("Waiting");
+  });
+  await step(8, "send the same guess again: it says it already exists", async () => {
+    await press("Send my guess");
+    await waitText("You already sent this guess");
+  });
+  await step(9, "move forward 5 days: the guess is answered", async () => {
+    await press("5 days");
+    await waitText("Answered", 20000);
+    await waitText("One guess tells you almost nothing");
+    await shot("09-answered");
+    return (await text("table[aria-label='Your guesses']")).replace(/\s+/g, " ").slice(0, 120);
+  });
+  if (KEYBOARD) return;
+  await step(10, "reload the page: the episode and the guess are still there", async () => {
+    await page.reload({ waitUntil: "networkidle0" });
+    await page.waitForFunction(() => /Day 65 of 120/.test(document.body.innerText) && /Answered/.test(document.body.innerText), { timeout: 20000 });
+    return await a11y("episode screen");
+  });
+  await step(11, "finish: open the score", async () => {
+    await press("Finish and see my score");
+    await press("Show my score");
+    await waitText("Your score");
+    await waitText("Too few guesses");
+    await shot("11-score");
+    return await a11y("score screen");
+  });
+  await step(12, "reveal what it was", async () => {
+    await press("Reveal what it was");
+    await press("Yes, reveal it");
+    await waitText("What this does not tell you");
+    await shot("12-reveal");
+    const t = await text();
+    return t.includes("This was a real stock") ? "it was a real stock" : "it was a made-up chart";
+  });
+  await step(13, "open How does this work?", async () => {
+    await go("/hood");
+    await waitText("Is everything running?");
+    await waitText("Front desk: running");
+    await page.waitForFunction(() => /Moved the episode forward/.test(document.body.innerText), { timeout: 10000 });
+    await shot("13-hood");
+  });
+  await step(14, "keyboard: Tab reaches the main controls on the start page", async () => {
+    await go("/learn");
+    const seen = new Set();
+    for (let i = 0; i < 30; i++) { await page.keyboard.press("Tab"); seen.add(await page.evaluate(() => (document.activeElement?.innerText || document.activeElement?.id || document.activeElement?.tagName || "").trim().slice(0, 30))); }
+    for (const need of ["Learn", "Start"]) if (![...seen].some((s) => s.includes(need))) throw new Error(`Tab never reached: ${need}`);
+  });
+}
+
+// ---------------------------------------------------------------------------------------------- Strategy Lab walk
+async function labWalk() {
+  await step(1, "create an account", createAccount);
+  await step(2, "skip the tour and open the Lab", async () => {
+    await skipTour();
+    await press("Lab");
+    await waitText("What this is, and what it is not");
+    await shot("01-lab-home");
+  });
+  await step(3, "pick a stock and start a study", async () => {
+    await page.waitForSelector("#stock-search", { timeout: 20000 });
+    await typeInto("stock-search", "AAPL");
+    if (KEYBOARD) { await page.keyboard.press("Tab"); await page.keyboard.press("Enter"); }
+    else await mouse(await (async () => { const [h] = await page.$$("xpath/.//button[contains(@class,'stock-btn')][.//span[normalize-space(.)='AAPL']]"); if (!h) throw new Error("AAPL not listed"); return h; })());
+    await press("Start study");
+    await waitText("AAPL study");
+    await waitText("Vault locked");
+  });
+  await step(4, "run the default rule on the practice years", async () => {
+    await press("Run on practice years");
+    await waitText("What happened on the practice years", 60000);
+    await waitText("What this does not tell you");
+    await shot("04-lab-results");
+  });
+  await step(5, "the result shows both lines, the benchmark and no vault date", async () => {
+    const body = await text();
+    const bad = body.match(/\b(2022|2023|2024|2025|2026)\b|\d{4}-\d{2}-\d{2}/);
+    if (bad) throw new Error("vault-era date on the page before the vault is opened: " + bad[0]);
+    for (const need of ["Your rule", "Buy and hold", "Growth of 100 (log scale)", "What costs do to it", "Could this be luck?", "Ideas tried"]) if (!body.includes(need)) throw new Error(`missing: ${need}`);
+    for (const banned of ["beats the market", "profit", "alpha", "guarantee"]) if (body.toLowerCase().includes(banned)) throw new Error(`banned word: ${banned}`);
+    await page.waitForSelector("canvas");
+    return await a11y("study page");
+  });
+  await step(6, "an invalid rule is refused next to the field and nothing is sent", async () => {
+    await typeInto("fast", "200");
+    await typeInto("slow", "50");
+    await press("Run on practice years");
+    await waitText("The short average must be shorter than the long average.");
+  });
+  await step(7, "run a second rule: it counts as a second idea", async () => {
+    await typeInto("fast", "10");
+    await typeInto("slow", "50");
+    await press("Run on practice years");
+    await page.waitForFunction(() => /2 ideas tried/.test(document.body.innerText), { timeout: 60000 });
+    await shot("07-lab-two-ideas");
+  });
+  await step(8, "run the same rule again: it is not counted twice", async () => {
+    await press("Run on practice years");
+    await waitText("not counted again", 60000);
+    if (!/2 ideas tried/.test(await text())) throw new Error("the repeat changed the count");
+  });
+  await step(9, "open the vault: cancel first, then confirm with OPEN", async () => {
+    await press("Open the vault");
+    await waitText("Open the vault?");
+    const focused = await page.evaluate(() => document.activeElement?.innerText?.trim());
+    if (focused !== "Cancel") throw new Error(`focus should start on Cancel, it is on: ${focused}`);
+    await press("Cancel");
+    await page.waitForFunction(() => !document.body.innerText.includes("Open the vault?"));
+    await press("Open the vault");
+    await waitText("Open the vault?");
+    await typeInto("vault-confirm", "OPEN");
+    await press("Open the vault now");
+    await waitText("The vault is open", 90000);
+    await shot("09-lab-vault-open");
+  });
+  await step(10, "the vault result compares practice and vault, and a reload shows the same", async () => {
+    const t = await text();
+    for (const need of ["Practice years and vault, side by side", "You tried 2 ideas before opening the vault."]) if (!t.includes(need)) throw new Error(`missing: ${need}`);
+    await page.reload({ waitUntil: "networkidle0" });
+    await waitText("The vault is open", 60000);
+    return await a11y("vault screen");
+  });
+  await step(11, "the vault cannot be opened a second time", async () => {
+    const t = await text();
+    if (t.includes("Open the vault now")) throw new Error("the open button is still offered");
+  });
+}
+
+if (LAB) await labWalk(); else await learningWalk();
+
+const failed = results.filter((r) => r[2] === "FAIL").length;
+console.log(results.map((r) => r.join(" | ")).join("\n"));
+console.log(`\nmouse clicks: ${clicks}${KEYBOARD ? " (must be 0 in keyboard mode)" : ""}`);
+if (KEYBOARD && clicks !== 0) results.push(["-", "no mouse clicks in keyboard mode", "FAIL", "", String(clicks)]);
+console.log("browser problems:", problems.length ? "\n  " + [...new Set(problems)].join("\n  ") : "none");
+await browser.close();
+process.exit(failed || (KEYBOARD && clicks) ? 1 : 0);

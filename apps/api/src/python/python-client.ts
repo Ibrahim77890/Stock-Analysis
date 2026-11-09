@@ -19,6 +19,15 @@ const SAFE: Record<number, string> = {
 
 export const DEFAULT_TIMEOUT_MS = 5_000;
 export const SCORE_TIMEOUT_MS = 30_000;
+export const LAB_RUN_TIMEOUT_MS = 30_000;
+
+const SAFE_LAB: Record<number, string> = {
+  404: "That study or stock was not found.",
+  409: "The vault of this study was already opened.",
+  422: "That request does not fit the rules. Please check the numbers.",
+  502: "The number service had a problem. Please try again.",
+  504: "The number service took too long. Please try again.",
+};
 
 /** Thin typed client for the Python analytics service. The gateway computes nothing: it forwards and maps errors. */
 @Injectable()
@@ -27,7 +36,8 @@ export class PythonClient {
 
   constructor(@Inject(APP_CONFIG) private readonly cfg: AppConfig, private readonly trace: TraceService) {}
 
-  private async call<T>(method: "GET" | "POST", path: string, pattern: string, body?: unknown, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<T> {
+  private async call<T>(method: "GET" | "POST", path: string, pattern: string, body?: unknown, timeoutMs = DEFAULT_TIMEOUT_MS, lab = false): Promise<T> {
+    const SAFE_MSG = lab ? SAFE_LAB : SAFE;
     const t0 = process.hrtime.bigint();
     const done = (status: number) =>
       this.trace.addUpstream({ service: "python", route: `${method} ${pattern}`, status, duration_ms: Math.round(Number(process.hrtime.bigint() - t0) / 1e5) / 10 });
@@ -43,14 +53,20 @@ export class PythonClient {
       const timedOut = e?.name === "TimeoutError" || e?.name === "AbortError";
       done(timedOut ? 504 : 502);
       this.log.warn(redact(`upstream ${method} ${pattern} failed: ${e?.name ?? "error"}`, this.cfg));
-      throw new UpstreamError(timedOut ? 504 : 502, SAFE[timedOut ? 504 : 502]);
+      throw new UpstreamError(timedOut ? 504 : 502, SAFE_MSG[timedOut ? 504 : 502]);
     }
     done(res.status);
     if (res.ok) return (await res.json()) as T;
     // upstream 4xx keep their status with a safe message; 5xx become 502
     const status = res.status >= 500 ? 502 : res.status;
     this.log.warn(`upstream ${method} ${pattern} answered ${res.status}`);
-    throw new UpstreamError(status, SAFE[status] ?? "The request could not be completed.");
+    let message = SAFE_MSG[status] ?? "The request could not be completed.";
+    if (lab && status === 422) {
+      // the Lab's own limit messages are plain sentences written for learners; anything else stays generic
+      const detail = await res.json().then((j: any) => j?.detail, () => undefined);
+      if (typeof detail === "string" && detail.length <= 300) message = detail;
+    }
+    throw new UpstreamError(status, message);
   }
 
   async health(timeoutMs = 2_000): Promise<boolean> {
@@ -91,5 +107,28 @@ export class PythonClient {
   }
   summary(ids: string[]) {
     return this.call<any>("POST", "/learning/summary", "/learning/summary", { episode_ids: ids }, SCORE_TIMEOUT_MS);
+  }
+
+  // ---- Strategy Lab (Sprint 07)
+  labStocks() {
+    return this.call<any>("GET", "/lab/stocks", "/lab/stocks", undefined, DEFAULT_TIMEOUT_MS, true);
+  }
+  labCreate(body: { symbol: string; name?: string }) {
+    return this.call<any>("POST", "/lab/studies", "/lab/studies", body, DEFAULT_TIMEOUT_MS, true);
+  }
+  labInfo(ids: number[]) {
+    return this.call<any>("POST", "/lab/studies/info", "/lab/studies/info", { study_ids: ids }, LAB_RUN_TIMEOUT_MS, true);
+  }
+  labOverview(id: number) {
+    return this.call<any>("GET", `/lab/studies/${id}`, "/lab/studies/:id", undefined, DEFAULT_TIMEOUT_MS, true);
+  }
+  labRun(id: number, body: object) {
+    return this.call<any>("POST", `/lab/studies/${id}/runs`, "/lab/studies/:id/runs", body, LAB_RUN_TIMEOUT_MS, true);
+  }
+  labVault(id: number, body: object) {
+    return this.call<any>("POST", `/lab/studies/${id}/vault`, "/lab/studies/:id/vault", body, LAB_RUN_TIMEOUT_MS, true);
+  }
+  labSavedVault(id: number) {
+    return this.call<any>("GET", `/lab/studies/${id}/vault`, "/lab/studies/:id/vault", undefined, LAB_RUN_TIMEOUT_MS, true);
   }
 }

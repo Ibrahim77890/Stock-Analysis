@@ -47,6 +47,10 @@ app = FastAPI(
         {"name": "Learning", "description": "INTERNAL (called by the NestJS gateway): blind episodes, precommitted guesses, scores and the reveal. "
                                             "With INTERNAL_API_TOKEN set every call needs the header X-Internal-Token. "
                                             "Writes: POST /episodes, /advance, /predictions, /reveal."},
+        {"name": "Lab", "description": "INTERNAL (called by the NestJS gateway): Strategy Lab studies. Test one moving-average rule on the "
+                                       "practice years of a stock, then open the vault (the most recent years) exactly once. With INTERNAL_API_TOKEN "
+                                       "set every call needs the header X-Internal-Token. Writes: POST /lab/studies, /lab/studies/{id}/runs, "
+                                       "/lab/studies/{id}/vault."},
         {"name": "Sources", "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor "
                                            "adjustment check, key check. Tiingo data are internal use only: keep this API on loopback."},
         {"name": "Macro", "description": "FRED series DGS3MO (risk-free rate) and VIXCLS, read as of a date. "
@@ -84,6 +88,10 @@ app.include_router(make_sources_router(get_conn))
 from market_data.api.routers.learning import make_router as make_learning_router  # noqa: E402
 
 app.include_router(make_learning_router(get_conn))
+
+from market_data.api.routers.lab import make_router as make_lab_router  # noqa: E402
+
+app.include_router(make_lab_router(get_conn))
 
 
 @app.exception_handler(UnknownSymbolError)

@@ -12,8 +12,8 @@ export function ScoreMeter({ value }: { value: number }) {
     <div className="meter" role="img" aria-label={`Score meter from 0 (perfect) to 0.5. Guessing is at 0.25. Your score is ${num(value)}.`}>
       <span className="mark" style={{ left: "50%" }}><span>{copy.meterGuessing} (0.25)</span></span>
       <span className="mark you" style={{ left: `${pos}%` }}><span>You: {num(value)}</span></span>
-      <span style={{ position: "absolute", left: 6, top: "0.2rem", fontSize: "0.8rem" }}>{copy.meterPerfect}</span>
-      <span style={{ position: "absolute", right: 6, top: "0.2rem", fontSize: "0.8rem" }}>{copy.meterWorse}</span>
+      <span className="end" style={{ left: 10 }}>{copy.meterPerfect}</span>
+      <span className="end" style={{ right: 10 }}>{copy.meterWorse}</span>
     </div>
   );
 }
@@ -56,29 +56,29 @@ export function CalibrationPlot({ bins }: { bins: Bin[] }) {
   return (
     <div>
       <h3>{copy.calibTitle}</h3>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 420, background: "#fff", border: "1px solid #aab4c3", borderRadius: 8 }}
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: 440, background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12 }}
         role="img" aria-label="Calibration plot. The diagonal line is perfect. Each dot is one group of similar guesses." aria-describedby={tableId}>
-        <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(1)} stroke="#4a5568" strokeDasharray="5 4" />
-        <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(0)} stroke="#1b2330" />
-        <line x1={x(0)} y1={y(0)} x2={x(0)} y2={y(1)} stroke="#1b2330" />
+        <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(1)} style={{ stroke: "var(--muted)" }} strokeDasharray="5 4" />
+        <line x1={x(0)} y1={y(0)} x2={x(1)} y2={y(0)} style={{ stroke: "var(--text)" }} />
+        <line x1={x(0)} y1={y(0)} x2={x(0)} y2={y(1)} style={{ stroke: "var(--text)" }} />
         {[0, 0.25, 0.5, 0.75, 1].map((t) => (
           <g key={t}>
-            <text x={x(t)} y={H - 22} fontSize="11" textAnchor="middle" fill="#1b2330">{Math.round(t * 100)}%</text>
-            <text x={pad - 6} y={y(t) + 4} fontSize="11" textAnchor="end" fill="#1b2330">{Math.round(t * 100)}%</text>
+            <text x={x(t)} y={H - 22} fontSize="11" textAnchor="middle" style={{ fill: "var(--text)" }}>{Math.round(t * 100)}%</text>
+            <text x={pad - 6} y={y(t) + 4} fontSize="11" textAnchor="end" style={{ fill: "var(--text)" }}>{Math.round(t * 100)}%</text>
           </g>
         ))}
-        <text x={W / 2} y={H - 6} fontSize="12" textAnchor="middle" fill="#1b2330">What you said</text>
-        <text x={12} y={H / 2} fontSize="12" textAnchor="middle" fill="#1b2330" transform={`rotate(-90 12 ${H / 2})`}>How often it happened</text>
+        <text x={W / 2} y={H - 6} fontSize="12" textAnchor="middle" style={{ fill: "var(--text)" }}>What you said</text>
+        <text x={12} y={H / 2} fontSize="12" textAnchor="middle" style={{ fill: "var(--text)" }} transform={`rotate(-90 12 ${H / 2})`}>How often it happened</text>
         {filled.map((b) => (
           <g key={b.bin_low} data-testid="calib-dot">
-            <line x1={x(b.mean_forecast!)} x2={x(b.mean_forecast!)} y1={y(b.wilson_low!)} y2={y(b.wilson_high!)} stroke="#1f5fbf" strokeWidth="2" />
-            <circle cx={x(b.mean_forecast!)} cy={y(b.observed!)} r={b.sparse ? 6 : 7} fill={b.sparse ? "#ffffff" : "#1f5fbf"} stroke="#1f5fbf" strokeWidth="2" data-sparse={b.sparse} />
-            <text x={x(b.mean_forecast!) + 9} y={y(b.observed!) - 6} fontSize="11" fill="#1b2330">n={b.n}{b.sparse ? ` (${copy.fewPoints})` : ""}</text>
+            <line x1={x(b.mean_forecast!)} x2={x(b.mean_forecast!)} y1={y(b.wilson_low!)} y2={y(b.wilson_high!)} style={{ stroke: "var(--accent)" }} strokeWidth="2" />
+            <circle cx={x(b.mean_forecast!)} cy={y(b.observed!)} r={b.sparse ? 6 : 7} style={{ fill: b.sparse ? "var(--surface)" : "var(--accent)", stroke: "var(--accent)" }} strokeWidth="2" data-sparse={b.sparse} />
+            <text x={x(b.mean_forecast!) + (b.mean_forecast! > 0.55 ? -10 : 10)} y={y(b.observed!) - 8} textAnchor={b.mean_forecast! > 0.55 ? "end" : "start"} fontSize="11" style={{ fill: "var(--text)" }}>n={b.n}{b.sparse ? ` (${copy.fewPoints})` : ""}</text>
           </g>
         ))}
       </svg>
       <p className="muted">{copy.calibHelp}</p>
-      <table id={tableId} aria-label={copy.tableTitle}>
+      <div className="table-wrap"><table id={tableId} aria-label={copy.tableTitle}>
         <caption>{copy.tableTitle}</caption>
         <thead><tr><th>Group (you said)</th><th>Guesses</th><th>Average you said</th><th>Happened</th><th>Likely range</th></tr></thead>
         <tbody>
@@ -89,7 +89,7 @@ export function CalibrationPlot({ bins }: { bins: Bin[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }
