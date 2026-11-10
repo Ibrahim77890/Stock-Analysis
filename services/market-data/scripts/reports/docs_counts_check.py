@@ -77,6 +77,14 @@ def main() -> int:
     listed_gw = len(re.findall(r"`(?:GET|POST)(?:\|GET)? /lab/[^`]*`", api_readme)) + api_readme.count("`POST|GET /lab/studies`") + api_readme.count("`POST|GET /lab/studies/:id/vault`")
     check("gateway Lab routes (OpenAPI) versus apps/api/README.md", listed_gw, gw_routes)
 
+    # 6. Sprint 09: routes and migrations
+    paper_routes = sum(1 for p, ops in spec["paths"].items() if p.endswith("/decisions") or p.endswith("/indicators") and p.startswith("/episodes/") for _ in ops)
+    journal_md = (ROOT / "docs/02-domain/journal.md").read_text(encoding="utf-8")
+    m = re.search(r"(\d+) routes", journal_md)
+    check("indicator and decision routes named in journal.md versus the OpenAPI", int(m.group(1)) if m else None, paper_routes)
+    n_versions = len(list((config.PROJECT_DIR / "migrations" / "versions").glob("0*.py")))
+    check("Python migrations (files) versus the head named in the data dictionary", n_versions, int(head_no))
+
     print("\nall counts match" if not problems else f"\nMISMATCH: {problems}")
     return 1 if problems else 0
 

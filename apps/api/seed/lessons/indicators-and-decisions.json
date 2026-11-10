@@ -1,0 +1,94 @@
+{
+  "slug": "indicators-and-decisions",
+  "position": 7,
+  "version": 1,
+  "title": "Indicators, decisions and doubt",
+  "minutes": 5,
+  "summary": "What an indicator describes, why to write your reason first, and how to test an idea fairly.",
+  "steps": [
+    {
+      "head": "What an indicator is",
+      "body": "An {{indicator|indicator}} is a number worked out from past prices. It sums up what has already happened."
+    },
+    {
+      "head": "The 20-day average",
+      "body": "The 20-day average is the mean of the last 20 closing prices. A price above it has been higher lately than its usual level. It says nothing about tomorrow.",
+      "more": "A moving average follows the price with a delay, because it is built from old prices."
+    },
+    {
+      "head": "The RSI",
+      "body": "The {{rsi|RSI}} compares recent rises with recent falls, on a scale from 0 to 100. A high RSI says the last days were mostly rises. It does not say a fall is due."
+    },
+    {
+      "head": "Write your reason first",
+      "body": "A {{decision-journal|decision journal}} keeps what you chose and why, before you know the result. Later you cannot rewrite what you thought.",
+      "more": "After a result, the past often looks obvious. Your own written reason is the fair record."
+    },
+    {
+      "head": "Testing an idea fairly",
+      "body": "A rule built on an indicator is one more {{idea-tried|idea tried}}. Test it with costs, on new prices, and count your tries."
+    }
+  ],
+  "questions": [
+    {
+      "prompt": "What does the 20-day average describe?",
+      "options": [
+        {
+          "text": "The mean of the last 20 closing prices.",
+          "why": "Yes. It sums up the recent past, nothing more.",
+          "correct": true
+        },
+        {
+          "text": "The price 20 days from now.",
+          "why": "No. An average is built from old prices, so it cannot see ahead.",
+          "correct": false
+        },
+        {
+          "text": "A sure sign of what to hold.",
+          "why": "No. It describes the past. It is not a promise about the future.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "An RSI of 80 says the last days were mostly rises. Does it say a fall is due?",
+      "options": [
+        {
+          "text": "No. It describes the past only.",
+          "why": "Right. A high RSI tells you how the last days went, not what comes next.",
+          "correct": true
+        },
+        {
+          "text": "Yes. A high RSI always means a fall.",
+          "why": "No. Prices can keep rising after a high RSI, and they can fall after a low one.",
+          "correct": false
+        },
+        {
+          "text": "Yes, within 20 days.",
+          "why": "No. Nothing about the RSI fixes a date or a direction.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "Why write your reason before you see the result?",
+      "options": [
+        {
+          "text": "So hindsight cannot rewrite what you thought.",
+          "why": "Right. Your own words from that day are the fair record to learn from.",
+          "correct": true
+        },
+        {
+          "text": "So the result looks better.",
+          "why": "No. Writing first does not change the result. It keeps your record honest.",
+          "correct": false
+        },
+        {
+          "text": "Because the result is always wrong.",
+          "why": "No. Results are sometimes right and sometimes wrong. A reason helps you tell luck from judgement.",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

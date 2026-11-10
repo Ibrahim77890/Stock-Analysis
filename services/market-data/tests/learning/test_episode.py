@@ -39,7 +39,7 @@ def test_migrations_0010_0011_up_down_up(test_db_url):
     alembic("downgrade", "0009")
     assert "research.episode" not in tables() and "research.prediction" not in tables()
     alembic("upgrade", "head")
-    assert tables() == before and "0012" in alembic("heads")
+    assert tables() == before and "0013" in alembic("heads")
 
 
 # ---- synthetic episodes (no market data needed)

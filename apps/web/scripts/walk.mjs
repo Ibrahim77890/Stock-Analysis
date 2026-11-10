@@ -6,6 +6,8 @@
 //   npm run walk -- --lab --keyboard the same, keyboard only
 //   npm run walk -- --lessons        the learning path: read a lesson with a demo, answer wrongly then rightly, follow the practice link
 //   npm run walk -- --lessons --keyboard   the same, keyboard only
+//   npm run walk -- --journal        indicators on the chart, a practice decision, the My decisions page
+//   npm run walk -- --journal --keyboard   the same, keyboard only
 //
 // Needs the three servers running (Python :8000, gateway :3000, web :5173). Uses the system Edge or Chrome
 // (set BROWSER_PATH to choose). It creates throwaway learners named walk-xxxx in the real database and saves screenshots
@@ -19,6 +21,7 @@ const args = new Set(process.argv.slice(2));
 const KEYBOARD = args.has("--keyboard");
 const LAB = args.has("--lab");
 const LESSONS = args.has("--lessons");
+const JOURNAL = args.has("--journal");
 const BASE = process.env.WEB_URL ?? "http://127.0.0.1:5173";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const OUT = path.join(ROOT, "data", "reports", "walk") + path.sep;
@@ -33,7 +36,7 @@ const CANDIDATES = [
 ].filter(Boolean);
 const executablePath = CANDIDATES.find((p) => existsSync(p));
 if (!executablePath) { console.error("No Edge or Chrome found. Set BROWSER_PATH."); process.exit(2); }
-console.log(`browser: ${executablePath}\nmode: ${LESSONS ? "lessons" : LAB ? "lab" : "learning"}${KEYBOARD ? " + keyboard only" : ""}\n`);
+console.log(`browser: ${executablePath}\nmode: ${LESSONS ? "lessons" : JOURNAL ? "journal" : LAB ? "lab" : "learning"}${KEYBOARD ? " + keyboard only" : ""}\n`);
 
 const browser = await puppeteer.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
 const page = await browser.newPage();
@@ -49,13 +52,13 @@ const results = [];
 async function step(n, name, fn) {
   const t0 = Date.now();
   try { const note = await fn(); results.push([n, name, "PASS", `${Date.now() - t0} ms`, note ?? ""]); }
-  catch (e) { results.push([n, name, "FAIL", `${Date.now() - t0} ms`, String(e.message).slice(0, 220)]); await page.screenshot({ path: `${OUT}fail-${LESSONS ? "lessons-" : LAB ? "lab-" : ""}${n}.png` }).catch(() => {}); }
+  catch (e) { results.push([n, name, "FAIL", `${Date.now() - t0} ms`, String(e.message).slice(0, 220)]); await page.screenshot({ path: `${OUT}fail-${LESSONS ? "lessons-" : JOURNAL ? "journal-" : LAB ? "lab-" : ""}${n}.png` }).catch(() => {}); }
 }
 const text = async (sel = "body") => page.$eval(sel, (el) => el.innerText);
 const waitText = (t, timeout = 20000) => page.waitForFunction((x) => document.body.innerText.includes(x), { timeout }, t);
 // case-insensitive: small labels such as "Step 1 of 5" are drawn in capitals by the style sheet
 const waitTextI = (t, timeout = 20000) => page.waitForFunction((x) => document.body.innerText.toLowerCase().includes(x.toLowerCase()), { timeout }, t);
-const shot = (name) => page.screenshot({ path: `${OUT}${LESSONS ? "lessons-" : LAB ? "lab-" : ""}${name}.png` });
+const shot = (name) => page.screenshot({ path: `${OUT}${LESSONS ? "lessons-" : JOURNAL ? "journal-" : LAB ? "lab-" : ""}${name}.png` });
 
 /** A mouse click. In keyboard mode this is a failure: the walk must never need the mouse. */
 async function mouse(handleOrSelector) {
@@ -65,7 +68,7 @@ async function mouse(handleOrSelector) {
   if (!h) throw new Error(`nothing to click: ${handleOrSelector}`);
   await h.click();
 }
-const buttonByLabel = async (label) => { const [h] = await page.$$(`xpath/.//button[normalize-space(.)="${label}"] | .//a[normalize-space(.)="${label}"]`); if (!h) throw new Error(`button not found: ${label}`); return h; };
+const buttonByLabel = async (label) => { const [h] = await page.$$(`xpath/.//button[normalize-space(.)="${label}"] | .//a[normalize-space(.)="${label}"] | .//summary[normalize-space(.)="${label}"]`); if (!h) throw new Error(`button not found: ${label}`); return h; };
 
 /** Tab (never more than `max` presses) until the focused element satisfies `test`, which runs in the page. */
 async function tabTo(test, arg, max = 140) {
@@ -76,7 +79,7 @@ async function tabTo(test, arg, max = 140) {
   }
   throw new Error(`Tab never reached: ${arg}`);
 }
-const isButton = (el, label) => (el.tagName === "BUTTON" || el.tagName === "A") && el.innerText.trim() === label;
+const isButton = (el, label) => (el.tagName === "BUTTON" || el.tagName === "A" || el.tagName === "SUMMARY") && el.innerText.trim() === label;
 const isId = (el, id) => el.id === id;
 
 /** Press a button or link: with the mouse, or by tabbing to it and pressing Enter (keyboard mode). */
@@ -328,13 +331,13 @@ async function chooseOption(optionText) {
 const waitVerdict = (kind) => page.waitForSelector(`.verdict.${kind}`, { timeout: 20000 });
 async function lessonsWalk() {
   await step(1, "create an account", createAccount);
-  await step(2, "skip the tour: the path lists six lessons and marks where to start", async () => {
+  await step(2, "skip the tour: the path lists seven lessons and marks where to start", async () => {
     await skipTour();
     await waitText("Your learning path");
     const body = await text();
     for (const need of ["Start here", "Reading a candle chart", "Costs, buy and hold, and the vault", "private"]) if (!body.includes(need)) throw new Error(`missing: ${need}`);
     const count = await page.$$eval(".path > li", (els) => els.length);
-    if (count !== 6) throw new Error(`expected 6 lessons, saw ${count}`);
+    if (count !== 7) throw new Error(`expected 7 lessons, saw ${count}`);
     // the Brier lesson is about the score by name, so its title is taken out of the scan
     // the Brier lesson teaches the score by name, so its whole card is taken out of the scan
     const cards = await page.$$eval(".path > li", (els) => els.map((e) => e.innerText));
@@ -414,7 +417,77 @@ async function lessonsWalk() {
   });
 }
 
-if (LESSONS) await lessonsWalk(); else if (LAB) await labWalk(); else await learningWalk();
+// ---------------------------------------------------------------------------------------------- journal walk
+async function chooseStance(label) {
+  const readLabel = () => page.evaluate(() => document.activeElement?.closest?.("label")?.innerText.trim() ?? "");
+  if (KEYBOARD) {
+    await tabTo((el) => el.type === "radio" && el.name === "stance", "stance");
+    for (let i = 0; i < 3 && (await readLabel()) !== label; i++) await page.keyboard.press("ArrowDown");
+    if ((await readLabel()) !== label) throw new Error(`could not reach the stance: ${label}`);
+    await page.keyboard.press("Space");
+  } else {
+    const [h] = await page.$$(`xpath/.//label[normalize-space(.)=${JSON.stringify(label)}]`);
+    if (!h) throw new Error(`stance not found: ${label}`);
+    await mouse(h);
+  }
+}
+async function journalWalk() {
+  await step(1, "create an account", createAccount);
+  await step(2, "skip the tour and start a 120-day episode", async () => {
+    await skipTour();
+    await go("/learn");
+    if (KEYBOARD) {
+      await tabTo(isId, "length");
+      await page.keyboard.type("About s");
+    } else await page.select("#length", "120");
+    await press("Start");
+    await page.waitForFunction(() => /Day 60 of 120/.test(document.body.innerText), { timeout: 20000 });
+    await shot("02-episode");
+  });
+  await step(3, "switch on the 20-day average: it is pressed, explained, and its numbers are in a table", async () => {
+    await press("20-day average");
+    await page.waitForFunction(() => document.querySelector('button[aria-pressed="true"]')?.innerText.trim() === "20-day average", { timeout: 20000 });
+    await waitText("None of these numbers is a forecast.");
+    await waitText("The 20-day average is the mean of the last 20 closing prices.");
+    await press("Show the numbers");
+    await page.waitForFunction(() => document.querySelectorAll("table[aria-label*='20-day average'] tbody tr").length === 10, { timeout: 20000 });
+    const last = await page.$$eval("table[aria-label*='20-day average'] tbody tr td:first-child", (els) => els.map((e) => Number(e.innerText)).at(-1));
+    if (last !== 60) throw new Error(`the last day in the table is ${last}, not 60`);
+  });
+  await step(4, "switch on the RSI: a panel with a text alternative appears", async () => {
+    await press("RSI (14 days)");
+    await page.waitForSelector("[data-testid='rsi-chart']", { timeout: 20000 });
+    const label = await page.$eval("[data-testid='rsi-chart']", (e) => e.getAttribute("aria-label"));
+    if (!/RSI panel/.test(label)) throw new Error("the RSI panel has no text alternative");
+    return await a11y("episode with indicators");
+  });
+  await step(5, "record a practice decision with a reason: it is saved and waits for the next day", async () => {
+    await chooseStance("Hold the stock (long)");
+    await typeInto("decision-reason", "The price has stayed above its average.");
+    await press("Record my decision");
+    await waitText("Saved for day 60. The result appears after the next day.");
+    await shot("05-decision-saved");
+  });
+  await step(6, "a second decision on the same day is refused in plain words", async () => {
+    await typeInto("decision-reason", "Trying again on the same day.");
+    await press("Record my decision");
+    await waitText("already recorded a decision for this day");
+  });
+  await step(7, "move one day on, then the journal shows the reason and a result in words", async () => {
+    await press("Next day");
+    await page.waitForFunction(() => /Day 61 of 120/.test(document.body.innerText), { timeout: 20000 });
+    await go("/journal");
+    await waitText("The price has stayed above its average.");
+    await waitText("after costs");
+    const t = await text();
+    for (const bad of [/win rate/i, /\b(score|rank|points|level)\b/i, /you should/i]) if (bad.test(t)) throw new Error(`banned wording on the journal: ${bad}`);
+    if (!t.includes("1 decision. That is far too few to say anything.")) throw new Error("the count line is missing");
+    await shot("07-journal");
+    return await a11y("journal page");
+  });
+}
+
+if (JOURNAL) await journalWalk(); else if (LESSONS) await lessonsWalk(); else if (LAB) await labWalk(); else await learningWalk();
 
 const failed = results.filter((r) => r[2] === "FAIL").length;
 console.log(results.map((r) => r.join(" | ")).join("\n"));

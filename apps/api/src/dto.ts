@@ -586,3 +586,69 @@ export class AnswerResultDto {
   @ApiProperty({ description: "Wrong answers so far to this question" }) wrong_so_far!: number;
   @ApiProperty({ description: "Rightly answered at least once" }) answered_right!: boolean;
 }
+
+// ------------------------------------------------------------------ indicators and practice decisions (Sprint 09)
+
+export class IndicatorPointDto {
+  @ApiProperty({ description: "Episode day number (1-based)" }) day!: number;
+  @ApiProperty() value!: number;
+}
+
+export class IndicatorDto {
+  @ApiProperty() episode_id!: string;
+  @ApiProperty({ enum: ["sma", "ema", "rsi"] }) name!: string;
+  @ApiProperty() window!: number;
+  @ApiProperty({ description: "Days revealed so far. Values exist only for these days." }) day!: number;
+  @ApiProperty({ type: [IndicatorPointDto], description: "Warm-up days have no value and are left out" }) values!: IndicatorPointDto[];
+}
+
+export class DecisionInDto {
+  @ApiProperty({ enum: ["long", "flat"], description: "long = hold from the close of today; flat = hold nothing. A practice stance, not advice." })
+  @IsIn(["long", "flat"], { message: "Please choose long or flat." })
+  stance!: "long" | "flat";
+
+  @ApiProperty({ example: "The price has stayed above its average.", description: "1 to 280 characters, written before the result is known" })
+  @Transform(trim)
+  @IsString({ message: "Please write a short reason." })
+  @Length(1, 280, { message: "Your reason needs 1 to 280 characters." })
+  reason!: string;
+
+  @ApiProperty({ example: "5b1f0c1a-0000-4000-8000-000000000000", description: "The same key twice stores one decision (a double click is safe)" })
+  @IsString({ message: "Something went wrong. Please try again." })
+  @Length(8, 64, { message: "Something went wrong. Please try again." })
+  client_key!: string;
+
+  @ApiPropertyOptional({ example: 2, description: "Cost of changing stance in basis points, 0 to 50" })
+  @IsOptional()
+  @IsNumber({}, { message: "The cost must be a number from 0 to 50." })
+  @Min(0, { message: "The cost must be a number from 0 to 50." })
+  @Max(50, { message: "The cost must be a number from 0 to 50." })
+  cost_bps?: number;
+}
+
+export class DecisionDto {
+  @ApiProperty() decision_id!: number;
+  @ApiProperty() day!: number;
+  @ApiProperty({ enum: ["long", "flat"] }) stance!: string;
+  @ApiProperty() reason!: string;
+  @ApiProperty() cost_bps!: number;
+  @ApiProperty({ description: "Days of results marked so far" }) days_marked!: number;
+  @ApiProperty({ enum: ["pending", "marked"] }) status!: string;
+  @ApiPropertyOptional({ type: Number, nullable: true, description: "Fractional result after cost; null while pending" }) result?: number | null;
+  @ApiPropertyOptional({ description: "Only in the reply to a new decision: false when the same key was already stored" }) created?: boolean;
+}
+
+export class JournalTotalsDto {
+  @ApiProperty() decisions!: number;
+  @ApiProperty() marked!: number;
+  @ApiProperty() pending!: number;
+  @ApiPropertyOptional({ type: Number, nullable: true }) growth?: number | null;
+  @ApiProperty() note!: string;
+}
+
+export class JournalDto {
+  @ApiProperty() episode_id!: string;
+  @ApiProperty() day!: number;
+  @ApiProperty({ type: [DecisionDto] }) decisions!: DecisionDto[];
+  @ApiProperty({ type: JournalTotalsDto }) totals!: JournalTotalsDto;
+}

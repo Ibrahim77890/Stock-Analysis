@@ -372,5 +372,34 @@
       "vault",
       "idea-tried"
     ]
+  },
+  {
+    "slug": "indicator",
+    "term": "Indicator",
+    "plain_definition": "A number worked out from past prices, such as an average. It describes what already happened. It does not forecast.",
+    "example": "The 20-day average of the last 20 closing prices is an indicator.",
+    "related": [
+      "moving-average",
+      "rsi"
+    ]
+  },
+  {
+    "slug": "rsi",
+    "term": "RSI",
+    "plain_definition": "The relative strength index. It compares recent rises with recent falls on a scale from 0 to 100. A high number means the last days were mostly rises.",
+    "example": "An RSI of 80 says the last days were mostly rises. It does not say a fall is due.",
+    "related": [
+      "indicator"
+    ]
+  },
+  {
+    "slug": "decision-journal",
+    "term": "Decision journal",
+    "plain_definition": "A record of what you chose and why, written before you know the result, so you can learn from your own words later.",
+    "example": "On day 60 you wrote: the price stayed above its average. You read it again after the reveal.",
+    "related": [
+      "hindsight-bias",
+      "guess"
+    ]
   }
 ]

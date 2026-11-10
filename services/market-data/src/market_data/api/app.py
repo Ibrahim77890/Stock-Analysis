@@ -51,6 +51,10 @@ app = FastAPI(
                                        "practice years of a stock, then open the vault (the most recent years) exactly once. With INTERNAL_API_TOKEN "
                                        "set every call needs the header X-Internal-Token. Writes: POST /lab/studies, /lab/studies/{id}/runs, "
                                        "/lab/studies/{id}/vault."},
+        {"name": "Indicators", "description": "INTERNAL (called by the NestJS gateway): SMA, EMA and RSI of the days of an episode that are already visible. "
+                                              "They describe the past; they do not forecast. No dates or symbols in replies."},
+        {"name": "Paper", "description": "INTERNAL (called by the NestJS gateway): practice decisions (long or flat) with a written reason on blind episodes. "
+                                          "Append-only; results use only days already reached. Writes: POST /episodes/{id}/decisions."},
         {"name": "Sources", "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor "
                                            "adjustment check, key check. Tiingo data are internal use only: keep this API on loopback."},
         {"name": "Macro", "description": "FRED series DGS3MO (risk-free rate) and VIXCLS, read as of a date. "
@@ -92,6 +96,12 @@ app.include_router(make_learning_router(get_conn))
 from market_data.api.routers.lab import make_router as make_lab_router  # noqa: E402
 
 app.include_router(make_lab_router(get_conn))
+
+from market_data.api.routers.indicators import make_router as make_indicators_router  # noqa: E402
+from market_data.api.routers.paper import make_router as make_paper_router  # noqa: E402
+
+app.include_router(make_indicators_router(get_conn))
+app.include_router(make_paper_router(get_conn))
 
 
 @app.exception_handler(UnknownSymbolError)

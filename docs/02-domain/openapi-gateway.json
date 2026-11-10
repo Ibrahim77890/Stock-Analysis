@@ -299,6 +299,92 @@
         ],
         "type": "object"
       },
+      "DecisionDto": {
+        "properties": {
+          "cost_bps": {
+            "type": "number"
+          },
+          "created": {
+            "description": "Only in the reply to a new decision: false when the same key was already stored",
+            "type": "boolean"
+          },
+          "day": {
+            "type": "number"
+          },
+          "days_marked": {
+            "description": "Days of results marked so far",
+            "type": "number"
+          },
+          "decision_id": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "result": {
+            "description": "Fractional result after cost; null while pending",
+            "nullable": true,
+            "type": "number"
+          },
+          "stance": {
+            "enum": [
+              "long",
+              "flat"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "marked"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision_id",
+          "day",
+          "stance",
+          "reason",
+          "cost_bps",
+          "days_marked",
+          "status"
+        ],
+        "type": "object"
+      },
+      "DecisionInDto": {
+        "properties": {
+          "client_key": {
+            "description": "The same key twice stores one decision (a double click is safe)",
+            "example": "5b1f0c1a-0000-4000-8000-000000000000",
+            "type": "string"
+          },
+          "cost_bps": {
+            "description": "Cost of changing stance in basis points, 0 to 50",
+            "example": 2,
+            "type": "number"
+          },
+          "reason": {
+            "description": "1 to 280 characters, written before the result is known",
+            "example": "The price has stayed above its average.",
+            "type": "string"
+          },
+          "stance": {
+            "description": "long = hold from the close of today; flat = hold nothing. A practice stance, not advice.",
+            "enum": [
+              "long",
+              "flat"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "stance",
+          "reason",
+          "client_key"
+        ],
+        "type": "object"
+      },
       "EpisodeListItemDto": {
         "properties": {
           "created_at": {
@@ -542,6 +628,112 @@
           "first_date",
           "last_date",
           "source"
+        ],
+        "type": "object"
+      },
+      "IndicatorDto": {
+        "properties": {
+          "day": {
+            "description": "Days revealed so far. Values exist only for these days.",
+            "type": "number"
+          },
+          "episode_id": {
+            "type": "string"
+          },
+          "name": {
+            "enum": [
+              "sma",
+              "ema",
+              "rsi"
+            ],
+            "type": "string"
+          },
+          "values": {
+            "description": "Warm-up days have no value and are left out",
+            "items": {
+              "$ref": "#/components/schemas/IndicatorPointDto"
+            },
+            "type": "array"
+          },
+          "window": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "episode_id",
+          "name",
+          "window",
+          "day",
+          "values"
+        ],
+        "type": "object"
+      },
+      "IndicatorPointDto": {
+        "properties": {
+          "day": {
+            "description": "Episode day number (1-based)",
+            "type": "number"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "day",
+          "value"
+        ],
+        "type": "object"
+      },
+      "JournalDto": {
+        "properties": {
+          "day": {
+            "type": "number"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionDto"
+            },
+            "type": "array"
+          },
+          "episode_id": {
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/JournalTotalsDto"
+          }
+        },
+        "required": [
+          "episode_id",
+          "day",
+          "decisions",
+          "totals"
+        ],
+        "type": "object"
+      },
+      "JournalTotalsDto": {
+        "properties": {
+          "decisions": {
+            "type": "number"
+          },
+          "growth": {
+            "nullable": true,
+            "type": "number"
+          },
+          "marked": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          },
+          "pending": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "decisions",
+          "marked",
+          "pending",
+          "note"
         ],
         "type": "object"
       },
@@ -2190,6 +2382,144 @@
         "summary": "The blind chart up to today (day numbers, price starts at 100)",
         "tags": [
           "Learning"
+        ]
+      }
+    },
+    "/episodes/{id}/decisions": {
+      "get": {
+        "operationId": "JournalController_journal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My decisions on this episode with results so far (only days already revealed)",
+        "tags": [
+          "Journal"
+        ]
+      },
+      "post": {
+        "operationId": "JournalController_record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionInDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a practice decision (long or flat) with a reason. Stored once and never edited; limited to 30 a minute.",
+        "tags": [
+          "Journal"
+        ]
+      }
+    },
+    "/episodes/{id}/indicators": {
+      "get": {
+        "operationId": "JournalController_indicators",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "enum": [
+                "sma",
+                "ema",
+                "rsi"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "2 to 200, default 20",
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndicatorDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "An indicator (sma, ema or rsi) for the days already revealed. It describes the past; it does not forecast.",
+        "tags": [
+          "Journal"
         ]
       }
     },

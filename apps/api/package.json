@@ -16,7 +16,8 @@
     "seed:glossary": "npm run build && node dist/scripts/seed-glossary.js",
     "seed:lessons": "npm run build && node dist/scripts/seed-lessons.js",
     "latency": "npm run build && node dist/scripts/latency.js",
-    "bench:sprint08": "npm run build && node dist/scripts/bench-sprint08.js"
+    "bench:sprint08": "npm run build && node dist/scripts/bench-sprint08.js",
+    "bench:sprint09": "npm run build && node dist/scripts/bench-sprint09.js"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

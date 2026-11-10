@@ -13,11 +13,11 @@ const problems = (l: unknown, file?: string) => validateLesson(l, dir, glossary,
 describe("lesson files (the only source of lesson text)", () => {
   const files = readLessonFiles(dir);
 
-  it("there are six lessons, in positions 1 to 6, and every one validates", () => {
-    expect(files).toHaveLength(6);
-    expect(files.map((f) => (f.lesson as LessonFile).position).sort()).toEqual([1, 2, 3, 4, 5, 6]);
+  it("there are seven lessons, in positions 1 to 7, and every one validates", () => {
+    expect(files).toHaveLength(7);
+    expect(files.map((f) => (f.lesson as LessonFile).position).sort()).toEqual([1, 2, 3, 4, 5, 6, 7]);
     for (const f of files) expect(problems(f.lesson, f.file), f.file).toEqual([]);
-    expect(loadValidLessons()).toHaveLength(6);
+    expect(loadValidLessons()).toHaveLength(7);
   });
 
   it("each file name equals its slug, and every question has exactly one correct option", () => {

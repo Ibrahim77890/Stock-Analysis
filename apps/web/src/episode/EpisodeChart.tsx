@@ -1,7 +1,9 @@
-import { CandlestickSeries, createChart, HistogramSeries, IChartApi, UTCTimestamp } from "lightweight-charts";
+import { CandlestickSeries, createChart, HistogramSeries, IChartApi, LineSeries, UTCTimestamp } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 import type { Bar } from "../api/client";
 import { episode as copy } from "../copy/episode";
+import { CHART } from "../lib/chartTheme";
+import type { Series } from "./Indicators";
 
 const DAY = 86400;
 /** Lightweight Charts wants timestamps; we number days and show "Day N" only (no calendar dates). */
@@ -11,7 +13,7 @@ export const formatDay = (time: number): string => `Day ${Math.round(time / DAY)
 export const UP = "#14663a";
 export const DOWN = "#a12020";
 
-export function EpisodeChart({ bars, showVolume }: { bars: Bar[]; showVolume: boolean }) {
+export function EpisodeChart({ bars, showVolume, overlays }: { bars: Bar[]; showVolume: boolean; overlays?: Series }) {
   const ref = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
@@ -34,9 +36,15 @@ export function EpisodeChart({ bars, showVolume }: { bars: Bar[]; showVolume: bo
       chart.priceScale("vol").applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
       vol.setData(bars.map((b) => ({ time: toTime(b.day), value: b.rel_volume })));
     }
+    for (const [name, color] of [["sma", CHART.sma], ["ema", CHART.ema]] as const) {
+      const pts = overlays?.[name];
+      if (!pts || pts.length === 0) continue;
+      const line = chart.addSeries(LineSeries, { color, lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+      line.setData(pts.map((p) => ({ time: toTime(p.day), value: p.value })));
+    }
     chart.timeScale().fitContent();
     return () => { chart.remove(); chartRef.current = null; };
-  }, [bars, showVolume]);
+  }, [bars, showVolume, overlays]);
 
   const last = bars.slice(-10);
   return (

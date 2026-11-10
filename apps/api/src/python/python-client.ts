@@ -36,7 +36,7 @@ export class PythonClient {
 
   constructor(@Inject(APP_CONFIG) private readonly cfg: AppConfig, private readonly trace: TraceService) {}
 
-  private async call<T>(method: "GET" | "POST", path: string, pattern: string, body?: unknown, timeoutMs = DEFAULT_TIMEOUT_MS, lab = false): Promise<T> {
+  private async call<T>(method: "GET" | "POST", path: string, pattern: string, body?: unknown, timeoutMs = DEFAULT_TIMEOUT_MS, lab = false, plain422 = false): Promise<T> {
     const SAFE_MSG = lab ? SAFE_LAB : SAFE;
     const t0 = process.hrtime.bigint();
     const done = (status: number) =>
@@ -61,7 +61,7 @@ export class PythonClient {
     const status = res.status >= 500 ? 502 : res.status;
     this.log.warn(`upstream ${method} ${pattern} answered ${res.status}`);
     let message = SAFE_MSG[status] ?? "The request could not be completed.";
-    if (lab && status === 422) {
+    if ((lab || plain422) && status === 422) {
       // the Lab's own limit messages are plain sentences written for learners; anything else stays generic
       const detail = await res.json().then((j: any) => j?.detail, () => undefined);
       if (typeof detail === "string" && detail.length <= 300) message = detail;
@@ -107,6 +107,17 @@ export class PythonClient {
   }
   summary(ids: string[]) {
     return this.call<any>("POST", "/learning/summary", "/learning/summary", { episode_ids: ids }, SCORE_TIMEOUT_MS);
+  }
+
+  // ---- Indicators and practice decisions (Sprint 09); 422 messages from these routes are plain sentences for learners
+  indicators(id: string, name: string, window: number) {
+    return this.call<any>("GET", `/episodes/${encodeURIComponent(id)}/indicators?name=${encodeURIComponent(name)}&window=${window}`, "/episodes/:id/indicators", undefined, DEFAULT_TIMEOUT_MS, false, true);
+  }
+  recordDecision(id: string, body: object) {
+    return this.call<any>("POST", `/episodes/${encodeURIComponent(id)}/decisions`, "/episodes/:id/decisions", body, DEFAULT_TIMEOUT_MS, false, true);
+  }
+  decisions(id: string) {
+    return this.call<any>("GET", `/episodes/${encodeURIComponent(id)}/decisions`, "/episodes/:id/decisions", undefined, DEFAULT_TIMEOUT_MS, false, true);
   }
 
   // ---- Strategy Lab (Sprint 07)

@@ -86,6 +86,35 @@ export function makeFakePython(trace?: TraceService): FakePython {
     labVaultBody(id: number, b: any) { const s = hasStudy(id); return { study_id: id, params: { fast: b.fast, slow: b.slow, cost_bps: b.cost_bps }, rule: metrics(0.1), buy_hold: metrics(0.5), growth: growth(), yearly: [{ year: 2022, rule: 0.1, buy_hold: 0.2 }], vault_years: 4, vault_bars: 1000, practice: { rule: metrics(1.2), buy_hold: metrics(2.5), years: 15.9 }, ideas_tried: s.trials.length }; },
     async labSavedVault(id: number) { rec("labSavedVault"); const s = hasStudy(id); if (!s.vault) throw new UpstreamError(422, "The vault of this study has not been opened yet."); const [f, sl, c] = s.trials[0].split("/").map(Number); return fake.labVaultBody(id, { fast: f, slow: sl, cost_bps: c }); },
   });
+  // ---- Indicators and practice decisions fake (Sprint 09); `leak` adds identity fields that must never reach a learner
+  const decisions = new Map<string, Array<{ decision_id: number; day: number; stance: string; reason: string; cost_bps: number; key: string }>>();
+  let did = 0;
+  const journalOf = (id: string) => {
+    const e = episodes.get(id)!;
+    const rows = decisions.get(id) ?? [];
+    const out = rows.map((r) => ({ decision_id: r.decision_id, day: r.day, stance: r.stance, reason: r.reason, cost_bps: r.cost_bps, days_marked: Math.max(0, e.day - r.day), status: e.day > r.day ? "marked" : "pending", result: e.day > r.day ? 0.01 : null }));
+    const marked = out.filter((d) => d.status === "marked").length;
+    return { episode_id: id, day: e.day, decisions: out, totals: { decisions: out.length, marked, pending: out.length - marked, growth: marked ? 0.01 : null, note: "A few decisions say very little." }, ...(fake.leak ? { symbol: "AAPL", start_date: "2015-03-02" } : {}) };
+  };
+  Object.assign(fake, {
+    async indicators(id: string, name: string, window: number) {
+      rec("indicators"); has(id); const e = episodes.get(id)!;
+      const values: any[] = []; for (let d = window; d <= e.day; d++) values.push({ day: d, value: 100 + d * 0.1, ...(fake.leak ? { date: "2015-03-02" } : {}) });
+      return { episode_id: id, name, window, day: e.day, values, ...(fake.leak ? { symbol: "AAPL", kind: "real", start_date: "2015-03-02" } : {}) };
+    },
+    async recordDecision(id: string, b: any) {
+      rec("recordDecision"); has(id); const e = episodes.get(id)!;
+      if (e.status !== "open") throw new UpstreamError(409, "This episode is already revealed.");
+      const rows = decisions.get(id) ?? []; decisions.set(id, rows);
+      const known = rows.find((r) => r.key === b.client_key);
+      if (!known && rows.some((r) => r.day === e.day)) throw new UpstreamError(422, "You already recorded a decision for this day. Move on a day first.");
+      let row = known;
+      if (!row) { row = { decision_id: ++did, day: e.day, stance: b.stance, reason: b.reason, cost_bps: b.cost_bps, key: b.client_key }; rows.push(row); }
+      const j = journalOf(id).decisions.find((d) => d.decision_id === row!.decision_id)!;
+      return { ...j, created: !known, ...(fake.leak ? { symbol: "AAPL", client_key: row.key } : {}) };
+    },
+    async decisions(id: string) { rec("decisions"); has(id); return journalOf(id); },
+  });
   return fake;
 }
 

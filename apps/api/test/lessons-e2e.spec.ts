@@ -9,7 +9,7 @@ import { repoRoot } from "../src/config/paths";
 import { HAS_DB, Harness, register, resetAppTables, startApp } from "./helpers";
 
 const ROOT = repoRoot();
-const SLUGS = ["reading-candles", "what-a-guess-means", "brier-score", "calibration", "luck-and-many-tries", "costs-and-the-vault"];
+const SLUGS = ["reading-candles", "what-a-guess-means", "brier-score", "calibration", "luck-and-many-tries", "costs-and-the-vault", "indicators-and-decisions"];
 
 // ---- contract validation (extra fields are errors)
 function strict(node: any): any {
@@ -85,7 +85,7 @@ describe.skipIf(!HAS_DB)("lessons on the real HTTP stack (database, real server,
     return { status: res.status, body: json, headers };
   };
 
-  it("ANSWER-KEY LEAK FUZZ: 6 lessons x every option x random order x 3 learners; every reply and header scanned; contracts validate", async () => {
+  it("ANSWER-KEY LEAK FUZZ: 7 lessons x every option x random order x 3 learners; every reply and header scanned; contracts validate", async () => {
     const learners = [await register(h, "Ann"), await register(h, "Bob"), await register(h, "Cy")];
     let seed = 11;
     const rnd = (n: number) => { seed = (seed * 1664525 + 1013904223) % 4294967296; return Math.floor((seed / 4294967296) * n); };
@@ -97,6 +97,7 @@ describe.skipIf(!HAS_DB)("lessons on the real HTTP stack (database, real server,
       expect(validates("LessonSummaryDto", list.body[0])).toEqual([]);
       const order = SLUGS.map((s) => ({ s, k: rnd(1000) })).sort((a, b) => a.k - b.k).map((x) => x.s);
       for (const slug of order) {
+        await h.pool.query("DELETE FROM app.rate_event"); // a learner sends more than 60 answers in this loop, which the limit would refuse
         const lesson = lessons.find((l) => l.slug === slug)!;
         const detail = await call(who.token, "GET", `/lessons/${slug}`);
         findings.push(...keyFindings(`detail ${slug}`, "read", detail.body, detail.headers, lessons));
@@ -168,7 +169,7 @@ describe.skipIf(!HAS_DB)("lessons on the real HTTP stack (database, real server,
       const who = rnd(2) ? a : b;
       const kind = rnd(4);
       if (kind === 0) {
-        const slug = SLUGS[rnd(6)], n = 1 + rnd(5);
+        const slug = SLUGS[rnd(7)], n = 1 + rnd(5);
         const r = await call(who.token, "POST", `/lessons/${slug}/steps/${n}/read`);
         expect(r.status).toBe(200);
         mine[who.id].add(`${slug}/${n}`);
@@ -209,8 +210,8 @@ describe.skipIf(!HAS_DB)("lessons on the real HTTP stack (database, real server,
   it("the lesson content hash is stored and unchanged after a second seed (reproducibility)", async () => {
     const before = (await h.pool.query("SELECT slug, content_hash FROM app.lesson ORDER BY position")).rows;
     const r = await seedLessons(h.pool, lessons);
-    expect(r).toMatchObject({ inserted: 0, updated: 0, unchanged: 6 });
+    expect(r).toMatchObject({ inserted: 0, updated: 0, unchanged: 7 });
     expect((await h.pool.query("SELECT slug, content_hash FROM app.lesson ORDER BY position")).rows).toEqual(before);
-    expect(before).toHaveLength(6);
+    expect(before).toHaveLength(7);
   });
 });

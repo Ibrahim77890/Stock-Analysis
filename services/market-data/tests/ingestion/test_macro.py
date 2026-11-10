@@ -154,7 +154,7 @@ def test_migration_up_down_up_keeps_tables_and_head(test_db_url):
     alembic("downgrade", "0008")  # one before the macro migration (0009); later heads are re-applied below
     assert "market.macro_observation" not in tables()
     alembic("upgrade", "head")
-    assert tables() == before and "0012" in alembic("heads")
+    assert tables() == before and "0013" in alembic("heads")
 
 
 # ---- keys

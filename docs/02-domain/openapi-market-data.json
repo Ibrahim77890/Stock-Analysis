@@ -632,6 +632,48 @@
         "title": "CreateStudyIn",
         "type": "object"
       },
+      "DecisionIn": {
+        "properties": {
+          "client_key": {
+            "description": "the same key twice stores one decision",
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Client Key",
+            "type": "string"
+          },
+          "cost_bps": {
+            "default": 2.0,
+            "description": "cost of changing stance, in basis points",
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Cost Bps",
+            "type": "number"
+          },
+          "reason": {
+            "description": "why, written before the result is known",
+            "maxLength": 280,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "stance": {
+            "description": "long = hold the stock from today's close; flat = hold nothing",
+            "enum": [
+              "long",
+              "flat"
+            ],
+            "title": "Stance",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stance",
+          "reason",
+          "client_key"
+        ],
+        "title": "DecisionIn",
+        "type": "object"
+      },
       "DownloadRequest": {
         "properties": {
           "end": {
@@ -3888,6 +3930,220 @@
         ]
       }
     },
+    "/episodes/{episode_id}/decisions": {
+      "get": {
+        "operationId": "get_journal_episodes__episode_id__decisions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Journal Episodes  Episode Id  Decisions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "journal: decisions with their results so far and totals (only days already reached)",
+        "tags": [
+          "Paper"
+        ]
+      },
+      "post": {
+        "operationId": "record_episodes__episode_id__decisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Record Episodes  Episode Id  Decisions Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "record_decision: store a practice stance at the cursor day; append-only, idempotent by client key (writes)",
+        "tags": [
+          "Paper"
+        ]
+      }
+    },
+    "/episodes/{episode_id}/indicators": {
+      "get": {
+        "operationId": "indicators_episodes__episode_id__indicators_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "episode_id",
+            "required": true,
+            "schema": {
+              "title": "Episode Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "enum": [
+                "sma",
+                "ema",
+                "rsi"
+              ],
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 200,
+              "minimum": 2,
+              "title": "Window",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Indicators Episodes  Episode Id  Indicators Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "indicator_for_episode: SMA, EMA or RSI of the days already visible (no dates, no symbols)",
+        "tags": [
+          "Indicators"
+        ]
+      }
+    },
     "/episodes/{episode_id}/predictions": {
       "get": {
         "operationId": "predictions_episodes__episode_id__predictions_get",
@@ -6701,6 +6957,14 @@
     {
       "description": "INTERNAL (called by the NestJS gateway): Strategy Lab studies. Test one moving-average rule on the practice years of a stock, then open the vault (the most recent years) exactly once. With INTERNAL_API_TOKEN set every call needs the header X-Internal-Token. Writes: POST /lab/studies, /lab/studies/{id}/runs, /lab/studies/{id}/vault.",
       "name": "Lab"
+    },
+    {
+      "description": "INTERNAL (called by the NestJS gateway): SMA, EMA and RSI of the days of an episode that are already visible. They describe the past; they do not forecast. No dates or symbols in replies.",
+      "name": "Indicators"
+    },
+    {
+      "description": "INTERNAL (called by the NestJS gateway): practice decisions (long or flat) with a written reason on blind episodes. Append-only; results use only days already reached. Writes: POST /episodes/{id}/decisions.",
+      "name": "Paper"
     },
     {
       "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor adjustment check, key check. Tiingo data are internal use only: keep this API on loopback.",

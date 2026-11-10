@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { tour } from "../copy/home";
+import { journal as journalCopy } from "../copy/journal";
 import { lessons } from "../copy/lessons";
 import { BrandMark, Icon } from "./Icon";
 import { Tour, tourSeen } from "./Tour";
@@ -33,6 +34,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <NavLink to="/path"><Icon name="route" />{lessons.navLabel}</NavLink>
             <NavLink to="/learn"><Icon name="eye" />Learn</NavLink>
             <NavLink to="/lab"><Icon name="lab" />Lab</NavLink>
+            <NavLink to="/journal"><Icon name="book" />{journalCopy.navLabel}</NavLink>
             <NavLink to="/progress"><Icon name="chart" />My progress</NavLink>
             <NavLink to="/glossary"><Icon name="book" />Words</NavLink>
             <NavLink to="/hood"><Icon name="layers" />How does this work?</NavLink>

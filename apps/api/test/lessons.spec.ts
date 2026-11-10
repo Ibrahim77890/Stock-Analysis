@@ -3,7 +3,7 @@ import { glossarySlugs, loadValidLessons, seedLessons } from "../scripts/seed-le
 import { LessonFile } from "../src/lessons/content";
 import { auth, HAS_DB, Harness, register, resetAppTables, startApp } from "./helpers";
 
-const SLUGS = ["reading-candles", "what-a-guess-means", "brier-score", "calibration", "luck-and-many-tries", "costs-and-the-vault"];
+const SLUGS = ["reading-candles", "what-a-guess-means", "brier-score", "calibration", "luck-and-many-tries", "costs-and-the-vault", "indicators-and-decisions"];
 const NOT_FOUND = { statusCode: 404, message: "That lesson was not found." };
 
 describe.skipIf(!HAS_DB)("lessons gateway (database, fake Python)", () => {
@@ -34,7 +34,7 @@ describe.skipIf(!HAS_DB)("lessons gateway (database, fake Python)", () => {
     expect((await h.http().post("/lessons/brier-score/questions/1/answer").send({ option: 0 })).status).toBe(401);
   });
 
-  it("lists six lessons in order with zero progress for a new learner", async () => {
+  it("lists seven lessons in order with zero progress for a new learner", async () => {
     const { token } = await register(h, "Ann");
     const r = await h.http().get("/lessons").set(auth(token));
     expect(r.status).toBe(200);
@@ -147,7 +147,7 @@ describe.skipIf(!HAS_DB)("lessons gateway (database, fake Python)", () => {
     const mine = { [a.id]: new Set<string>(), [b.id]: new Set<string>() } as Record<string, Set<string>>;
     for (let i = 0; i < 200; i++) {
       const who = rnd(2) === 0 ? a : b;
-      const slug = SLUGS[rnd(6)], n = 1 + rnd(5);
+      const slug = SLUGS[rnd(7)], n = 1 + rnd(5);
       const r = await read(who.token, slug, n);
       expect(r.status).toBe(200);
       mine[who.id].add(`${slug}/${n}`);
@@ -176,13 +176,13 @@ describe.skipIf(!HAS_DB)("lessons gateway (database, fake Python)", () => {
 
   it("re-seeding: unchanged is reported; a changed lesson needs a higher version; old attempts keep their old version", async () => {
     const { token, id } = await register(h, "Ann");
-    expect(await seedLessons(h.pool, lessons)).toMatchObject({ inserted: 0, updated: 0, unchanged: 6 });
+    expect(await seedLessons(h.pool, lessons)).toMatchObject({ inserted: 0, updated: 0, unchanged: 7 });
     await answer(token, "brier-score", 1, keyOf("brier-score", 1));
     const changed: LessonFile[] = JSON.parse(JSON.stringify(lessons));
     changed[2].questions[0].prompt = changed[2].questions[0].prompt + " (reworded)";
     await expect(seedLessons(h.pool, changed)).rejects.toThrow(/Raise "version"/);
     changed[2].version = 2;
-    expect(await seedLessons(h.pool, changed)).toMatchObject({ updated: 1, unchanged: 5 });
+    expect(await seedLessons(h.pool, changed)).toMatchObject({ updated: 1, unchanged: 6 });
     await answer(token, "brier-score", 1, keyOf("brier-score", 1));
     const rows = await h.pool.query("SELECT lesson_version FROM app.quiz_answer WHERE learner_id = $1 ORDER BY answer_id", [id]);
     expect(rows.rows.map((r) => r.lesson_version)).toEqual([1, 2]);
@@ -196,7 +196,7 @@ describe.skipIf(!HAS_DB)("lessons gateway (database, fake Python)", () => {
 
   it("the seeded database rows pass the same content checks as the files", async () => {
     const rows = await h.pool.query("SELECT l.slug, l.content, (SELECT json_agg(q.options ORDER BY q.position) FROM app.lesson_question q WHERE q.lesson_slug = l.slug) AS opts FROM app.lesson l ORDER BY position");
-    expect(rows.rowCount).toBe(6);
+    expect(rows.rowCount).toBe(7);
     for (const r of rows.rows) {
       for (const opts of r.opts) expect((opts as any[]).filter((o) => o.correct)).toHaveLength(1);
       expect(r.content.steps.length).toBeGreaterThanOrEqual(4);

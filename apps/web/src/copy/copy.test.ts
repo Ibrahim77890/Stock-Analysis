@@ -5,6 +5,7 @@ import * as account from "./home";
 import { episode } from "./episode";
 import { hood } from "./hood";
 import { lab } from "./lab";
+import { decision, indicators, journal } from "./journal";
 import { lessons } from "./lessons";
 import { score } from "./score";
 
@@ -15,6 +16,9 @@ const blocks: Record<string, string[]> = {
   hood: flattenStrings(hood),
   lab: flattenStrings(lab),
   lessons: flattenStrings(lessons),
+  indicators: flattenStrings(indicators),
+  decision: flattenStrings(decision),
+  journal: flattenStrings(journal),
 };
 
 describe("screen copy is plain language", () => {

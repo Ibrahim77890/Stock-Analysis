@@ -378,6 +378,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/episodes/{episode_id}/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** journal: decisions with their results so far and totals (only days already reached) */
+        get: operations["get_journal_episodes__episode_id__decisions_get"];
+        put?: never;
+        /** record_decision: store a practice stance at the cursor day; append-only, idempotent by client key (writes) */
+        post: operations["record_episodes__episode_id__decisions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/episodes/{episode_id}/indicators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** indicator_for_episode: SMA, EMA or RSI of the days already visible (no dates, no symbols) */
+        get: operations["indicators_episodes__episode_id__indicators_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/episodes/{episode_id}/predictions": {
         parameters: {
             query?: never;
@@ -1597,6 +1632,31 @@ export interface components {
              * @default 1000
              */
             vault_bars: number;
+        };
+        /** DecisionIn */
+        DecisionIn: {
+            /**
+             * Client Key
+             * @description the same key twice stores one decision
+             */
+            client_key: string;
+            /**
+             * Cost Bps
+             * @description cost of changing stance, in basis points
+             * @default 2
+             */
+            cost_bps: number;
+            /**
+             * Reason
+             * @description why, written before the result is known
+             */
+            reason: string;
+            /**
+             * Stance
+             * @description long = hold the stock from today's close; flat = hold nothing
+             * @enum {string}
+             */
+            stance: "long" | "flat";
         };
         /** DownloadRequest */
         DownloadRequest: {
@@ -3824,6 +3884,118 @@ export interface operations {
     bars_episodes__episode_id__bars_get: {
         parameters: {
             query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_journal_episodes__episode_id__decisions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_episodes__episode_id__decisions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-internal-token"?: string | null;
+            };
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    indicators_episodes__episode_id__indicators_get: {
+        parameters: {
+            query: {
+                name: "sma" | "ema" | "rsi";
+                window?: number;
+            };
             header?: {
                 "x-internal-token"?: string | null;
             };

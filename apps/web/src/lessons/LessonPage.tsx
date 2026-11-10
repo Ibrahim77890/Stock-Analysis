@@ -94,7 +94,7 @@ export function LessonPage() {
   }
   if (!lesson) return <Loading />;
   const s = lesson.steps[step];
-  const practiceLearn = lesson.position <= 4;
+  const practiceLearn = lesson.position <= 4 || lesson.position === 7;
 
   return (
     <>

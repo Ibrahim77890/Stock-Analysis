@@ -87,6 +87,11 @@ export function Learn() {
   );
 }
 
+import { DecisionCard } from "../journal/DecisionCard";
+import { IndicatorTable, IndicatorToggles, RsiPanel, useIndicators } from "../episode/Indicators";
+import type { IndicatorName } from "../episode/Indicators";
+import { indicators as indCopy, decision as decCopy } from "../copy/journal";
+
 export function EpisodeScreen() {
   const { id = "" } = useParams();
   const { api } = useAuth();
@@ -100,6 +105,7 @@ export function EpisodeScreen() {
   const [finishing, setFinishing] = useState(false);
   const [moving, setMoving] = useState(false);
   const moveLock = useRef(false);
+  const [active, setActive] = useState<Set<IndicatorName>>(new Set());
 
   const load = useCallback(async () => {
     try {
@@ -125,6 +131,9 @@ export function EpisodeScreen() {
     return r;
   }
 
+  const { series, error: indError } = useIndicators(api, id, state?.day ?? 0, state ? active : new Set());
+  const toggle = (n: IndicatorName) => setActive((cur) => { const next = new Set(cur); if (next.has(n)) next.delete(n); else next.add(n); return next; });
+
   if (error && !state) return <ErrorMessage>{error}</ErrorMessage>;
   if (!state) return <Loading>{copy.loading}</Loading>;
   const waiting = preds.filter((p) => p.status === "pending").length;
@@ -143,17 +152,27 @@ export function EpisodeScreen() {
         <div>
           <Card title={copy.chartTitle}>
             <CandleHelp />
-            <EpisodeChart bars={bars} showVolume={showVolume} />
+            <EpisodeChart bars={bars} showVolume={showVolume} overlays={series} />
+            {active.has("rsi") && <RsiPanel points={series.rsi ?? []} />}
             <details onToggle={(e) => setShowVolume((e.target as HTMLDetailsElement).open)}>
               <summary>{copy.showMore}: {copy.showVolume}</summary>
               <p className="muted">{copy.volumeNote}</p>
             </details>
+          </Card>
+          <Card title={indCopy.title}>
+            <p className="muted small">{indCopy.intro}</p>
+            <IndicatorToggles active={active} onToggle={toggle} />
+            {indError && <ErrorMessage>{indError}</ErrorMessage>}
+            <IndicatorTable series={series} active={active} />
           </Card>
           <Card title={copy.guessesTitle}><GuessList items={preds} /></Card>
         </div>
         <div className="sticky">
           <Card title={copy.askTitle}>
             <GuessForm day={state.day} nBars={state.n_bars} disabled={revealed} onSend={send} onTouched={() => setPhase((p) => (p === 0 ? 1 : p))} />
+          </Card>
+          <Card title={decCopy.title}>
+            <DecisionCard day={state.day} disabled={revealed} onSend={(b) => api.decide(id, b)} />
           </Card>
           <Card title={copy.moveTitle}>
             <div className="row">

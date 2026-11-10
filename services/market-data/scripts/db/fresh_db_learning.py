@@ -47,7 +47,7 @@ def main() -> int:
 
     run(fresh, "-m", "alembic", "upgrade", "head")
     heads = run(fresh, "-m", "alembic", "heads").stdout
-    assert "0012" in heads, heads
+    assert "0013" in heads, heads
     for cmd in (["verify"], ["load"], ["tiingo-load"], ["fred-load"]):
         run(fresh, "-m", "market_data.cli", *cmd)
     fp_fresh = json.loads(run(fresh, "scripts/reports/learning_fingerprint.py").stdout)

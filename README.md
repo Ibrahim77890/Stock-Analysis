@@ -108,9 +108,13 @@ curl http://127.0.0.1:3000/health
 
 In the web app, sign in and open "How does this work?" (the `/hood` page) to see the live status of each part.
 
+## Indicators and practice decisions
+
+Open an episode (**Learn**). Under the chart, switch on the 20-day average, the EMA or the RSI to see what each one describes. Use the **Practice decision** card to record what you would hold and why; **My decisions** in the top bar shows them later with the result in words. Needs the Python migration `0013` (`uv run poe migration-run`). Design: `docs/04-adr/0019-indicators-and-the-practice-journal.md`, `docs/02-domain/journal.md`.
+
 ## Follow the learning path
 
-Sign in: you land on **Path**, six short lessons (candles, what a probability means, the Brier score, calibration, luck and many tries, costs and the vault). Each lesson has a few steps, an optional small demo on made-up data and three questions checked by the server. Load the lessons once with `cd apps/api && npm run seed:lessons`. Design: `docs/04-adr/0018-lessons-and-durable-platform-base.md`, `docs/02-domain/lessons.md`.
+Sign in: you land on **Path**, seven short lessons (candles, what a probability means, the Brier score, calibration, luck and many tries, costs and the vault, indicators and decisions). Each lesson has a few steps, an optional small demo on made-up data and three questions checked by the server. Load the lessons once with `cd apps/api && npm run seed:lessons`. Design: `docs/04-adr/0018-lessons-and-durable-platform-base.md`, `docs/02-domain/lessons.md`.
 
 ## Try the Strategy Lab
 
@@ -128,6 +132,8 @@ npm run walk -- --lab             # the Strategy Lab walk
 npm run walk -- --lab --keyboard  # the Lab walk, keyboard only
 npm run walk -- --lessons         # the learning path: a lesson with a demo, questions, practice link
 npm run walk -- --lessons --keyboard   # the same, keyboard only
+npm run walk -- --journal         # indicators, a practice decision, the My decisions page
+npm run walk -- --journal --keyboard   # the same, keyboard only
 ```
 
 It creates throwaway learners named `walk-...` in the real database and saves screenshots under `data/reports/walk/` (git-ignored).

@@ -52,7 +52,7 @@ def test_migration_0012_up_down_up(test_db_url):
     alembic("downgrade", "0011")
     assert "research.lab_study" not in tables()
     alembic("upgrade", "head")
-    assert tables() == before and "0012" in alembic("heads")
+    assert tables() == before and "0013" in alembic("heads")
 
 
 # ---- list and create

@@ -283,3 +283,5 @@ details.card > summary { font-size: 1.05rem; }
 .mark.down { color: var(--down); }
 .flips { font-family: ui-monospace, Consolas, monospace; letter-spacing: 0.08em; word-break: break-all; margin: 0.4rem 0; }
 .flip.hit { background: var(--accent); color: var(--accent-text); border-radius: 3px; padding: 0 0.1em; }
+textarea { font: inherit; padding: 0.6rem 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-sm); width: 100%; max-width: 32rem; background: var(--surface); color: var(--text); resize: vertical; }
+textarea:hover { border-color: var(--accent); }

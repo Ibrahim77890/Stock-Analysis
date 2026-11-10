@@ -107,6 +107,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/episodes/{id}/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My decisions on this episode with results so far (only days already revealed) */
+        get: operations["JournalController_journal"];
+        put?: never;
+        /** Record a practice decision (long or flat) with a reason. Stored once and never edited; limited to 30 a minute. */
+        post: operations["JournalController_record"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/episodes/{id}/indicators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An indicator (sma, ema or rsi) for the days already revealed. It describes the past; it does not forecast. */
+        get: operations["JournalController_indicators"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/episodes/{id}/predictions": {
         parameters: {
             query?: never;
@@ -538,6 +573,44 @@ export interface components {
             universe_caveat: string;
             warnings: string[];
         };
+        DecisionDto: {
+            cost_bps: number;
+            /** @description Only in the reply to a new decision: false when the same key was already stored */
+            created?: boolean;
+            day: number;
+            /** @description Days of results marked so far */
+            days_marked: number;
+            decision_id: number;
+            reason: string;
+            /** @description Fractional result after cost; null while pending */
+            result?: number | null;
+            /** @enum {string} */
+            stance: "long" | "flat";
+            /** @enum {string} */
+            status: "pending" | "marked";
+        };
+        DecisionInDto: {
+            /**
+             * @description The same key twice stores one decision (a double click is safe)
+             * @example 5b1f0c1a-0000-4000-8000-000000000000
+             */
+            client_key: string;
+            /**
+             * @description Cost of changing stance in basis points, 0 to 50
+             * @example 2
+             */
+            cost_bps?: number;
+            /**
+             * @description 1 to 280 characters, written before the result is known
+             * @example The price has stayed above its average.
+             */
+            reason: string;
+            /**
+             * @description long = hold from the close of today; flat = hold nothing. A practice stance, not advice.
+             * @enum {string}
+             */
+            stance: "long" | "flat";
+        };
         EpisodeListItemDto: {
             created_at: string;
             /** @description the current day (cursor) */
@@ -606,6 +679,34 @@ export interface components {
             sector: string | null;
             source: string;
             symbol: string;
+        };
+        IndicatorDto: {
+            /** @description Days revealed so far. Values exist only for these days. */
+            day: number;
+            episode_id: string;
+            /** @enum {string} */
+            name: "sma" | "ema" | "rsi";
+            /** @description Warm-up days have no value and are left out */
+            values: components["schemas"]["IndicatorPointDto"][];
+            window: number;
+        };
+        IndicatorPointDto: {
+            /** @description Episode day number (1-based) */
+            day: number;
+            value: number;
+        };
+        JournalDto: {
+            day: number;
+            decisions: components["schemas"]["DecisionDto"][];
+            episode_id: string;
+            totals: components["schemas"]["JournalTotalsDto"];
+        };
+        JournalTotalsDto: {
+            decisions: number;
+            growth?: number | null;
+            marked: number;
+            note: string;
+            pending: number;
         };
         KindScoreDto: {
             brier: number | null;
@@ -1167,6 +1268,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BarsDto"];
+                };
+            };
+        };
+    };
+    JournalController_journal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalDto"];
+                };
+            };
+        };
+    };
+    JournalController_record: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionDto"];
+                };
+            };
+        };
+    };
+    JournalController_indicators: {
+        parameters: {
+            query: {
+                name: "sma" | "ema" | "rsi";
+                /** @description 2 to 200, default 20 */
+                window?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndicatorDto"];
                 };
             };
         };
