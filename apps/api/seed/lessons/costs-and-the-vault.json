@@ -1,0 +1,93 @@
+{
+  "slug": "costs-and-the-vault",
+  "position": 6,
+  "version": 1,
+  "title": "Costs, buy and hold, and the vault",
+  "minutes": 6,
+  "summary": "Why costs matter, why every rule meets buy and hold, and what a backtest cannot tell you.",
+  "steps": [
+    {
+      "head": "Trading has a price",
+      "body": "Every trade costs a little, from fees and a slightly worse price. We count it in {{basis-point|basis points}}. 100 basis points is 1%."
+    },
+    {
+      "head": "Small costs add up",
+      "body": "A rule that trades often pays the cost again and again. A result that looks good can turn bad after costs."
+    },
+    {
+      "head": "Compare with buy and hold",
+      "body": "{{buy-and-hold|Buy and hold}} means buying once and doing nothing. Every rule should be shown next to it."
+    },
+    {
+      "head": "The vault",
+      "body": "The {{vault|vault}} holds the newest years, kept locked. You can open it once, with one rule, after you have tried that rule on the practice years.",
+      "more": "One look only, so you cannot keep peeking and adjusting until the result looks good."
+    },
+    {
+      "head": "What a backtest cannot tell you",
+      "body": "A {{backtest|backtest}} tests the past. The future can be different. Nothing here is advice, and no result is a promise."
+    }
+  ],
+  "questions": [
+    {
+      "prompt": "How much is 100 basis points?",
+      "options": [
+        {
+          "text": "1%",
+          "why": "Yes. One basis point is one hundredth of a percent, so 100 of them make 1%.",
+          "correct": true
+        },
+        {
+          "text": "100%",
+          "why": "No. That would be 10,000 basis points.",
+          "correct": false
+        },
+        {
+          "text": "0.01%",
+          "why": "No. That is one basis point.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "Why can the vault be opened only once?",
+      "options": [
+        {
+          "text": "So you cannot keep peeking and adjusting until it looks good.",
+          "why": "Right. Every look at the vault would otherwise become one more try.",
+          "correct": true
+        },
+        {
+          "text": "Because it is slow.",
+          "why": "No. The reason is not speed. It is fairness to your own test.",
+          "correct": false
+        },
+        {
+          "text": "Because it costs money.",
+          "why": "No. It costs nothing. The limit protects the test.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "A rule did better than buy and hold on the practice years. What is safe to say?",
+      "options": [
+        {
+          "text": "It did so on those years. That says little about the future.",
+          "why": "Right. A past result is a fact about the past only.",
+          "correct": true
+        },
+        {
+          "text": "It will do so next year.",
+          "why": "No. Nothing here predicts next year.",
+          "correct": false
+        },
+        {
+          "text": "You should use it with real money.",
+          "why": "No. This site gives no advice, and a past result is not a reason to trade.",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

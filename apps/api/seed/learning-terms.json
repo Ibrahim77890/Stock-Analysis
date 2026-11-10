@@ -351,5 +351,26 @@
       "luck",
       "bootstrap"
     ]
+  },
+  {
+    "slug": "streak",
+    "term": "Streak",
+    "plain_definition": "A run of the same result in a row, such as seven heads when flipping a coin. Streaks often come from luck alone.",
+    "example": "In 100 coin flips, a run of 6 or 7 heads is normal.",
+    "related": [
+      "luck",
+      "coin-flip"
+    ]
+  },
+  {
+    "slug": "backtest",
+    "term": "Backtest",
+    "plain_definition": "A test of a rule on past prices. It shows what the rule would have done, not what it will do.",
+    "example": "We ran the rule on 2005 to 2021 prices and compared it with buy and hold.",
+    "related": [
+      "buy-and-hold",
+      "vault",
+      "idea-tried"
+    ]
   }
 ]

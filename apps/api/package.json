@@ -14,7 +14,9 @@
     "check:python-api": "node scripts/check-generated.mjs",
     "export:openapi": "npm run build && node dist/scripts/export-openapi.js",
     "seed:glossary": "npm run build && node dist/scripts/seed-glossary.js",
-    "latency": "npm run build && node dist/scripts/latency.js"
+    "seed:lessons": "npm run build && node dist/scripts/seed-lessons.js",
+    "latency": "npm run build && node dist/scripts/latency.js",
+    "bench:sprint08": "npm run build && node dist/scripts/bench-sprint08.js"
   },
   "dependencies": {
     "@nestjs/common": "12.2.0",

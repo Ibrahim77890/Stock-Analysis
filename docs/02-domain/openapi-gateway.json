@@ -12,6 +12,49 @@
         },
         "type": "object"
       },
+      "AnswerDto": {
+        "properties": {
+          "option": {
+            "description": "0-based index of the chosen option",
+            "example": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "option"
+        ],
+        "type": "object"
+      },
+      "AnswerResultDto": {
+        "properties": {
+          "answered_right": {
+            "description": "Rightly answered at least once",
+            "type": "boolean"
+          },
+          "correct": {
+            "type": "boolean"
+          },
+          "correct_option": {
+            "description": "Index of the right option. Sent only when the answer was right, or after the second wrong answer to this question.",
+            "type": "number"
+          },
+          "why": {
+            "description": "The explanation for the option that was chosen",
+            "type": "string"
+          },
+          "wrong_so_far": {
+            "description": "Wrong answers so far to this question",
+            "type": "number"
+          }
+        },
+        "required": [
+          "correct",
+          "why",
+          "wrong_so_far",
+          "answered_right"
+        ],
+        "type": "object"
+      },
       "BarDto": {
         "properties": {
           "close": {
@@ -713,6 +756,199 @@
         ],
         "type": "object"
       },
+      "LessonDetailDto": {
+        "properties": {
+          "done": {
+            "description": "All steps read and all questions answered rightly",
+            "type": "boolean"
+          },
+          "minutes": {
+            "type": "number"
+          },
+          "position": {
+            "type": "number"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/LessonQuestionDto"
+            },
+            "type": "array"
+          },
+          "questions_right": {
+            "description": "Questions this learner has answered rightly at least once",
+            "type": "number"
+          },
+          "questions_total": {
+            "type": "number"
+          },
+          "slug": {
+            "example": "brier-score",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/LessonStepDto"
+            },
+            "type": "array"
+          },
+          "steps_read": {
+            "description": "Steps this learner has read",
+            "type": "number"
+          },
+          "steps_read_list": {
+            "description": "1-based numbers of the steps this learner has read",
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "steps_total": {
+            "type": "number"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "slug",
+          "position",
+          "version",
+          "title",
+          "summary",
+          "minutes",
+          "steps_total",
+          "steps_read",
+          "questions_total",
+          "questions_right",
+          "done",
+          "steps",
+          "questions",
+          "steps_read_list"
+        ],
+        "type": "object"
+      },
+      "LessonQuestionDto": {
+        "properties": {
+          "answered_right": {
+            "description": "Has this learner answered it rightly at least once?",
+            "type": "boolean"
+          },
+          "attempts": {
+            "description": "How many times this learner has answered it",
+            "type": "number"
+          },
+          "options": {
+            "description": "Option texts only. The answer key stays on the server.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "position": {
+            "description": "1-based",
+            "type": "number"
+          },
+          "prompt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "prompt",
+          "options",
+          "answered_right",
+          "attempts"
+        ],
+        "type": "object"
+      },
+      "LessonStepDto": {
+        "properties": {
+          "body": {
+            "description": "May hold {{slug|label}} glossary markers",
+            "type": "string"
+          },
+          "demo": {
+            "enum": [
+              "chance-70",
+              "coin-streaks",
+              "many-tries"
+            ],
+            "type": "string"
+          },
+          "head": {
+            "type": "string"
+          },
+          "more": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "head",
+          "body"
+        ],
+        "type": "object"
+      },
+      "LessonSummaryDto": {
+        "properties": {
+          "done": {
+            "description": "All steps read and all questions answered rightly",
+            "type": "boolean"
+          },
+          "minutes": {
+            "type": "number"
+          },
+          "position": {
+            "type": "number"
+          },
+          "questions_right": {
+            "description": "Questions this learner has answered rightly at least once",
+            "type": "number"
+          },
+          "questions_total": {
+            "type": "number"
+          },
+          "slug": {
+            "example": "brier-score",
+            "type": "string"
+          },
+          "steps_read": {
+            "description": "Steps this learner has read",
+            "type": "number"
+          },
+          "steps_total": {
+            "type": "number"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "slug",
+          "position",
+          "version",
+          "title",
+          "summary",
+          "minutes",
+          "steps_total",
+          "steps_read",
+          "questions_total",
+          "questions_right",
+          "done"
+        ],
+        "type": "object"
+      },
       "LoginDto": {
         "properties": {
           "display_name": {
@@ -1191,6 +1427,30 @@
           "enough",
           "min_enough",
           "warnings"
+        ],
+        "type": "object"
+      },
+      "StepReadDto": {
+        "properties": {
+          "lesson_slug": {
+            "type": "string"
+          },
+          "step": {
+            "type": "number"
+          },
+          "steps_read": {
+            "description": "Steps read so far in this lesson",
+            "type": "number"
+          },
+          "steps_total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lesson_slug",
+          "step",
+          "steps_read",
+          "steps_total"
         ],
         "type": "object"
       },
@@ -2432,6 +2692,171 @@
         "summary": "Open the vault with one rule you already tried. It can be done only once.",
         "tags": [
           "Lab"
+        ]
+      }
+    },
+    "/lessons": {
+      "get": {
+        "operationId": "LessonsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LessonSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The learning path: every lesson with my own progress",
+        "tags": [
+          "Lessons"
+        ]
+      }
+    },
+    "/lessons/{slug}": {
+      "get": {
+        "operationId": "LessonsController_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LessonDetailDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "One lesson: steps and questions with option texts only (no answer key)",
+        "tags": [
+          "Lessons"
+        ]
+      }
+    },
+    "/lessons/{slug}/questions/{n}/answer": {
+      "post": {
+        "description": "The reply says whether the chosen option is right and why. The index of the right option is sent only when the answer was right, or after the second wrong answer to the same question. Every answer is recorded. Limited to 60 answers per minute per learner.",
+        "operationId": "LessonsController_answer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnswerResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a question and get a verdict with an explanation",
+        "tags": [
+          "Lessons"
+        ]
+      }
+    },
+    "/lessons/{slug}/steps/{n}/read": {
+      "post": {
+        "operationId": "LessonsController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "n",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepReadDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a step as read. Safe to repeat: it is stored once.",
+        "tags": [
+          "Lessons"
         ]
       }
     },

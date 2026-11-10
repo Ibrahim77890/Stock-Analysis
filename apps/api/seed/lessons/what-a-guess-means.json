@@ -1,0 +1,94 @@
+{
+  "slug": "what-a-guess-means",
+  "position": 2,
+  "version": 1,
+  "title": "What a probability guess means",
+  "minutes": 5,
+  "summary": "Why 70% means you expect to be wrong 3 times in 10, and why that is fine.",
+  "steps": [
+    {
+      "head": "A guess with a number",
+      "body": "In the game you give a {{probability|chance}} that the price will be higher after a few days. A {{guess|guess}} of 70% means you think it is likely, but not sure."
+    },
+    {
+      "head": "What 70% really says",
+      "body": "Say 70% many times. About 7 of those times the price should go up. About 3 times it should not. Being wrong 3 times in 10 is not a mistake. It is what 70% means.",
+      "more": "Try the small demo below. Move the slider and look at how many ups you see out of 20.",
+      "demo": "chance-70"
+    },
+    {
+      "head": "Why not say 100%?",
+      "body": "A guess of 100% says you can never be wrong. One miss then looks very bad. Honest doubt is part of a good guess."
+    },
+    {
+      "head": "The coin-flip line",
+      "body": "Saying 50% every time is like flipping a {{coin-flip|coin}}. Your numbers only mean something if they do better than that."
+    },
+    {
+      "head": "Small numbers fool us",
+      "body": "After three guesses, a lucky run can look like skill. A small {{sample-size|number of guesses}} tells you very little."
+    }
+  ],
+  "questions": [
+    {
+      "prompt": "You say 70% on ten different days. About how many times should you be wrong?",
+      "options": [
+        {
+          "text": "About 3 times.",
+          "why": "Yes. 70% means you expect to be right about 7 times in 10, so wrong about 3 times.",
+          "correct": true
+        },
+        {
+          "text": "Never.",
+          "why": "No. Only a guess of 100% says you are never wrong, and that is rarely wise.",
+          "correct": false
+        },
+        {
+          "text": "About 7 times.",
+          "why": "No. That is how often you expect to be right, not wrong.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "You said 70% and the price fell. Was that a bad guess?",
+      "options": [
+        {
+          "text": "Not by itself. One miss is normal.",
+          "why": "Right. A 70% guess should miss about 3 times in 10. Judge guesses over many days.",
+          "correct": true
+        },
+        {
+          "text": "Yes. The price should have risen.",
+          "why": "Not so. A guess of 70% never says the price must rise.",
+          "correct": false
+        },
+        {
+          "text": "Yes. You should have said 100%.",
+          "why": "No. A guess of 100% would have been far worse after this miss.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "What does it mean to say 50% every time?",
+      "options": [
+        {
+          "text": "You have no view. It is the same as a coin flip.",
+          "why": "Right. A fixed 50% is the line your real guesses need to improve on.",
+          "correct": true
+        },
+        {
+          "text": "You are always right.",
+          "why": "No. A fixed 50% is right about half the time.",
+          "correct": false
+        },
+        {
+          "text": "You are always wrong.",
+          "why": "No. It is right about half the time, like a coin.",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

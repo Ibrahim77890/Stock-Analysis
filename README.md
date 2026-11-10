@@ -108,6 +108,10 @@ curl http://127.0.0.1:3000/health
 
 In the web app, sign in and open "How does this work?" (the `/hood` page) to see the live status of each part.
 
+## Follow the learning path
+
+Sign in: you land on **Path**, six short lessons (candles, what a probability means, the Brier score, calibration, luck and many tries, costs and the vault). Each lesson has a few steps, an optional small demo on made-up data and three questions checked by the server. Load the lessons once with `cd apps/api && npm run seed:lessons`. Design: `docs/04-adr/0018-lessons-and-durable-platform-base.md`, `docs/02-domain/lessons.md`.
+
 ## Try the Strategy Lab
 
 Sign in, open **Lab** in the top bar, pick a stock (for example AAPL), start a study and run a rule on the practice years. Run a few more rules, then open the vault once. Needs price data in the database (Tiingo, see the Python README). Design: `docs/04-adr/0017-strategy-lab-practice-window-and-vault.md`.
@@ -122,6 +126,8 @@ npm run walk                      # the 14-step learning walkthrough
 npm run walk -- --keyboard        # steps 2 to 9 with the keyboard only (fails on any mouse click)
 npm run walk -- --lab             # the Strategy Lab walk
 npm run walk -- --lab --keyboard  # the Lab walk, keyboard only
+npm run walk -- --lessons         # the learning path: a lesson with a demo, questions, practice link
+npm run walk -- --lessons --keyboard   # the same, keyboard only
 ```
 
 It creates throwaway learners named `walk-...` in the real database and saves screenshots under `data/reports/walk/` (git-ignored).

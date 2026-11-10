@@ -521,3 +521,68 @@ export class VaultResultDto {
   @ApiProperty({ type: VaultPracticeDto }) practice!: VaultPracticeDto;
   @ApiProperty({ description: "ideas tried in this study when the vault was opened" }) ideas_tried!: number;
 }
+
+// ------------------------------------------------------------------ lessons
+// Naming note: replies that carry lesson text never use the words "correct" or "why" as field names,
+// so a scan for the answer key can look for them without false alarms. Only the answer reply has them.
+
+export class LessonSummaryDto {
+  @ApiProperty({ example: "brier-score" }) slug!: string;
+  @ApiProperty() position!: number;
+  @ApiProperty() version!: number;
+  @ApiProperty() title!: string;
+  @ApiProperty() summary!: string;
+  @ApiProperty() minutes!: number;
+  @ApiProperty() steps_total!: number;
+  @ApiProperty({ description: "Steps this learner has read" }) steps_read!: number;
+  @ApiProperty() questions_total!: number;
+  @ApiProperty({ description: "Questions this learner has answered rightly at least once" }) questions_right!: number;
+  @ApiProperty({ description: "All steps read and all questions answered rightly" }) done!: boolean;
+}
+
+export class LessonStepDto {
+  @ApiProperty() head!: string;
+  @ApiProperty({ description: "May hold {{slug|label}} glossary markers" }) body!: string;
+  @ApiPropertyOptional() more?: string;
+  @ApiPropertyOptional({ enum: ["chance-70", "coin-streaks", "many-tries"] }) demo?: string;
+}
+
+export class LessonQuestionDto {
+  @ApiProperty({ description: "1-based" }) position!: number;
+  @ApiProperty() prompt!: string;
+  @ApiProperty({ type: [String], description: "Option texts only. The answer key stays on the server." }) options!: string[];
+  @ApiProperty({ description: "Has this learner answered it rightly at least once?" }) answered_right!: boolean;
+  @ApiProperty({ description: "How many times this learner has answered it" }) attempts!: number;
+}
+
+export class LessonDetailDto extends LessonSummaryDto {
+  @ApiProperty({ type: [LessonStepDto] }) steps!: LessonStepDto[];
+  @ApiProperty({ type: [LessonQuestionDto] }) questions!: LessonQuestionDto[];
+  @ApiProperty({ type: [Number], description: "1-based numbers of the steps this learner has read" }) steps_read_list!: number[];
+}
+
+export class StepReadDto {
+  @ApiProperty() lesson_slug!: string;
+  @ApiProperty() step!: number;
+  @ApiProperty({ description: "Steps read so far in this lesson" }) steps_read!: number;
+  @ApiProperty() steps_total!: number;
+}
+
+export class AnswerDto {
+  @ApiProperty({ example: 0, description: "0-based index of the chosen option" })
+  @IsInt({ message: "Please choose one of the options." })
+  @Min(0, { message: "Please choose one of the options." })
+  @Max(3, { message: "Please choose one of the options." })
+  option!: number;
+}
+
+export class AnswerResultDto {
+  @ApiProperty() correct!: boolean;
+  @ApiProperty({ description: "The explanation for the option that was chosen" }) why!: string;
+  @ApiPropertyOptional({
+    description: "Index of the right option. Sent only when the answer was right, or after the second wrong answer to this question.",
+  })
+  correct_option?: number;
+  @ApiProperty({ description: "Wrong answers so far to this question" }) wrong_so_far!: number;
+  @ApiProperty({ description: "Rightly answered at least once" }) answered_right!: boolean;
+}

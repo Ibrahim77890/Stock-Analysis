@@ -1,0 +1,94 @@
+{
+  "slug": "reading-candles",
+  "position": 1,
+  "version": 1,
+  "title": "Reading a candle chart",
+  "minutes": 4,
+  "summary": "What one candle shows, and what a row of candles cannot tell you.",
+  "steps": [
+    {
+      "head": "One day, one candle",
+      "body": "Each {{candle|candle}} shows one trading day. It holds four prices: the {{open|open}}, the {{high-and-low|high}}, the low and the {{close|close}}."
+    },
+    {
+      "head": "Up days and down days",
+      "body": "If the close is above the open, the price rose that day. If the close is below the open, the price fell. The thin lines show the highest and lowest price of the day.",
+      "more": "Many charts use two colours for rises and falls. This site also writes a word, so colour is never the only clue."
+    },
+    {
+      "head": "A row of candles tells a story",
+      "body": "Put many candles side by side and you can see the path of the price. A path from the past is not a promise about tomorrow."
+    },
+    {
+      "head": "Busy days and quiet days",
+      "body": "Bars under the candles can show how much was traded. We show {{relative-volume|relative volume}}, which compares a day with its usual level.",
+      "more": "A busy day often comes with a big move. It does not always do so."
+    },
+    {
+      "head": "What a chart cannot tell you",
+      "body": "A chart shows the past. It cannot say what comes next. That is why the guess game hides the future from you."
+    }
+  ],
+  "questions": [
+    {
+      "prompt": "A candle closes below its open. What happened on that day?",
+      "options": [
+        {
+          "text": "The price fell.",
+          "why": "Yes. The close is the last price of the day. A close below the open means the price ended lower than it began.",
+          "correct": true
+        },
+        {
+          "text": "The price rose.",
+          "why": "Not quite. A rise would put the close above the open. Here it is the other way round.",
+          "correct": false
+        },
+        {
+          "text": "Nothing was traded.",
+          "why": "No. A candle with an open and a close means there were trades that day.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "What do the thin lines on a candle show?",
+      "options": [
+        {
+          "text": "The highest and lowest price of the day.",
+          "why": "Right. The lines reach out to the day's high and low.",
+          "correct": true
+        },
+        {
+          "text": "The price on the next day.",
+          "why": "No. A candle only holds one day. It cannot show the next day.",
+          "correct": false
+        },
+        {
+          "text": "The price a year ago.",
+          "why": "No. Each candle covers one day only.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "Five rising candles in a row. Does that show that tomorrow will rise too?",
+      "options": [
+        {
+          "text": "No. A chart shows the past only.",
+          "why": "Right. A run of rises has happened. It does not tell you what happens next.",
+          "correct": true
+        },
+        {
+          "text": "Yes. Rises always continue.",
+          "why": "No. Prices do not have to continue. Streaks can end at any time.",
+          "correct": false
+        },
+        {
+          "text": "Yes, but only when the bars are busy.",
+          "why": "No. Busy days do not make the next day predictable either.",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-# System overview (after Sprint 07)
+# System overview (after Sprint 08)
 
 ```mermaid
 flowchart LR
@@ -14,11 +14,13 @@ flowchart LR
 | Part | Folder | Port | Owns | Never does |
 |---|---|---|---|---|
 | Web app | `apps/web` | 5173 | pages, charts, words | compute scores, hold identity before the reveal |
-| Gateway | `apps/api` | 3000 | schema `app` (learners, `learner_episode`, `learner_study`, glossary), logins, validation, trace | compute any number |
+| Gateway | `apps/api` | 3000 | schema `app` (learners, `learner_episode`, `learner_study`, glossary, lessons and progress, durable limits and trace), logins, validation | compute any number |
 | Python service | `services/market-data` | 8000 | schemas `market` and `research`, all data and scores, Swagger for every function | handle users or passwords |
 | PostgreSQL | native Windows service | 5432 | the three schemas | |
 
 **Strategy Lab data flow (Sprint 07).** `POST /lab/studies` (gateway: ownership row in `app.learner_study`, at most 20 studies per learner) -> Python `create_lab_study` (practice end fixed, vault locked) -> `POST /lab/studies/:id/runs` (validate, ownership, 20 runs a minute) -> Python `run_practice` (practice bars only, adjusted as of the practice end; rule, buy and hold, cost table, luck check, one trial) -> whitelisted reply with at most 300 chart points -> `POST /lab/studies/:id/vault` (type OPEN, `confirm: true`, 3 tries a minute) -> Python `open_vault` (one use) -> vault numbers. Decision record: ADR 0017; what the page shows: `lab.md`.
+
+**Lessons data flow (Sprint 08).** `GET /lessons` and `GET /lessons/:slug` (gateway only; option texts, no answer key) -> `POST .../steps/:n/read` (idempotent upsert into `app.lesson_progress`) -> `POST .../questions/:n/answer` (limit 60 a minute checked in `app.rate_event`; verdict looked up from `app.lesson_question`; attempt appended to `app.quiz_answer` with the lesson version; the right option is returned only when the answer was right or after the second wrong answer). Python is not involved. **Durable limits:** login, Lab runs, vault tries and lesson answers are counted in PostgreSQL in one transaction with an advisory lock, so they survive a restart and two simultaneous calls cannot both take the last slot; the request trace is stored in `app.request_log`. Decision record: ADR 0018; lessons: `lessons.md`.
 
 **Request path:** browser -> gateway (token, ownership, validation) -> Python (work) -> gateway (whitelist the answer, map errors) -> browser. The Python Learning endpoints demand `X-Internal-Token` when `INTERNAL_API_TOKEN` is set, so the browser path is the only path. **Contracts:** `docs/02-domain/openapi-market-data.json` (Python) and `docs/02-domain/openapi-gateway.json` (gateway) are committed and checked by tests; the web and gateway TypeScript types are generated from them.
 
@@ -27,7 +29,7 @@ flowchart LR
 # 1. Python service (from services/market-data)
 .venv/Scripts/python.exe -m market_data.cli serve            # or: uv run market-data serve
 # 2. Gateway (from apps/api)
-npm ci && npm run build && npm run migrate:up && npm run seed:glossary && npm start
+npm ci && npm run build && npm run migrate:up && npm run seed:glossary && npm run seed:lessons && npm start
 # 3. Web app (from apps/web)
 npm ci && npm run dev                                          # http://127.0.0.1:5173
 ```

@@ -1,0 +1,93 @@
+{
+  "slug": "calibration",
+  "position": 4,
+  "version": 1,
+  "title": "Calibration and few guesses",
+  "minutes": 5,
+  "summary": "Do your numbers match real life, and why a handful of guesses proves little.",
+  "steps": [
+    {
+      "head": "Do your numbers match life?",
+      "body": "{{calibration|Calibration}} asks a simple thing. Of the times you said 70%, did about 7 in 10 go up?"
+    },
+    {
+      "head": "Putting guesses in groups",
+      "body": "We group your guesses by size, such as 60 to 70%. Then we compare each group with what really happened."
+    },
+    {
+      "head": "Too sure",
+      "body": "Say your 90% guesses went up only 6 times in 10. You were too sure. This is called {{overconfidence|overconfidence}}.",
+      "more": "Most people start out too sure. Seeing it in your own numbers is the first step to fixing it."
+    },
+    {
+      "head": "Few guesses prove little",
+      "body": "A group of five guesses can look perfect or awful by chance alone. You need many guesses in a group before you can trust it."
+    },
+    {
+      "head": "What to do with this",
+      "body": "Keep guessing and look first at the groups with the most guesses. Do not change your style after a few misses."
+    }
+  ],
+  "questions": [
+    {
+      "prompt": "Your 80% guesses went up 5 times in 10. What does this suggest?",
+      "options": [
+        {
+          "text": "You were too sure.",
+          "why": "Yes. If you say 80%, about 8 in 10 should go up. 5 in 10 means your number was too high.",
+          "correct": true
+        },
+        {
+          "text": "You were just right.",
+          "why": "No. Just right would be about 8 in 10.",
+          "correct": false
+        },
+        {
+          "text": "You were too careful.",
+          "why": "No. Too careful would mean more than 8 in 10 went up.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "Why do five guesses in a group prove little?",
+      "options": [
+        {
+          "text": "Chance alone can give almost any result.",
+          "why": "Right. With so few guesses, a lucky or unlucky run is common.",
+          "correct": true
+        },
+        {
+          "text": "Five is the best size.",
+          "why": "No. More guesses make a group more reliable, not fewer.",
+          "correct": false
+        },
+        {
+          "text": "Small groups are always perfect.",
+          "why": "No. Small groups can look perfect or awful. That is the problem.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "Which group of guesses should you trust the most?",
+      "options": [
+        {
+          "text": "The group with the most guesses.",
+          "why": "Right. More guesses means less room for luck to fool you.",
+          "correct": true
+        },
+        {
+          "text": "The group with the fewest guesses.",
+          "why": "No. A few guesses can be lucky.",
+          "correct": false
+        },
+        {
+          "text": "The group you like best.",
+          "why": "No. How much you like a result says nothing about how reliable it is.",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

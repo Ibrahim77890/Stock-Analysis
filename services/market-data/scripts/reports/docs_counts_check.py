@@ -3,8 +3,7 @@
     .venv/Scripts/python.exe scripts/reports/docs_counts_check.py
 
 Checks: (1) the Alembic head named in the docs, (2) the number of Lab routes in the Python OpenAPI against the README row,
-(3) the number of eligible stocks in docs/02-domain/lab.md against the database, (4) the glossary size named in the Sprint 07
-completion note against app.glossary_term, (5) the Lab routes of the gateway OpenAPI against apps/api/README.md.
+(3) the number of eligible stocks in docs/02-domain/lab.md against the database, (4) the glossary size and the lesson and gateway-migration counts (Sprint 08) against the database and the files, (5) the Lab routes of the gateway OpenAPI against apps/api/README.md.
 """
 
 import json
@@ -53,11 +52,23 @@ def main() -> int:
     m = re.search(r"today (\d+) symbols", lab_md)
     check("eligible stocks named in lab.md", int(m.group(1)) if m else None, n_stocks)
 
-    # 4. glossary size in the completion note
-    note = next((ROOT / "sprints").glob("07_*/completed/07_05.md"), None)
-    if note:
-        m = re.search(r"the glossary now has (\d+) terms", note.read_text(encoding="utf-8"))
-        check("glossary terms named in the 07_05 completion note", int(m.group(1)) if m else None, n_terms)
+    # 4. glossary size in lessons.md and the data dictionary against the database
+    lessons_md = (ROOT / "docs/02-domain/lessons.md").read_text(encoding="utf-8")
+    m = re.search(r"the glossary has (\d+) terms", lessons_md)
+    check("glossary terms named in lessons.md", int(m.group(1)) if m else None, n_terms)
+    m = re.search(r"the glossary has (\d+) terms", dd)
+    check("glossary terms named in the data dictionary", int(m.group(1)) if m else None, n_terms)
+
+    # 4b. lessons: files, database rows, lessons.md table, gateway migrations
+    files = sorted(p for p in (ROOT / "apps/api/seed/lessons").glob("*.json") if p.name != "lesson.schema.json")
+    with psycopg.connect(config.database_url()) as conn:
+        n_db = conn.execute("SELECT count(*) FROM app.lesson").fetchone()[0]
+    rows = [line for line in lessons_md.splitlines() if re.match(r"^\| \d \| `", line)]
+    check("lessons listed in lessons.md versus lesson files", len(rows), len(files))
+    check("lesson rows in the database versus lesson files", n_db, len(files))
+    mig = len(list((ROOT / "apps/api/migrations").glob("*.sql")))
+    m = re.search(r"(\d+) gateway migrations", dd)
+    check("gateway migrations named in the data dictionary", int(m.group(1)) if m else None, mig)
 
     # 5. gateway Lab routes
     gw = json.loads((ROOT / "docs/02-domain/openapi-gateway.json").read_text(encoding="utf-8"))

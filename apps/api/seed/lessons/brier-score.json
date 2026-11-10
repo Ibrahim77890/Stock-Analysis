@@ -1,0 +1,93 @@
+{
+  "slug": "brier-score",
+  "position": 3,
+  "version": 1,
+  "title": "The Brier score",
+  "minutes": 5,
+  "summary": "How a guess becomes a score, and why 0.25 is the coin-flip line.",
+  "steps": [
+    {
+      "head": "Scoring a guess",
+      "body": "The {{brier-score|Brier score}} shows how far your number was from what happened. Lower is better."
+    },
+    {
+      "head": "How it is worked out",
+      "body": "If the price rose, the outcome is 1. If it did not, the outcome is 0. Take your guess minus the outcome and multiply it by itself. A guess of 0.7 on a rise gives 0.3 times 0.3, which is 0.09."
+    },
+    {
+      "head": "The coin-flip line",
+      "body": "A guess of 0.5 scores 0.25 every time, whatever happens. So 0.25 is the line to improve on."
+    },
+    {
+      "head": "Being sure and wrong",
+      "body": "A guess of 0.9 when the price fell scores 0.81. Big, confident misses cost much more than small doubts."
+    },
+    {
+      "head": "Reading your score",
+      "body": "A score under 0.25 over many guesses is a good sign. Over only a few guesses it may be {{luck|luck}}.",
+      "more": "The score screen also shows how a shuffled set of outcomes would have scored. It helps you judge luck."
+    }
+  ],
+  "questions": [
+    {
+      "prompt": "What is the Brier score of saying 50% every time?",
+      "options": [
+        {
+          "text": "0.25",
+          "why": "Yes. 0.5 minus 1 or 0.5 minus 0 is 0.5 in size, and 0.5 times 0.5 is 0.25.",
+          "correct": true
+        },
+        {
+          "text": "0.5",
+          "why": "Not quite. 0.5 is the size of the gap before it is multiplied by itself.",
+          "correct": false
+        },
+        {
+          "text": "0",
+          "why": "No. A score of 0 needs a perfect guess every time.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "You guessed 0.9 and the price fell. About how big is the cost?",
+      "options": [
+        {
+          "text": "0.81",
+          "why": "Yes. The gap is 0.9, and 0.9 times 0.9 is 0.81.",
+          "correct": true
+        },
+        {
+          "text": "0.09",
+          "why": "No. That is the cost of a guess of 0.7 on a rise.",
+          "correct": false
+        },
+        {
+          "text": "0.1",
+          "why": "No. 0.1 is the gap for a right 0.9 guess, before it is multiplied.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "Is a higher or a lower Brier score better?",
+      "options": [
+        {
+          "text": "Lower.",
+          "why": "Right. The score measures your gap from what happened, so a smaller gap is better.",
+          "correct": true
+        },
+        {
+          "text": "Higher.",
+          "why": "No. Higher means a bigger gap from what happened.",
+          "correct": false
+        },
+        {
+          "text": "It depends on the day.",
+          "why": "No. The rule is the same on every day: lower is better.",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

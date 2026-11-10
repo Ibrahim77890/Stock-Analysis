@@ -297,6 +297,77 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lessons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The learning path: every lesson with my own progress */
+        get: operations["LessonsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lessons/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One lesson: steps and questions with option texts only (no answer key) */
+        get: operations["LessonsController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lessons/{slug}/questions/{n}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer a question and get a verdict with an explanation
+         * @description The reply says whether the chosen option is right and why. The index of the right option is sent only when the answer was right, or after the second wrong answer to the same question. Every answer is recorded. Limited to 60 answers per minute per learner.
+         */
+        post: operations["LessonsController_answer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lessons/{slug}/steps/{n}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a step as read. Safe to repeat: it is stored once. */
+        post: operations["LessonsController_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -372,6 +443,24 @@ export interface components {
         AdvanceDto: {
             /** @default 1 */
             n: number;
+        };
+        AnswerDto: {
+            /**
+             * @description 0-based index of the chosen option
+             * @example 0
+             */
+            option: number;
+        };
+        AnswerResultDto: {
+            /** @description Rightly answered at least once */
+            answered_right: boolean;
+            correct: boolean;
+            /** @description Index of the right option. Sent only when the answer was right, or after the second wrong answer to this question. */
+            correct_option?: number;
+            /** @description The explanation for the option that was chosen */
+            why: string;
+            /** @description Wrong answers so far to this question */
+            wrong_so_far: number;
         };
         BarDto: {
             close: number;
@@ -572,6 +661,63 @@ export interface components {
             display_name: string;
             learner_id: string;
         };
+        LessonDetailDto: {
+            /** @description All steps read and all questions answered rightly */
+            done: boolean;
+            minutes: number;
+            position: number;
+            questions: components["schemas"]["LessonQuestionDto"][];
+            /** @description Questions this learner has answered rightly at least once */
+            questions_right: number;
+            questions_total: number;
+            /** @example brier-score */
+            slug: string;
+            steps: components["schemas"]["LessonStepDto"][];
+            /** @description Steps this learner has read */
+            steps_read: number;
+            /** @description 1-based numbers of the steps this learner has read */
+            steps_read_list: number[];
+            steps_total: number;
+            summary: string;
+            title: string;
+            version: number;
+        };
+        LessonQuestionDto: {
+            /** @description Has this learner answered it rightly at least once? */
+            answered_right: boolean;
+            /** @description How many times this learner has answered it */
+            attempts: number;
+            /** @description Option texts only. The answer key stays on the server. */
+            options: string[];
+            /** @description 1-based */
+            position: number;
+            prompt: string;
+        };
+        LessonStepDto: {
+            /** @description May hold {{slug|label}} glossary markers */
+            body: string;
+            /** @enum {string} */
+            demo?: "chance-70" | "coin-streaks" | "many-tries";
+            head: string;
+            more?: string;
+        };
+        LessonSummaryDto: {
+            /** @description All steps read and all questions answered rightly */
+            done: boolean;
+            minutes: number;
+            position: number;
+            /** @description Questions this learner has answered rightly at least once */
+            questions_right: number;
+            questions_total: number;
+            /** @example brier-score */
+            slug: string;
+            /** @description Steps this learner has read */
+            steps_read: number;
+            steps_total: number;
+            summary: string;
+            title: string;
+            version: number;
+        };
         LoginDto: {
             /** @example Sam */
             display_name: string;
@@ -733,6 +879,13 @@ export interface components {
             n: number;
             skill_vs_coin_flip: number | null;
             warnings: string[];
+        };
+        StepReadDto: {
+            lesson_slug: string;
+            step: number;
+            /** @description Steps read so far in this lesson */
+            steps_read: number;
+            steps_total: number;
         };
         StockDto: {
             bars: number;
@@ -1318,6 +1471,94 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VaultResultDto"];
+                };
+            };
+        };
+    };
+    LessonsController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonSummaryDto"][];
+                };
+            };
+        };
+    };
+    LessonsController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonDetailDto"];
+                };
+            };
+        };
+    };
+    LessonsController_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                n: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnswerResultDto"];
+                };
+            };
+        };
+    };
+    LessonsController_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+                n: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StepReadDto"];
                 };
             };
         };

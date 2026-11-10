@@ -4,6 +4,8 @@
 //   npm run walk -- --keyboard       steps 2 to 9 with the keyboard only (Tab, Shift+Tab, Enter, Space, arrows, typing); fails on any click
 //   npm run walk -- --lab            the Strategy Lab walk (start a study, run rules, open the vault once)
 //   npm run walk -- --lab --keyboard the same, keyboard only
+//   npm run walk -- --lessons        the learning path: read a lesson with a demo, answer wrongly then rightly, follow the practice link
+//   npm run walk -- --lessons --keyboard   the same, keyboard only
 //
 // Needs the three servers running (Python :8000, gateway :3000, web :5173). Uses the system Edge or Chrome
 // (set BROWSER_PATH to choose). It creates throwaway learners named walk-xxxx in the real database and saves screenshots
@@ -16,6 +18,7 @@ import puppeteer from "puppeteer-core";
 const args = new Set(process.argv.slice(2));
 const KEYBOARD = args.has("--keyboard");
 const LAB = args.has("--lab");
+const LESSONS = args.has("--lessons");
 const BASE = process.env.WEB_URL ?? "http://127.0.0.1:5173";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const OUT = path.join(ROOT, "data", "reports", "walk") + path.sep;
@@ -30,7 +33,7 @@ const CANDIDATES = [
 ].filter(Boolean);
 const executablePath = CANDIDATES.find((p) => existsSync(p));
 if (!executablePath) { console.error("No Edge or Chrome found. Set BROWSER_PATH."); process.exit(2); }
-console.log(`browser: ${executablePath}\nmode: ${LAB ? "lab" : "learning"}${KEYBOARD ? " + keyboard only" : ""}\n`);
+console.log(`browser: ${executablePath}\nmode: ${LESSONS ? "lessons" : LAB ? "lab" : "learning"}${KEYBOARD ? " + keyboard only" : ""}\n`);
 
 const browser = await puppeteer.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
 const page = await browser.newPage();
@@ -46,11 +49,13 @@ const results = [];
 async function step(n, name, fn) {
   const t0 = Date.now();
   try { const note = await fn(); results.push([n, name, "PASS", `${Date.now() - t0} ms`, note ?? ""]); }
-  catch (e) { results.push([n, name, "FAIL", `${Date.now() - t0} ms`, String(e.message).slice(0, 220)]); await page.screenshot({ path: `${OUT}fail-${LAB ? "lab-" : ""}${n}.png` }).catch(() => {}); }
+  catch (e) { results.push([n, name, "FAIL", `${Date.now() - t0} ms`, String(e.message).slice(0, 220)]); await page.screenshot({ path: `${OUT}fail-${LESSONS ? "lessons-" : LAB ? "lab-" : ""}${n}.png` }).catch(() => {}); }
 }
 const text = async (sel = "body") => page.$eval(sel, (el) => el.innerText);
 const waitText = (t, timeout = 20000) => page.waitForFunction((x) => document.body.innerText.includes(x), { timeout }, t);
-const shot = (name) => page.screenshot({ path: `${OUT}${LAB ? "lab-" : ""}${name}.png` });
+// case-insensitive: small labels such as "Step 1 of 5" are drawn in capitals by the style sheet
+const waitTextI = (t, timeout = 20000) => page.waitForFunction((x) => document.body.innerText.toLowerCase().includes(x.toLowerCase()), { timeout }, t);
+const shot = (name) => page.screenshot({ path: `${OUT}${LESSONS ? "lessons-" : LAB ? "lab-" : ""}${name}.png` });
 
 /** A mouse click. In keyboard mode this is a failure: the walk must never need the mouse. */
 async function mouse(handleOrSelector) {
@@ -304,7 +309,112 @@ async function labWalk() {
   });
 }
 
-if (LAB) await labWalk(); else await learningWalk();
+// ---------------------------------------------------------------------------------------------- lessons walk
+const COMPETITION = /\b(score|rank|points|level)\b/i;
+async function chooseOption(optionText) {
+  if (KEYBOARD) {
+    // Tab reaches a radio group once; the arrow keys move inside it (the browser's own behaviour)
+    const label = () => page.evaluate(() => document.activeElement?.closest?.("label")?.innerText.trim() ?? "");
+    await tabTo((el) => el.type === "radio", "a radio option");
+    for (let i = 0; i < 5 && (await label()) !== optionText; i++) await page.keyboard.press("ArrowDown");
+    if ((await label()) !== optionText) throw new Error(`could not reach the option with the arrow keys: ${optionText}`);
+    await page.keyboard.press("Space");
+  } else {
+    const [h] = await page.$$(`xpath/.//label[normalize-space(.)=${JSON.stringify(optionText)}]`);
+    if (!h) throw new Error(`option not found: ${optionText}`);
+    await mouse(h);
+  }
+}
+const waitVerdict = (kind) => page.waitForSelector(`.verdict.${kind}`, { timeout: 20000 });
+async function lessonsWalk() {
+  await step(1, "create an account", createAccount);
+  await step(2, "skip the tour: the path lists six lessons and marks where to start", async () => {
+    await skipTour();
+    await waitText("Your learning path");
+    const body = await text();
+    for (const need of ["Start here", "Reading a candle chart", "Costs, buy and hold, and the vault", "private"]) if (!body.includes(need)) throw new Error(`missing: ${need}`);
+    const count = await page.$$eval(".path > li", (els) => els.length);
+    if (count !== 6) throw new Error(`expected 6 lessons, saw ${count}`);
+    // the Brier lesson is about the score by name, so its title is taken out of the scan
+    // the Brier lesson teaches the score by name, so its whole card is taken out of the scan
+    const cards = await page.$$eval(".path > li", (els) => els.map((e) => e.innerText));
+    const hit = cards.filter((_, i) => i !== 2).join(" ").match(COMPETITION);
+    if (hit) throw new Error(`competition word on the path page: ${hit[0]}`);
+    await shot("01-path");
+    return await a11y("path page");
+  });
+  await step(3, "open lesson 2 and read it step by step", async () => {
+    await go("/path/what-a-guess-means");
+    await waitTextI("Step 1 of 5");
+    await press("Next");
+    await waitTextI("Step 2 of 5");
+    await press("Back");
+    await waitTextI("Step 1 of 5");
+    await press("Next");
+    await waitTextI("Step 2 of 5");
+    await shot("03-lesson-step");
+    return await a11y("lesson page");
+  });
+  await step(4, "the demo shows a sentence and another seed changes it", async () => {
+    await waitText("What does 70% look like?");
+    const before = (await text(".demo-result")).trim();
+    if (!/\d+ of 20 went up\./.test(before)) throw new Error(`no result sentence: ${before}`);
+    if (!(await text(".demo")).includes("made-up data")) throw new Error("the demo does not say made-up data");
+    let changed = false;
+    for (let i = 0; i < 6 && !changed; i++) {
+      await press("Try another seed");
+      changed = (await text(".demo-result")).trim() !== before;
+    }
+    if (!changed) throw new Error("six seeds gave the same picture");
+  });
+  await step(5, "read the other steps and go to the questions", async () => {
+    for (const n of [3, 4, 5]) { await press("Next"); await waitTextI(`Step ${n} of 5`); }
+    await press("Go to the questions");
+    await waitText("Check your understanding");
+    await waitTextI("Question 1 of 3");
+  });
+  await step(6, "a wrong answer says Not yet with a reason and nothing about the right option; then try again", async () => {
+    await chooseOption("Never.");
+    await press("Check my answer");
+    await waitVerdict("notyet");
+    const t = await text();
+    if (t.includes("The right answer is")) throw new Error("the right option was shown after one wrong answer");
+    if (!t.includes("100%")) throw new Error("no reason shown");
+    await press("Try again");
+  });
+  await step(7, "the right answer says Right; the next question follows", async () => {
+    await chooseOption("About 3 times.");
+    await press("Check my answer");
+    await waitVerdict("right");
+    await press("Next question");
+    await waitTextI("Question 2 of 3");
+  });
+  await step(8, "answer questions 2 and 3 rightly and finish", async () => {
+    await chooseOption("Not by itself. One miss is normal.");
+    await press("Check my answer"); await waitVerdict("right");
+    await press("Next question"); await waitTextI("Question 3 of 3");
+    await chooseOption("You have no view. It is the same as a coin flip.");
+    await press("Check my answer"); await waitVerdict("right");
+    await press("Finish the lesson");
+    await waitText("Lesson finished");
+    const hit = (await text()).match(COMPETITION);
+    if (hit) throw new Error(`competition word on the lesson page: ${hit[0]}`);
+    await shot("08-lesson-done");
+  });
+  await step(9, "the path shows the lesson as done and the practice link opens the guess game", async () => {
+    await press("Back to the path");
+    await waitText("Your learning path");
+    const items = await page.$$eval(".path > li", (els) => els.map((e) => e.innerText));
+    if (!/Done/.test(items[1])) throw new Error("lesson 2 is not marked Done");
+    if (/Start here/.test(items[1])) throw new Error("Start here is still on a finished lesson");
+    await go("/path/what-a-guess-means");
+    await waitText("Lesson finished");
+    await press("Practise in the guess game");
+    await page.waitForFunction(() => location.pathname === "/learn", { timeout: 20000 });
+  });
+}
+
+if (LESSONS) await lessonsWalk(); else if (LAB) await labWalk(); else await learningWalk();
 
 const failed = results.filter((r) => r[2] === "FAIL").length;
 console.log(results.map((r) => r.join(" | ")).join("\n"));

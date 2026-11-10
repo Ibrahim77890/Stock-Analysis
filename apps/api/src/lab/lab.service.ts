@@ -1,5 +1,5 @@
 import { HttpException, Inject, Injectable, Logger, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
-import { RateLimiter } from "../auth/auth.service";
+import { Limiter, LimiterFactory } from "../limits/db-rate-limiter";
 import { Spec } from "../common/pick";
 import { clean } from "../learning/whitelist";
 import { APP_CONFIG, AppConfig } from "../config/app-config";
@@ -21,11 +21,11 @@ export class TooManyRequests extends HttpException {
 
 /** Separate from the login limiter: expensive runs and the vault have their own counters per learner. */
 export class LabLimiters {
-  readonly runs: RateLimiter;
-  readonly vault: RateLimiter;
-  constructor(runsPerMinute: number) {
-    this.runs = new RateLimiter(runsPerMinute);
-    this.vault = new RateLimiter(VAULT_CALLS_PER_MINUTE);
+  readonly runs: Limiter;
+  readonly vault: Limiter;
+  constructor(factory: LimiterFactory, runsPerMinute: number) {
+    this.runs = factory.make("lab-run", runsPerMinute);
+    this.vault = factory.make("lab-vault", VAULT_CALLS_PER_MINUTE);
   }
 }
 
@@ -55,9 +55,9 @@ export class LabService {
     return out.value;
   }
 
-  private throttle(limiter: RateLimiter, learnerId: string, what: string): void {
-    if (!limiter.allow(learnerId)) {
-      const wait = limiter.retryAfterSeconds(learnerId);
+  private async throttle(limiter: Limiter, learnerId: string, what: string): Promise<void> {
+    if (!(await limiter.allow(learnerId))) {
+      const wait = await limiter.retryAfterSeconds(learnerId);
       throw new TooManyRequests(`You are going a little fast. Please wait ${wait} seconds before the next ${what}.`, wait);
     }
   }
@@ -101,7 +101,7 @@ export class LabService {
   async run(learnerId: string, rawId: string, dto: RunDto) {
     this.checkRule(dto.fast, dto.slow);
     const id = await this.assertOwns(learnerId, rawId);
-    this.throttle(this.limits.runs, learnerId, "run");
+    await this.throttle(this.limits.runs, learnerId, "run");
     const body = { fast: dto.fast, slow: dto.slow, cost_bps: dto.cost_bps ?? 2, seed: dto.seed ?? 1, n_paths: dto.n_paths ?? 100 };
     const out = this.shape<any>(await this.py.labRun(id, body), RUN, "run");
     if (out.overfitting_meter === null) delete out.overfitting_meter; // absent, not null, until there are two ideas
@@ -111,7 +111,7 @@ export class LabService {
   async vault(learnerId: string, rawId: string, dto: VaultDto) {
     this.checkRule(dto.fast, dto.slow);
     const id = await this.assertOwns(learnerId, rawId);
-    this.throttle(this.limits.vault, learnerId, "try");
+    await this.throttle(this.limits.vault, learnerId, "try");
     const out = await this.py.labVault(id, { fast: dto.fast, slow: dto.slow, cost_bps: dto.cost_bps });
     return this.shape<any>(out, VAULT, "vault"); // the only place vault numbers may pass
   }

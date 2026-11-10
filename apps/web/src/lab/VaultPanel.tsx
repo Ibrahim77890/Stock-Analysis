@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { StudyOverview, VaultResult } from "../api/client";
 import { Icon } from "../components/Icon";
 import { Button, Callout, Card, ErrorMessage } from "../components/ui";
@@ -35,7 +36,8 @@ export function VaultDialog({ trial, busy, onCancel, onConfirm }: { trial: Trial
     onConfirm();
   }
 
-  return (
+  // drawn at the page root so no chart or sticky column can sit above it
+  return createPortal(
     <div className="dialog-backdrop">
       <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="vault-dialog-title" onKeyDown={trap}>
         <h2 id="vault-dialog-title"><Icon name="lock" /> {lab.dialogTitle}</h2>
@@ -52,7 +54,8 @@ export function VaultDialog({ trial, busy, onCancel, onConfirm }: { trial: Trial
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

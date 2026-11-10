@@ -110,7 +110,17 @@ export async function startApp(over: Partial<AppConfig> = {}): Promise<Harness> 
 }
 
 export async function resetAppTables(pool: Pool): Promise<void> {
-  await pool.query("TRUNCATE app.learner CASCADE");
+  // A trace row may still be on its way from the last request of the previous test; if it collides with the
+  // TRUNCATE the database reports a deadlock (40P01) and one retry is enough.
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await pool.query("TRUNCATE app.learner, app.rate_event CASCADE");
+      return;
+    } catch (e: any) {
+      if (e?.code !== "40P01" || attempt >= 5) throw e;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  }
 }
 
 export async function register(h: Harness, name: string, password = "correct horse battery"): Promise<{ token: string; id: string }> {

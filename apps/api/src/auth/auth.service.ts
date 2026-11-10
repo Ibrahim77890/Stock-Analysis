@@ -1,11 +1,12 @@
-import { ConflictException, HttpException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { ConflictException, HttpException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { DbService } from "../db/db.service";
 import { LoginDto, RegisterDto, TokenDto } from "../dto";
+import { Limiter } from "../limits/db-rate-limiter";
 import { dummyHash, hashPassword, verifyPassword } from "./password";
 
-/** Simple in-memory limiter: at most `limit` attempts per window per key. */
-export class RateLimiter {
+/** In-memory limiter with a fake-clock friendly API. The app uses the database limiter; this one stays for unit tests of the interface. */
+export class RateLimiter implements Limiter {
   private readonly hits = new Map<string, number[]>();
   constructor(private readonly limit: number, private readonly windowMs = 60_000) {}
 
@@ -28,19 +29,21 @@ export class RateLimiter {
   }
 }
 
+export const LOGIN_LIMITER = "LOGIN_LIMITER";
+
 const TOO_MANY = "Too many tries. Please wait a minute and try again.";
 const BAD_LOGIN = "That name or password is not right.";
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly db: DbService, private readonly jwt: JwtService, private readonly limiter: RateLimiter) {}
+  constructor(private readonly db: DbService, private readonly jwt: JwtService, @Inject(LOGIN_LIMITER) private readonly limiter: Limiter) {}
 
-  private check(client: string, name: string): void {
-    if (!this.limiter.allow(`${client}:${name.toLowerCase()}`)) throw new HttpException(TOO_MANY, 429);
+  private async check(client: string, name: string): Promise<void> {
+    if (!(await this.limiter.allow(`${client}:${name.toLowerCase()}`))) throw new HttpException(TOO_MANY, 429);
   }
 
   async register(dto: RegisterDto, client: string): Promise<TokenDto> {
-    this.check(client, dto.display_name);
+    await this.check(client, dto.display_name);
     const hash = await hashPassword(dto.password);
     try {
       const r = await this.db.query(
@@ -55,7 +58,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto, client: string): Promise<TokenDto> {
-    this.check(client, dto.display_name);
+    await this.check(client, dto.display_name);
     const r = await this.db.query("SELECT learner_id, display_name, password_hash FROM app.learner WHERE display_name_key = $1", [dto.display_name.toLowerCase()]);
     const row = r.rows[0];
     const ok = await verifyPassword(dto.password, row ? row.password_hash : await dummyHash());

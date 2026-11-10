@@ -63,7 +63,7 @@ export class SystemController {
   @ApiOperation({ summary: "What my recent requests did (route patterns, times and statuses only)" })
   @ApiQuery({ name: "limit", required: false })
   @ApiOkResponse({ type: [TraceEntryDto] })
-  getTrace(@CurrentLearner() me: string, @Query("limit") limit?: string) {
-    return this.trace.last(me, limit ? Number(limit) : 50);
+  async getTrace(@CurrentLearner() me: string, @Query("limit") limit?: string) {
+    return await this.trace.last(me, limit ? Number(limit) : 50);
   }
 }

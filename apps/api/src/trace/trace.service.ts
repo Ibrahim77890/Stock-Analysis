@@ -1,4 +1,5 @@
-import { Injectable, NestMiddleware } from "@nestjs/common";
+import { Injectable, NestMiddleware, Optional } from "@nestjs/common";
+import { DbService } from "../db/db.service";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 
@@ -29,7 +30,10 @@ const BUFFER = 200;
 @Injectable()
 export class TraceService {
   private readonly als = new AsyncLocalStorage<Live>();
-  private readonly byLearner = new Map<string, TraceEntry[]>();
+  private readonly byLearner = new Map<string, TraceEntry[]>(); // only used when there is no database (unit tests)
+  private readonly pending = new Set<Promise<void>>();
+
+  constructor(@Optional() private readonly db?: DbService) {}
 
   run<T>(live: Live, fn: () => T): T {
     return this.als.run(live, fn);
@@ -47,19 +51,60 @@ export class TraceService {
 
   finish(live: Live): void {
     if (!live.learnerId) return; // only logged-in learners are traced
-    const list = this.byLearner.get(live.learnerId) ?? [];
+    if (!this.db) return this.finishMemory(live);
+    const learnerId = live.learnerId;
+    const e = live.entry;
+    const job: Promise<void> = this.db
+      .query(
+        `INSERT INTO app.request_log (request_id, learner_id, at, method, route, status, duration_ms, upstream)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [e.request_id, learnerId, e.time, e.method, e.route, e.status, e.duration_ms, JSON.stringify(e.upstream)],
+      )
+      .then(() =>
+        this.db!.query(
+          `DELETE FROM app.request_log WHERE learner_id = $1 AND id NOT IN
+             (SELECT id FROM app.request_log WHERE learner_id = $1 ORDER BY at DESC, id DESC LIMIT ${BUFFER})`,
+          [learnerId],
+        ),
+      )
+      .then(() => undefined)
+      .catch(() => undefined) // a failed trace write must never fail a request
+      .finally(() => this.pending.delete(job));
+    this.pending.add(job);
+  }
+
+  private finishMemory(live: Live): void {
+    const list = this.byLearner.get(live.learnerId!) ?? [];
     list.push(live.entry);
     while (list.length > BUFFER) list.shift();
-    this.byLearner.set(live.learnerId, list);
+    this.byLearner.set(live.learnerId!, list);
   }
 
-  last(learnerId: string, limit = 50): TraceEntry[] {
-    const list = this.byLearner.get(learnerId) ?? [];
-    return list.slice(-Math.max(1, Math.min(limit, BUFFER))).reverse();
+  /** Waits for writes that are still on their way (the reply is sent before the row is stored). */
+  async flush(): Promise<void> {
+    await Promise.all([...this.pending]);
   }
 
-  size(learnerId: string): number {
-    return this.byLearner.get(learnerId)?.length ?? 0;
+  async last(learnerId: string, limit = 50): Promise<TraceEntry[]> {
+    const n = Math.max(1, Math.min(Number.isFinite(limit) ? Math.floor(limit) : 50, BUFFER));
+    if (!this.db) return (this.byLearner.get(learnerId) ?? []).slice(-n).reverse();
+    await this.flush();
+    const r = await this.db.query(
+      `SELECT request_id, at, method, route, status, duration_ms, upstream FROM app.request_log
+        WHERE learner_id = $1 ORDER BY at DESC, id DESC LIMIT $2`,
+      [learnerId, n],
+    );
+    return r.rows.map((x) => ({
+      request_id: x.request_id, time: new Date(x.at).toISOString(), method: x.method, route: x.route,
+      status: x.status, duration_ms: x.duration_ms, upstream: x.upstream,
+    }));
+  }
+
+  async size(learnerId: string): Promise<number> {
+    if (!this.db) return this.byLearner.get(learnerId)?.length ?? 0;
+    await this.flush();
+    const r = await this.db.query("SELECT count(*)::int AS n FROM app.request_log WHERE learner_id = $1", [learnerId]);
+    return r.rows[0].n;
   }
 }
 

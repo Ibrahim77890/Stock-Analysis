@@ -25,6 +25,7 @@ export function fakeApi(over: Partial<Record<keyof Api, any>> = {}): Api {
     system: vi.fn(), trace: vi.fn().mockResolvedValue([]),
     labStocks: vi.fn().mockResolvedValue({ stocks: [] }), labStudies: vi.fn().mockResolvedValue([]), labCreate: vi.fn(), labStudy: vi.fn(),
     labRun: vi.fn(), labVault: vi.fn(), labSavedVault: vi.fn(),
+    lessons: vi.fn().mockResolvedValue([]), lesson: vi.fn(), lessonRead: vi.fn(), lessonAnswer: vi.fn(),
   };
   return { ...base, ...over } as unknown as Api;
 }

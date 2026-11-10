@@ -1,0 +1,95 @@
+{
+  "slug": "luck-and-many-tries",
+  "position": 5,
+  "version": 1,
+  "title": "Luck and trying many ideas",
+  "minutes": 6,
+  "summary": "Streaks by luck, and why the best of many tries looks better than it is.",
+  "steps": [
+    {
+      "head": "Luck is everywhere",
+      "body": "Flip a coin 100 times. You will often see a run of 6 or 7 heads in a row. A {{streak|streak}} can come from luck alone.",
+      "more": "Press the button to flip again. Look at the longest run each time.",
+      "demo": "coin-streaks"
+    },
+    {
+      "head": "Streaks fool the eye",
+      "body": "A run of wins feels like skill. Before you trust it, ask how often chance alone makes a run like that."
+    },
+    {
+      "head": "Trying many ideas",
+      "body": "Try 50 random rules on the same past prices, and one of them will look good. The best of many tries is partly {{luck|luck}}. Then look at the same rule on new prices.",
+      "demo": "many-tries"
+    },
+    {
+      "head": "Counting ideas tried",
+      "body": "This is why the Lab counts every {{idea-tried|idea tried}}. The more ideas you try, the less you should trust the best one."
+    },
+    {
+      "head": "Fitting the past",
+      "body": "{{overfitting|Overfitting}} means a rule fits the past by chance. On new prices it then does worse."
+    }
+  ],
+  "questions": [
+    {
+      "prompt": "You try 50 random rules on past prices. What should you expect from the best one?",
+      "options": [
+        {
+          "text": "It looks good partly by luck.",
+          "why": "Right. With so many tries, one is likely to look good even if it is random.",
+          "correct": true
+        },
+        {
+          "text": "It will keep doing well on new prices.",
+          "why": "No. A lucky result on old prices does not have to repeat on new ones.",
+          "correct": false
+        },
+        {
+          "text": "All 50 do equally well.",
+          "why": "No. Random rules differ, so the best of them stands out by chance.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "Why does the Lab count the ideas you tried?",
+      "options": [
+        {
+          "text": "More tries make a lucky result more likely.",
+          "why": "Yes. The count tells you how much luck could be hiding in the best result.",
+          "correct": true
+        },
+        {
+          "text": "To limit how much you can learn.",
+          "why": "No. The count is there to help you judge your results, not to stop you.",
+          "correct": false
+        },
+        {
+          "text": "To score you against other people.",
+          "why": "No. Nothing here is a contest. The count is only for your own judgement.",
+          "correct": false
+        }
+      ]
+    },
+    {
+      "prompt": "In 100 coin flips you see 7 heads in a row. Is the coin special?",
+      "options": [
+        {
+          "text": "No. Runs like that are normal.",
+          "why": "Right. Runs of 6 or 7 are common in 100 flips of a fair coin.",
+          "correct": true
+        },
+        {
+          "text": "Yes. A fair coin never does that.",
+          "why": "No. A fair coin often does this in 100 flips.",
+          "correct": false
+        },
+        {
+          "text": "Yes. The next flip must be tails.",
+          "why": "No. Each flip is new. The coin has no memory.",
+          "correct": false
+        }
+      ]
+    }
+  ]
+}

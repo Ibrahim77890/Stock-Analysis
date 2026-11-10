@@ -7,7 +7,7 @@ export class DbService implements OnModuleDestroy {
   readonly pool: Pool;
 
   constructor(@Inject(APP_CONFIG) cfg: AppConfig) {
-    this.pool = new Pool({ connectionString: cfg.databaseUrl, max: 5, connectionTimeoutMillis: 3000, query_timeout: 10_000 });
+    this.pool = new Pool({ connectionString: cfg.databaseUrl, max: 10, connectionTimeoutMillis: 8000, query_timeout: 10_000 });
   }
 
   query<T extends QueryResultRow = any>(text: string, params: unknown[] = []): Promise<QueryResult<T>> {

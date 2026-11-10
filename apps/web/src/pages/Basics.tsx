@@ -19,7 +19,7 @@ export function Home() {
           <p className="lead">{home.intro}</p>
           <div className="row">
             {learner ? (
-              <Link className="btn big" to="/learn">{home.startSignedIn}<Icon name="arrow" /></Link>
+              <Link className="btn big" to="/path">{home.startSignedIn}<Icon name="arrow" /></Link>
             ) : (
               <Link className="btn big" to="/sign-in">{home.signUpButton}<Icon name="arrow" /></Link>
             )}
@@ -81,7 +81,7 @@ export function SignIn() {
   const [busy, setBusy] = useState(false);
   const nav = useNavigate();
   const loc = useLocation();
-  if (learner) return <Navigate to={(loc.state as any)?.from ?? "/learn"} replace />;
+  if (learner) return <Navigate to={(loc.state as any)?.from ?? "/path"} replace />;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -89,7 +89,7 @@ export function SignIn() {
     setError(null);
     try {
       await (mode === "register" ? register : signIn)(name, password);
-      nav("/learn");
+      nav("/path");
     } catch (err) {
       setError((err as Error).message);
     } finally {

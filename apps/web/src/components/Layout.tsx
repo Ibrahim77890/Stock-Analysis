@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { tour } from "../copy/home";
+import { lessons } from "../copy/lessons";
 import { BrandMark, Icon } from "./Icon";
 import { Tour, tourSeen } from "./Tour";
 import { Button } from "./ui";
@@ -29,6 +30,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="appbar-inner">
           <Link to="/" className="brand"><BrandMark />MarketLab</Link>
           <nav className="nav" aria-label="Main">
+            <NavLink to="/path"><Icon name="route" />{lessons.navLabel}</NavLink>
             <NavLink to="/learn"><Icon name="eye" />Learn</NavLink>
             <NavLink to="/lab"><Icon name="lab" />Lab</NavLink>
             <NavLink to="/progress"><Icon name="chart" />My progress</NavLink>
