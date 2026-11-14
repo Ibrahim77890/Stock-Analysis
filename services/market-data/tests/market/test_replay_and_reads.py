@@ -16,7 +16,7 @@ from market_data.market.replay import blind_view, new_session, visible_bars
 
 D = date
 SRC = Path(__file__).resolve().parents[2] / "src" / "market_data"
-ALLOWED_SQL_MODULES = {"market/read.py", "ingestion/load.py", "ingestion/quality.py"}  # load writes; quality has its own checks
+ALLOWED_SQL_MODULES = {"market/read.py", "ingestion/load.py", "ingestion/quality.py", "market/status.py"}  # load writes; quality has its own checks; status only counts rows (Sprint 10)
 
 
 @pytest.fixture(scope="module")

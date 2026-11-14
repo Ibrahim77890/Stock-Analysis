@@ -7,6 +7,7 @@ import { Rich } from "../components/Term";
 import { Button, Callout, Card, Chip, ErrorMessage, Loading, PageHead, ProgressBar } from "../components/ui";
 import { lessons } from "../copy/lessons";
 import { Demo } from "./demos/Demos";
+import { Visual } from "./visuals/Visuals";
 import { QuestionFlow } from "./QuestionFlow";
 
 type Phase = "steps" | "questions" | "done";
@@ -37,6 +38,7 @@ export function LessonPage() {
   const [step, setStep] = useState(0);
   const [more, setMore] = useState(false);
   const asked = useRef(new Set<number>()); // steps already sent in this visit: each is marked once
+  const [marking, setMarking] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -70,6 +72,20 @@ export function LessonPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lesson?.slug, phase, step]);
 
+  async function toggleComplete() {
+    if (!lesson || marking) return;
+    setMarking(true);
+    setError(null);
+    try {
+      const r = lesson.completed_manually ? await api.lessonIncomplete(lesson.slug) : await api.lessonComplete(lesson.slug);
+      setLesson((cur) => (cur ? { ...cur, completed_manually: r.completed_manually, done: r.done } : cur));
+    } catch (e) {
+      setError(friendly(e));
+    } finally {
+      setMarking(false);
+    }
+  }
+
   function go(n: number) {
     setMore(false);
     setStep(n);
@@ -102,6 +118,14 @@ export function LessonPage() {
         <Link className="btn ghost small" to="/path">{lessons.allLessons}</Link>
       </PageHead>
       {error && <ErrorMessage>{error}</ErrorMessage>}
+      {lesson.manual_complete_allowed && (
+        <div className="complete-bar">
+          <Button variant={lesson.completed_manually ? "secondary" : "primary"} size="small" disabled={marking} onClick={toggleComplete}>
+            <Icon name="check" />{marking ? lessons.markSaving : lesson.completed_manually ? lessons.markNotComplete : lessons.markComplete}
+          </Button>
+          <span className="muted small" role="status">{lesson.completed_manually ? lessons.markedByYou : lessons.manualNote}</span>
+        </div>
+      )}
 
       {phase === "steps" && (
         <Card>
@@ -118,6 +142,7 @@ export function LessonPage() {
               {more && <p className="lesson-more"><Rich text={s.more} /></p>}
             </>
           )}
+          {s.visual && <Visual id={s.visual} />}
           {s.demo && <Demo id={s.demo} />}
           <div className="row">
             <Button variant="secondary" disabled={step === 0} onClick={() => go(step - 1)}>{lessons.back}</Button>

@@ -3,7 +3,7 @@ import type { AnswerResult, LessonDetail, LessonSummary } from "../src/api/clien
 export function summary(over: Partial<LessonSummary> = {}): LessonSummary {
   return {
     slug: "reading-candles", position: 1, version: 1, title: "Reading a candle chart", summary: "What one candle shows.", minutes: 4,
-    steps_total: 5, steps_read: 0, questions_total: 3, questions_right: 0, done: false, ...over,
+    steps_total: 5, steps_read: 0, questions_total: 3, questions_right: 0, done: false, manual_complete_allowed: true, completed_manually: false, ...over,
   };
 }
 

@@ -1,9 +1,10 @@
 {
   "slug": "what-a-guess-means",
   "position": 2,
-  "version": 1,
+  "version": 2,
   "title": "What a probability guess means",
   "minutes": 5,
+  "manual_completion": true,
   "summary": "Why 70% means you expect to be wrong 3 times in 10, and why that is fine.",
   "steps": [
     {
@@ -14,7 +15,8 @@
       "head": "What 70% really says",
       "body": "Say 70% many times. About 7 of those times the price should go up. About 3 times it should not. Being wrong 3 times in 10 is not a mistake. It is what 70% means.",
       "more": "Try the small demo below. Move the slider and look at how many ups you see out of 20.",
-      "demo": "chance-70"
+      "demo": "chance-70",
+      "visual": "expected-misses"
     },
     {
       "head": "Why not say 100%?",

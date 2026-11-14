@@ -1,5 +1,5 @@
 import { FormEvent, ReactElement, useEffect, useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { GlossaryTerm } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { account, home } from "../copy/home";
@@ -21,7 +21,7 @@ export function Home() {
             {learner ? (
               <Link className="btn big" to="/path">{home.startSignedIn}<Icon name="arrow" /></Link>
             ) : (
-              <Link className="btn big" to="/sign-in">{home.signUpButton}<Icon name="arrow" /></Link>
+              <Link className="btn big" to="/sign-in?mode=register">{home.signUpButton}<Icon name="arrow" /></Link>
             )}
             {!learner && <span className="muted">{home.startSignedOut}</span>}
           </div>
@@ -73,7 +73,8 @@ export function Home() {
 
 export function SignIn() {
   const { signIn, register, learner, notice } = useAuth();
-  const [mode, setMode] = useState<"register" | "signin">("register");
+  const [params] = useSearchParams();
+  const [mode, setMode] = useState<"register" | "signin">(params.get("mode") === "register" ? "register" : "signin");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);

@@ -13,6 +13,7 @@ export interface AppConfig {
   corsOrigins: string[];
   loginLimit: number; // attempts per minute per client and name
   labRunsPerMinute: number; // Strategy Lab runs per minute per learner
+  operatorToken?: string; // opens GET /metrics; separate from every learner token; unset means the route is closed
 }
 
 /** Raised at start-up; the message names the variable and never a value. */
@@ -54,12 +55,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     corsOrigins: origins,
     loginLimit: Number(env.LOGIN_LIMIT_PER_MINUTE ?? 5),
     labRunsPerMinute: Number(env.LAB_RUNS_PER_MINUTE ?? 20),
+    ...(env.OPERATOR_TOKEN && env.OPERATOR_TOKEN.trim() ? { operatorToken: env.OPERATOR_TOKEN.trim() } : {}),
   };
 }
 
 /** Replaces every configured secret in `text` by *** (longest first). */
-export function redact(text: string, cfg: Pick<AppConfig, "internalToken" | "jwtSecret" | "databaseUrl">): string {
-  const secrets = [cfg.internalToken, cfg.jwtSecret, passwordOf(cfg.databaseUrl)].filter((s) => s && s.length >= 6);
+export function redact(text: string, cfg: Pick<AppConfig, "internalToken" | "jwtSecret" | "databaseUrl"> & { operatorToken?: string }): string {
+  const secrets = [cfg.internalToken, cfg.jwtSecret, cfg.operatorToken ?? "", passwordOf(cfg.databaseUrl)].filter((s) => s && s.length >= 6);
   for (const s of secrets.sort((a, b) => b.length - a.length)) text = text.split(s).join("***");
   return text;
 }

@@ -1,9 +1,10 @@
 {
   "slug": "luck-and-many-tries",
   "position": 5,
-  "version": 1,
+  "version": 2,
   "title": "Luck and trying many ideas",
   "minutes": 6,
+  "manual_completion": true,
   "summary": "Streaks by luck, and why the best of many tries looks better than it is.",
   "steps": [
     {
@@ -23,7 +24,8 @@
     },
     {
       "head": "Counting ideas tried",
-      "body": "This is why the Lab counts every {{idea-tried|idea tried}}. The more ideas you try, the less you should trust the best one."
+      "body": "This is why the Lab counts every {{idea-tried|idea tried}}. The more ideas you try, the less you should trust the best one.",
+      "visual": "many-paths"
     },
     {
       "head": "Fitting the past",

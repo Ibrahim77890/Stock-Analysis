@@ -1,9 +1,10 @@
 {
   "slug": "calibration",
   "position": 4,
-  "version": 1,
+  "version": 2,
   "title": "Calibration and few guesses",
   "minutes": 5,
+  "manual_completion": true,
   "summary": "Do your numbers match real life, and why a handful of guesses proves little.",
   "steps": [
     {
@@ -12,7 +13,8 @@
     },
     {
       "head": "Putting guesses in groups",
-      "body": "We group your guesses by size, such as 60 to 70%. Then we compare each group with what really happened."
+      "body": "We group your guesses by size, such as 60 to 70%. Then we compare each group with what really happened.",
+      "visual": "calibration-plot"
     },
     {
       "head": "Too sure",

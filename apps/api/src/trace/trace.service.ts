@@ -27,6 +27,14 @@ interface Live {
 
 const BUFFER = 200;
 
+/** Where JSON request lines go. Tests replace it. One line per request: route PATTERN, status and time. Never a URL, query, body or header. */
+export let requestLogSink: (line: string) => void = (line) => {
+  if (process.env.REQUEST_LOG !== "off") process.stdout.write(line + "\n");
+};
+export function setRequestLogSink(fn: (line: string) => void): void {
+  requestLogSink = fn;
+}
+
 @Injectable()
 export class TraceService {
   private readonly als = new AsyncLocalStorage<Live>();
@@ -42,6 +50,11 @@ export class TraceService {
   /** Called by the Python client for every upstream call. */
   addUpstream(e: UpstreamEntry): void {
     this.als.getStore()?.entry.upstream.push(e);
+  }
+
+  /** The id of the request being served (forwarded to Python so both logs carry it). */
+  currentRequestId(): string | undefined {
+    return this.als.getStore()?.entry.request_id;
   }
 
   setLearner(id: string): void {
@@ -132,6 +145,7 @@ export class TraceMiddleware implements NestMiddleware {
       entry.route = `${req.method} ${pattern}`;
       if (req.learnerId) live.learnerId = req.learnerId;
       this.trace.finish(live);
+      requestLogSink(JSON.stringify({ time: entry.time, service: "gateway", method: req.method, route: pattern, status: entry.status, duration_ms: entry.duration_ms, request_id: entry.request_id }));
     });
     this.trace.run(live, next);
   }

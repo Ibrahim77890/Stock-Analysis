@@ -11,6 +11,7 @@
     "title": { "type": "string", "minLength": 3, "maxLength": 80 },
     "summary": { "type": "string", "minLength": 10, "maxLength": 200 },
     "minutes": { "type": "integer", "minimum": 3, "maximum": 8 },
+    "manual_completion": { "type": "boolean", "description": "May a learner mark this lesson complete by hand? Default true." },
     "steps": {
       "type": "array", "minItems": 4, "maxItems": 6,
       "items": {
@@ -19,7 +20,8 @@
           "head": { "type": "string", "minLength": 2, "maxLength": 60 },
           "body": { "type": "string", "minLength": 10, "maxLength": 600 },
           "more": { "type": "string", "minLength": 10, "maxLength": 600 },
-          "demo": { "enum": ["chance-70", "coin-streaks", "many-tries"] }
+          "demo": { "enum": ["chance-70", "coin-streaks", "many-tries"] },
+          "visual": { "enum": ["candle-anatomy", "candle-row", "volume-bars", "expected-misses", "brier-formula", "brier-curve", "calibration-plot", "many-paths", "cost-drag", "sma-diagram", "rsi-formula"] }
         }
       }
     },

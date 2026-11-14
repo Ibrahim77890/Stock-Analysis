@@ -45,7 +45,7 @@ export class PythonClient {
     try {
       res = await fetch(this.cfg.pythonApiUrl + path, {
         method,
-        headers: { "content-type": "application/json", "x-internal-token": this.cfg.internalToken },
+        headers: { "content-type": "application/json", "x-internal-token": this.cfg.internalToken, ...(this.trace.currentRequestId() ? { "x-request-id": this.trace.currentRequestId()! } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body),
         signal: AbortSignal.timeout(timeoutMs),
       });
@@ -107,6 +107,14 @@ export class PythonClient {
   }
   summary(ids: string[]) {
     return this.call<any>("POST", "/learning/summary", "/learning/summary", { episode_ids: ids }, SCORE_TIMEOUT_MS);
+  }
+
+  // ---- Operations (Sprint 10)
+  metrics() {
+    return this.call<any>("GET", "/metrics", "/metrics");
+  }
+  dataStatus() {
+    return this.call<any>("GET", "/data/status", "/data/status");
   }
 
   // ---- Indicators and practice decisions (Sprint 09); 422 messages from these routes are plain sentences for learners

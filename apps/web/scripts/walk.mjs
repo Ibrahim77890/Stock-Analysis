@@ -8,6 +8,10 @@
 //   npm run walk -- --lessons --keyboard   the same, keyboard only
 //   npm run walk -- --journal        indicators on the chart, a practice decision, the My decisions page
 //   npm run walk -- --journal --keyboard   the same, keyboard only
+//   npm run walk -- --status         the Data page: sources, coverage, freshness, checks, caveats, health
+//   npm run walk -- --status --keyboard   the same, keyboard only
+//   npm run walk -- --acceptance     one journey through the blueprint MVP criteria (see docs/05-acceptance/mvp-matrix.md)
+//   npm run walk -- --acceptance --keyboard   the same, keyboard only
 //
 // Needs the three servers running (Python :8000, gateway :3000, web :5173). Uses the system Edge or Chrome
 // (set BROWSER_PATH to choose). It creates throwaway learners named walk-xxxx in the real database and saves screenshots
@@ -22,6 +26,8 @@ const KEYBOARD = args.has("--keyboard");
 const LAB = args.has("--lab");
 const LESSONS = args.has("--lessons");
 const JOURNAL = args.has("--journal");
+const STATUS = args.has("--status");
+const ACCEPTANCE = args.has("--acceptance");
 const BASE = process.env.WEB_URL ?? "http://127.0.0.1:5173";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const OUT = path.join(ROOT, "data", "reports", "walk") + path.sep;
@@ -36,7 +42,7 @@ const CANDIDATES = [
 ].filter(Boolean);
 const executablePath = CANDIDATES.find((p) => existsSync(p));
 if (!executablePath) { console.error("No Edge or Chrome found. Set BROWSER_PATH."); process.exit(2); }
-console.log(`browser: ${executablePath}\nmode: ${LESSONS ? "lessons" : JOURNAL ? "journal" : LAB ? "lab" : "learning"}${KEYBOARD ? " + keyboard only" : ""}\n`);
+console.log(`browser: ${executablePath}\nmode: ${ACCEPTANCE ? "acceptance" : LESSONS ? "lessons" : JOURNAL ? "journal" : STATUS ? "status" : LAB ? "lab" : "learning"}${KEYBOARD ? " + keyboard only" : ""}\n`);
 
 const browser = await puppeteer.launch({ executablePath, headless: true, args: ["--no-sandbox"] });
 const page = await browser.newPage();
@@ -52,13 +58,13 @@ const results = [];
 async function step(n, name, fn) {
   const t0 = Date.now();
   try { const note = await fn(); results.push([n, name, "PASS", `${Date.now() - t0} ms`, note ?? ""]); }
-  catch (e) { results.push([n, name, "FAIL", `${Date.now() - t0} ms`, String(e.message).slice(0, 220)]); await page.screenshot({ path: `${OUT}fail-${LESSONS ? "lessons-" : JOURNAL ? "journal-" : LAB ? "lab-" : ""}${n}.png` }).catch(() => {}); }
+  catch (e) { results.push([n, name, "FAIL", `${Date.now() - t0} ms`, String(e.message).slice(0, 220)]); await page.screenshot({ path: `${OUT}fail-${ACCEPTANCE ? "acceptance-" : LESSONS ? "lessons-" : JOURNAL ? "journal-" : STATUS ? "status-" : LAB ? "lab-" : ""}${n}.png` }).catch(() => {}); }
 }
 const text = async (sel = "body") => page.$eval(sel, (el) => el.innerText);
 const waitText = (t, timeout = 20000) => page.waitForFunction((x) => document.body.innerText.includes(x), { timeout }, t);
 // case-insensitive: small labels such as "Step 1 of 5" are drawn in capitals by the style sheet
 const waitTextI = (t, timeout = 20000) => page.waitForFunction((x) => document.body.innerText.toLowerCase().includes(x.toLowerCase()), { timeout }, t);
-const shot = (name) => page.screenshot({ path: `${OUT}${LESSONS ? "lessons-" : JOURNAL ? "journal-" : LAB ? "lab-" : ""}${name}.png` });
+const shot = (name) => page.screenshot({ path: `${OUT}${ACCEPTANCE ? "acceptance-" : LESSONS ? "lessons-" : JOURNAL ? "journal-" : STATUS ? "status-" : LAB ? "lab-" : ""}${name}.png` });
 
 /** A mouse click. In keyboard mode this is a failure: the walk must never need the mouse. */
 async function mouse(handleOrSelector) {
@@ -113,7 +119,7 @@ const PASSWORD = "a few random words here";
 
 // ---------------------------------------------------------------------------------------------- shared: account and tour
 async function createAccount() {
-  await go("/sign-in");
+  await go("/sign-in?mode=register");   // plain /sign-in opens the login form
   await waitText("10 or more characters");
   await typeInto("name", name);
   await typeInto("password", PASSWORD);
@@ -135,30 +141,21 @@ async function learningWalk() {
     });
   }
   await step(2, "create an account", createAccount);
-  if (!KEYBOARD) {
-    await step(3, "open a word's definition inside the tour", async () => {
-      await mouse(await buttonByLabel("candle"));
-      await waitText("One box on the chart that shows one day");
-      await shot("03-tour-term");
-    });
-    await step(4, "take the tour to the end", async () => {
-      for (let i = 0; i < 4; i++) await press("Next");
-      await press("Got it");
-      await page.waitForFunction(() => !document.body.innerText.includes("A quick tour"));
-    });
-  } else {
-    await step(3, "open a word's definition inside the tour with the keyboard", async () => {
-      await tabTo(isButton, "candle");
-      await page.keyboard.press("Enter");
-      await waitText("One box on the chart that shows one day");
-      await page.keyboard.press("Escape");
-    });
-    await step(4, "take the tour to the end with the keyboard", async () => {
-      for (let i = 0; i < 4; i++) await press("Next");
-      await press("Got it");
-      await page.waitForFunction(() => !document.body.innerText.includes("A quick tour"));
-    });
-  }
+  await step(3, "take the whole tour with Next, ending with Got it", async () => {
+    for (let i = 0; i < 14; i++) {
+      const last = await page.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.innerText.trim() === "Got it"));
+      if (last) break;
+      await press("Next");
+    }
+    await press("Got it");
+    await page.waitForFunction(() => !document.querySelector("[role=alertdialog]"), { timeout: 10000 });
+  });
+  await step(4, "the Tutorial button in the header opens the tour again, and Skip closes it", async () => {
+    await press("Tutorial");
+    await waitText("A quick tour");
+    await press("Skip the tour");
+    await page.waitForFunction(() => !document.querySelector("[role=alertdialog]"), { timeout: 10000 });
+  });
   await step(5, "start a mixed episode", async () => {
     await go("/learn");
     if (KEYBOARD) {
@@ -415,6 +412,23 @@ async function lessonsWalk() {
     await press("Practise in the guess game");
     await page.waitForFunction(() => location.pathname === "/learn", { timeout: 20000 });
   });
+  await step(10, "a lesson shows its diagram and calculation, and can be marked complete by hand", async () => {
+    await go("/path/brier-score");
+    await waitTextI("Step 1 of 5");
+    await press("Next");
+    await page.waitForSelector("figure.visual svg[role=img], figure.visual table", { timeout: 20000 });
+    const fig = await text("figure.visual");
+    if (!/Score = \(guess − outcome\)²/.test(fig) || !fig.includes("0.81")) throw new Error("the Brier calculation is not shown");
+    await press("Mark as complete");
+    await waitText("Marked complete by you");
+    await go("/path");
+    await waitText("Your learning path");
+    const items = await page.$$eval(".path > li", (els) => els.map((e) => e.innerText));
+    if (!/Done/.test(items[2]) || !items[2].includes("Marked complete by you")) throw new Error("lesson 3 is not shown as done and marked by you");
+    await go("/path/brier-score");
+    await press("Mark as not complete");
+    await waitText("You can mark a lesson complete yourself");
+  });
 }
 
 // ---------------------------------------------------------------------------------------------- journal walk
@@ -450,7 +464,7 @@ async function journalWalk() {
     await waitText("None of these numbers is a forecast.");
     await waitText("The 20-day average is the mean of the last 20 closing prices.");
     await press("Show the numbers");
-    await page.waitForFunction(() => document.querySelectorAll("table[aria-label*='20-day average'] tbody tr").length === 10, { timeout: 20000 });
+    await page.waitForFunction(() => document.querySelector("details[open] table[aria-label*='20-day average']") && document.querySelectorAll("table[aria-label*='20-day average'] tbody tr").length === 10, { timeout: 20000 });
     const last = await page.$$eval("table[aria-label*='20-day average'] tbody tr td:first-child", (els) => els.map((e) => Number(e.innerText)).at(-1));
     if (last !== 60) throw new Error(`the last day in the table is ${last}, not 60`);
   });
@@ -487,7 +501,120 @@ async function journalWalk() {
   });
 }
 
-if (JOURNAL) await journalWalk(); else if (LESSONS) await lessonsWalk(); else if (LAB) await labWalk(); else await learningWalk();
+// ---------------------------------------------------------------------------------------------- status walk
+async function statusWalk() {
+  await step(1, "create an account", createAccount);
+  await step(2, "skip the tour and open the Data page from the top bar", async () => {
+    await skipTour();
+    await press("Data");
+    await waitText("Where the data come from");
+    await waitText("What the data cannot tell you");
+    await shot("02-status");
+  });
+  await step(3, "the sources table, coverage and freshness are there, with numbers", async () => {
+    await page.waitForSelector("table[aria-label='Data sources'] tbody tr", { timeout: 20000 });
+    const first = await page.$$eval("table[aria-label='Data sources'] tbody tr:first-child td", (els) => els.map((e) => e.innerText));
+    if (first.length !== 6 || !/\d/.test(first[1]) || !/\d{4}-\d{2}-\d{2}/.test(first[3])) throw new Error(`unexpected first row: ${first.join(" | ")}`);
+    const t = await text();
+    for (const need of ["What is covered", "How fresh it is", "Checks that ran"]) if (!t.includes(need)) throw new Error(`missing: ${need}`);
+  });
+  await step(4, "the caveats are always shown and the page never says the data are clean", async () => {
+    const t = await text();
+    for (const need of ["survivorship bias", "one free vendor feed", "licensed for private learning", "not investment advice"]) if (!t.toLowerCase().includes(need.toLowerCase())) throw new Error(`missing caveat: ${need}`);
+    if (/all checks passed|data are clean|guarantee/i.test(t)) throw new Error("the page overclaims");
+  });
+  await step(5, "the health card names each part in words", async () => {
+    await waitText("Is MarketLab working now?");
+    await waitText("Number service: Working");
+    return await a11y("status page");
+  });
+}
+
+// ---------------------------------------------------------------------------------------------- acceptance walk
+// One journey through the blueprint's MVP criteria (docs/05-acceptance/mvp-matrix.md). Items 1 to 10 map to steps 2 to 10 here.
+async function acceptanceWalk() {
+  await step(1, "MVP 1: register and reach the learning area", async () => {
+    await createAccount();
+    await skipTour();
+    await waitText("Your learning path");
+  });
+  await step(2, "MVP 2: complete a market-fundamentals lesson (read every step, answer the questions)", async () => {
+    await go("/path/reading-candles");
+    await waitTextI("Step 1 of 5");
+    for (let n = 2; n <= 5; n++) { await press("Next"); await waitTextI(`Step ${n} of 5`); }
+    await press("Go to the questions");
+    const answers = ["The price fell.", "The highest and lowest price of the day.", "No. A chart shows the past only."];
+    for (const [i, a] of answers.entries()) {
+      await chooseOption(a);
+      await press("Check my answer");
+      await waitVerdict("right");
+      await press(i === 2 ? "Finish the lesson" : "Next question");
+    }
+    await waitText("Lesson finished");
+  });
+  await step(3, "MVP 3: search a supported US stock", async () => {
+    await go("/lab");
+    await page.waitForSelector("#stock-search", { timeout: 20000 });
+    await typeInto("stock-search", "AAPL");
+    await page.waitForFunction(() => [...document.querySelectorAll(".stock-btn")].some((b) => b.innerText.includes("AAPL")), { timeout: 20000 });
+  });
+  await step(4, "MVP 4 and 5: view historical candles and inspect an indicator", async () => {
+    await go("/learn");
+    if (KEYBOARD) { await tabTo(isId, "length"); await page.keyboard.type("About s"); } else await page.select("#length", "120");
+    await press("Start");
+    await page.waitForFunction(() => /Day 60 of 120/.test(document.body.innerText), { timeout: 20000 });
+    await page.waitForSelector("canvas", { timeout: 20000 });
+    await press("20-day average");
+    await page.waitForFunction(() => document.querySelector('button[aria-pressed="true"]')?.innerText.trim() === "20-day average", { timeout: 20000 });
+    await waitText("None of these numbers is a forecast.");
+  });
+  await step(5, "MVP 6: replay a period one day at a time with no real symbol or date shown", async () => {
+    await press("Next day");
+    await page.waitForFunction(() => /Day 61 of 120/.test(document.body.innerText), { timeout: 20000 });
+    const t = await text("main");
+    if (/\b(19|20)\d{2}\b/.test(t) || /\b[A-Z]{2,5}\b(?= stock)/.test(t) || /\d{4}-\d{2}-\d{2}/.test(t)) throw new Error("a year, date or symbol is visible before the reveal");
+  });
+  await step(6, "MVP 7: record a simulated trading decision with a reason", async () => {
+    await chooseStance("Hold the stock (long)");
+    await typeInto("decision-reason", "The price has stayed above its average.");
+    await press("Record my decision");
+    await waitText("Saved for day 61.");
+  });
+  await step(7, "MVP 8 and 9: run a reproducible backtest and read results, costs and risk", async () => {
+    await go("/lab");
+    await page.waitForSelector("#stock-search", { timeout: 20000 });
+    await typeInto("stock-search", "AAPL");
+    if (KEYBOARD) { await page.keyboard.press("Tab"); await page.keyboard.press("Enter"); }
+    else await mouse(await (async () => { const [h] = await page.$$("xpath/.//button[contains(@class,'stock-btn')][.//span[normalize-space(.)='AAPL']]"); if (!h) throw new Error("AAPL not listed"); return h; })());
+    await press("Start study");
+    await waitText("AAPL study");
+    await press("Run on practice years");
+    await waitText("What happened on the practice years", 60000);
+    const t = await text();
+    for (const need of ["Your rule", "Buy and hold", "What costs do to it", "Could this be luck?", "Ideas tried", "Worst fall"]) if (!t.includes(need)) throw new Error(`missing: ${need}`);
+    await press("Run on practice years");
+    await waitText("not counted again", 60000);   // the same rule gives the same numbers and counts once
+  });
+  await step(8, "MVP 10: inspect the source, coverage and quality status of the data", async () => {
+    await go("/status");
+    await waitText("Where the data come from");
+    await page.waitForSelector("table[aria-label='Data sources'] tbody tr", { timeout: 20000 });
+    const t = await text();
+    for (const need of ["Checks that ran", "survivorship bias", "licensed for private learning"]) if (!t.toLowerCase().includes(need.toLowerCase())) throw new Error(`missing: ${need}`);
+  });
+  await step(9, "engineering: the request id is on every reply and the metrics route is closed to a learner", async () => {
+    const info = await page.evaluate(async () => {
+      const s = JSON.parse(sessionStorage.getItem("marketlab.session"));
+      const r = await fetch("http://127.0.0.1:3000/me", { headers: { authorization: `Bearer ${s.token}` } });
+      const m = await fetch("http://127.0.0.1:3000/metrics", { headers: { authorization: `Bearer ${s.token}` } });
+      return { id: r.headers.get("x-request-id"), metrics: m.status };
+    });
+    if (!/^[0-9a-f-]{36}$/.test(info.id ?? "")) throw new Error("no request id header");
+    if (info.metrics !== 401) throw new Error(`a learner token opened /metrics (${info.metrics})`);
+  });
+}
+
+if (ACCEPTANCE) await acceptanceWalk(); else if (STATUS) await statusWalk(); else if (JOURNAL) await journalWalk(); else if (LESSONS) await lessonsWalk(); else if (LAB) await labWalk(); else await learningWalk();
 
 const failed = results.filter((r) => r[2] === "FAIL").length;
 console.log(results.map((r) => r.join(" | ")).join("\n"));

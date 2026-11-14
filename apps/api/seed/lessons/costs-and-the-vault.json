@@ -1,9 +1,10 @@
 {
   "slug": "costs-and-the-vault",
   "position": 6,
-  "version": 1,
+  "version": 2,
   "title": "Costs, buy and hold, and the vault",
   "minutes": 6,
+  "manual_completion": true,
   "summary": "Why costs matter, why every rule meets buy and hold, and what a backtest cannot tell you.",
   "steps": [
     {
@@ -12,7 +13,8 @@
     },
     {
       "head": "Small costs add up",
-      "body": "A rule that trades often pays the cost again and again. A result that looks good can turn bad after costs."
+      "body": "A rule that trades often pays the cost again and again. A result that looks good can turn bad after costs.",
+      "visual": "cost-drag"
     },
     {
       "head": "Compare with buy and hold",

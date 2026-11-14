@@ -1,9 +1,10 @@
 {
   "slug": "indicators-and-decisions",
   "position": 7,
-  "version": 1,
+  "version": 2,
   "title": "Indicators, decisions and doubt",
   "minutes": 5,
+  "manual_completion": true,
   "summary": "What an indicator describes, why to write your reason first, and how to test an idea fairly.",
   "steps": [
     {
@@ -13,11 +14,13 @@
     {
       "head": "The 20-day average",
       "body": "The 20-day average is the mean of the last 20 closing prices. A price above it has been higher lately than its usual level. It says nothing about tomorrow.",
-      "more": "A moving average follows the price with a delay, because it is built from old prices."
+      "more": "A moving average follows the price with a delay, because it is built from old prices.",
+      "visual": "sma-diagram"
     },
     {
       "head": "The RSI",
-      "body": "The {{rsi|RSI}} compares recent rises with recent falls, on a scale from 0 to 100. A high RSI says the last days were mostly rises. It does not say a fall is due."
+      "body": "The {{rsi|RSI}} compares recent rises with recent falls, on a scale from 0 to 100. A high RSI says the last days were mostly rises. It does not say a fall is due.",
+      "visual": "rsi-formula"
     },
     {
       "head": "Write your reason first",

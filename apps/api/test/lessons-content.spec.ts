@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
 import { glossarySlugs, lessonsDir, loadValidLessons } from "../scripts/seed-lessons";
-import { BANNED, contentHash, DEMO_IDS, LessonFile, markerSlugs, plain, readLessonFiles, setHash, textFields, validateLesson } from "../src/lessons/content";
+import { BANNED, contentHash, DEMO_IDS, VISUAL_IDS, LessonFile, markerSlugs, plain, readLessonFiles, setHash, textFields, validateLesson } from "../src/lessons/content";
 import { fleschReadingEase } from "../src/common/readability";
 
 const dir = lessonsDir();
@@ -52,6 +52,21 @@ describe("lesson files (the only source of lesson text)", () => {
     for (const f of files) for (const t of textFields(f.lesson as LessonFile)) expect(blocked.test(plain(t.text)), `${f.file} ${t.where}`).toBe(false);
   });
 
+  it("every lesson has at least one diagram or worked calculation, every visual id is known, and every visual is used", () => {
+    const used = new Set<string>();
+    for (const f of files) {
+      const l = f.lesson as LessonFile;
+      const v = l.steps.filter((s) => s.visual);
+      expect(v.length, `${l.slug} has a visual`).toBeGreaterThanOrEqual(1);
+      for (const s of v) { expect(VISUAL_IDS as readonly string[]).toContain(s.visual); used.add(s.visual!); }
+    }
+    expect([...used].sort()).toEqual([...VISUAL_IDS].sort());
+  });
+
+  it("every lesson file states its manual-completion setting", () => {
+    for (const f of files) expect(typeof (f.lesson as LessonFile).manual_completion, f.file).toBe("boolean");
+  });
+
   it("the content hash is stable and changes when one word changes", () => {
     const l = good();
     expect(contentHash(l)).toBe(contentHash(JSON.parse(JSON.stringify(l))));
@@ -75,6 +90,12 @@ describe("the validator rejects bad lessons (negative tests)", () => {
   it("only two steps", () => {
     const l = good(); l.steps = l.steps.slice(0, 2);
     expect(problems(l).join("\n")).toMatch(/schema/);
+  });
+  it("an unknown visual id and a non-boolean manual-completion setting are rejected", () => {
+    const l = good(); (l.steps[0] as any).visual = "pie-chart";
+    expect(problems(l).join("\n")).toMatch(/schema/);
+    const m = good(); (m as any).manual_completion = "yes";
+    expect(problems(m).join("\n")).toMatch(/schema/);
   });
   it("an unknown demo id", () => {
     const l = good(); (l.steps[0] as any).demo = "stock-picker";

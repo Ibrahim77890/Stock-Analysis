@@ -52,7 +52,7 @@ export function PathPage() {
                 </div>
                 <p>{l.summary}</p>
                 <ProgressBar value={l.steps_read + l.questions_right} max={l.steps_total + l.questions_total} label={`Progress in ${l.title}`} />
-                <p className="muted small">{lessons.progressLine(l.steps_read, l.steps_total, l.questions_right, l.questions_total)}</p>
+                <p className="muted small">{lessons.progressLine(l.steps_read, l.steps_total, l.questions_right, l.questions_total)}{l.completed_manually ? ` · ${lessons.markedByYou}` : ""}</p>
                 <Link className={state === "done" ? "btn secondary small" : "btn small"} to={`/path/${l.slug}`} aria-label={`${state === "done" ? lessons.readAgain : state === "inProgress" ? lessons.continueLesson : lessons.openLesson}: ${l.title}`}>
                   {state === "done" ? lessons.readAgain : state === "inProgress" ? lessons.continueLesson : lessons.openLesson}
                   <Icon name="arrow" />

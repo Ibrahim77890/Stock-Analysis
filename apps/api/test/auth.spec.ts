@@ -126,10 +126,10 @@ describe.skipIf(!HAS_DB)("migrations (database)", () => {
 
   it("up, down (all), up leaves the same tables; Python tables are untouched; running up twice changes nothing", async () => {
     const before = await tables();
-    expect(before.app).toEqual(expect.arrayContaining(["learner", "learner_episode", "learner_study", "glossary_term", "lesson", "lesson_question", "lesson_progress", "quiz_answer", "rate_event", "request_log", "pgmigrations"]));
+    expect(before.app).toEqual(expect.arrayContaining(["learner", "learner_episode", "learner_study", "glossary_term", "lesson", "lesson_question", "lesson_progress", "quiz_answer", "lesson_completion", "rate_event", "request_log", "pgmigrations"]));
     expect(run("up").status).toBe(0); // idempotent
     expect(await tables()).toEqual(before);
-    expect(run("down", ["5"]).status).toBe(0);
+    expect(run("down", ["6"]).status).toBe(0);
     const down = await tables();
     expect(down.app).toEqual(["pgmigrations"]);          // the schema stays; it holds the version table
     expect(down.market).toEqual(before.market);

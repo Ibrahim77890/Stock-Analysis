@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AuthGuard, CurrentLearner } from "../auth/auth.guard";
-import { AnswerDto, AnswerResultDto, LessonDetailDto, LessonSummaryDto, StepReadDto } from "../dto";
+import { AnswerDto, AnswerResultDto, CompletionDto, LessonDetailDto, LessonSummaryDto, StepReadDto } from "../dto";
 import { LessonsService } from "./lessons.service";
 
 @ApiTags("Lessons")
@@ -31,6 +31,22 @@ export class LessonsController {
   @ApiOkResponse({ type: StepReadDto })
   read(@CurrentLearner() me: string, @Param("slug") slug: string, @Param("n") n: string) {
     return this.svc.markRead(me, slug, n);
+  }
+
+  @Post(":slug/complete")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Mark a lesson complete by hand (like a course site). Allowed when the lesson's own setting says so; safe to repeat." })
+  @ApiOkResponse({ type: CompletionDto })
+  complete(@CurrentLearner() me: string, @Param("slug") slug: string) {
+    return this.svc.setManual(me, slug, true);
+  }
+
+  @Post(":slug/incomplete")
+  @HttpCode(200)
+  @ApiOperation({ summary: "Take back a manual completion mark. The lesson stays done if its steps and questions are finished." })
+  @ApiOkResponse({ type: CompletionDto })
+  incomplete(@CurrentLearner() me: string, @Param("slug") slug: string) {
+    return this.svc.setManual(me, slug, false);
   }
 
   @Post(":slug/questions/:n/answer")

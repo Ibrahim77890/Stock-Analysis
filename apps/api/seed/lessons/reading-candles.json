@@ -1,14 +1,16 @@
 {
   "slug": "reading-candles",
   "position": 1,
-  "version": 1,
+  "version": 2,
   "title": "Reading a candle chart",
   "minutes": 4,
+  "manual_completion": true,
   "summary": "What one candle shows, and what a row of candles cannot tell you.",
   "steps": [
     {
       "head": "One day, one candle",
-      "body": "Each {{candle|candle}} shows one trading day. It holds four prices: the {{open|open}}, the {{high-and-low|high}}, the low and the {{close|close}}."
+      "body": "Each {{candle|candle}} shows one trading day. It holds four prices: the {{open|open}}, the {{high-and-low|high}}, the low and the {{close|close}}.",
+      "visual": "candle-anatomy"
     },
     {
       "head": "Up days and down days",
@@ -17,12 +19,14 @@
     },
     {
       "head": "A row of candles tells a story",
-      "body": "Put many candles side by side and you can see the path of the price. A path from the past is not a promise about tomorrow."
+      "body": "Put many candles side by side and you can see the path of the price. A path from the past is not a promise about tomorrow.",
+      "visual": "candle-row"
     },
     {
       "head": "Busy days and quiet days",
       "body": "Bars under the candles can show how much was traded. We show {{relative-volume|relative volume}}, which compares a day with its usual level.",
-      "more": "A busy day often comes with a big move. It does not always do so."
+      "more": "A busy day often comes with a big move. It does not always do so.",
+      "visual": "volume-bars"
     },
     {
       "head": "What a chart cannot tell you",

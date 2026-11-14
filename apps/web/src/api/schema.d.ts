@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/data/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What data MarketLab holds: sources, coverage, freshness, quality checks and caveats (no file paths, hashes or keys) */
+        get: operations["OpsController_dataStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/episodes": {
         parameters: {
             query?: never;
@@ -366,6 +383,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/lessons/{slug}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a lesson complete by hand (like a course site). Allowed when the lesson's own setting says so; safe to repeat. */
+        post: operations["LessonsController_complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/lessons/{slug}/incomplete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Take back a manual completion mark. The lesson stays done if its steps and questions are finished. */
+        post: operations["LessonsController_incomplete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/lessons/{slug}/questions/{n}/answer": {
         parameters: {
             query?: never;
@@ -429,6 +480,23 @@ export interface paths {
         };
         /** My results across all my episodes */
         get: operations["LearningController_progress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** For the person running MarketLab: calls, error counts and p50, p95, max duration per route (needs the operator token, never a learner token) */
+        get: operations["OpsController_metrics"];
         put?: never;
         post?: never;
         delete?: never;
@@ -520,6 +588,11 @@ export interface components {
             wilson_high: number | null;
             wilson_low: number | null;
         };
+        CompletionDto: {
+            completed_manually: boolean;
+            done: boolean;
+            lesson_slug: string;
+        };
         CostRowDto: {
             buy_hold_total_return: number | null;
             cost_bps: number;
@@ -561,6 +634,29 @@ export interface components {
              * @example AAPL
              */
             symbol: string;
+        };
+        DataSourceDto: {
+            bars: number;
+            /** @example 2005-01-03 */
+            first_date: string;
+            /** @example 2025-12-31 */
+            last_date: string;
+            retrieved_at?: string | null;
+            /** @example tiingo */
+            source: string;
+            symbols: number;
+            symbols_with_long_history: number;
+        };
+        DataStatusDto: {
+            /** @description Always shown: survivorship bias, one vendor, licence, not advice */
+            caveats: string[];
+            /** @description True when no price data is loaded */
+            empty: boolean;
+            macro: components["schemas"]["MacroSummaryDto"];
+            /** @description A symbol counts as long history with at least this many sessions */
+            min_sessions_for_long_history: number;
+            quality: components["schemas"]["QualitySummaryDto"];
+            sources: components["schemas"]["DataSourceDto"][];
         };
         DataTrailDto: {
             adjustment: string;
@@ -763,8 +859,12 @@ export interface components {
             learner_id: string;
         };
         LessonDetailDto: {
-            /** @description All steps read and all questions answered rightly */
+            /** @description The learner marked this lesson complete by hand */
+            completed_manually: boolean;
+            /** @description Marked complete by the learner, or all steps read and all questions answered rightly */
             done: boolean;
+            /** @description This lesson's own setting: may a learner mark it complete by hand? */
+            manual_complete_allowed: boolean;
             minutes: number;
             position: number;
             questions: components["schemas"]["LessonQuestionDto"][];
@@ -801,10 +901,16 @@ export interface components {
             demo?: "chance-70" | "coin-streaks" | "many-tries";
             head: string;
             more?: string;
+            /** @description A diagram or worked calculation shown with the step */
+            visual?: string;
         };
         LessonSummaryDto: {
-            /** @description All steps read and all questions answered rightly */
+            /** @description The learner marked this lesson complete by hand */
+            completed_manually: boolean;
+            /** @description Marked complete by the learner, or all steps read and all questions answered rightly */
             done: boolean;
+            /** @description This lesson's own setting: may a learner mark it complete by hand? */
+            manual_complete_allowed: boolean;
             minutes: number;
             position: number;
             /** @description Questions this learner has answered rightly at least once */
@@ -835,6 +941,30 @@ export interface components {
             shuffled_quantiles: {
                 [key: string]: number;
             } | null;
+        };
+        MacroSummaryDto: {
+            first_date?: string | null;
+            last_date?: string | null;
+            observations: number;
+            series: number;
+        };
+        MetricRouteDto: {
+            /** @description Answers with status 400 to 499 */
+            client_errors: number;
+            count: number;
+            max_ms: number | null;
+            p50_ms: number | null;
+            p95_ms: number | null;
+            /** @example GET /lessons/:slug */
+            route: string;
+            /** @description Answers with status 500 or more */
+            server_errors: number;
+        };
+        MetricsDto: {
+            gateway: components["schemas"]["ServiceMetricsDto"];
+            /** @description Absent when the Python service could not be asked */
+            python?: components["schemas"]["ServiceMetricsDto"];
+            window_hours: number;
         };
         OverallDto: {
             baselines: {
@@ -903,6 +1033,14 @@ export interface components {
             };
             episodes: number;
             overall: components["schemas"]["OverallDto"];
+        };
+        QualitySummaryDto: {
+            errors: number;
+            infos: number;
+            rules_flagged: number;
+            /** @description Has a quality run been stored at all? */
+            run: boolean;
+            warnings: number;
         };
         RegisterDto: {
             /**
@@ -980,6 +1118,13 @@ export interface components {
             n: number;
             skill_vs_coin_flip: number | null;
             warnings: string[];
+        };
+        ServiceMetricsDto: {
+            note?: string;
+            routes: components["schemas"]["MetricRouteDto"][];
+            /** @enum {string} */
+            service: "gateway" | "python";
+            uptime_seconds?: number;
         };
         StepReadDto: {
             lesson_slug: string;
@@ -1159,6 +1304,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenDto"];
+                };
+            };
+        };
+    };
+    OpsController_dataStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataStatusDto"];
                 };
             };
         };
@@ -1687,6 +1851,48 @@ export interface operations {
             };
         };
     };
+    LessonsController_complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompletionDto"];
+                };
+            };
+        };
+    };
+    LessonsController_incomplete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompletionDto"];
+                };
+            };
+        };
+    };
     LessonsController_answer: {
         parameters: {
             query?: never;
@@ -1769,6 +1975,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgressDto"];
+                };
+            };
+        };
+    };
+    OpsController_metrics: {
+        parameters: {
+            query?: {
+                /** @description 1 to 168, default 24 */
+                hours?: string;
+            };
+            header: {
+                "x-operator-token": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricsDto"];
                 };
             };
         };

@@ -26,7 +26,7 @@ export function fakeApi(over: Partial<Record<keyof Api, any>> = {}): Api {
     labStocks: vi.fn().mockResolvedValue({ stocks: [] }), labStudies: vi.fn().mockResolvedValue([]), labCreate: vi.fn(), labStudy: vi.fn(),
     labRun: vi.fn(), labVault: vi.fn(), labSavedVault: vi.fn(),
     indicators: vi.fn().mockResolvedValue({ episode_id: "e1", name: "sma", window: 20, day: 60, values: [] }), decide: vi.fn(), journal: vi.fn().mockResolvedValue({ episode_id: "e1", day: 60, decisions: [], totals: { decisions: 0, marked: 0, pending: 0, growth: null, note: "" } }),
-    lessons: vi.fn().mockResolvedValue([]), lesson: vi.fn(), lessonRead: vi.fn(), lessonAnswer: vi.fn(),
+    dataStatus: vi.fn(), lessons: vi.fn().mockResolvedValue([]), lesson: vi.fn(), lessonRead: vi.fn(), lessonAnswer: vi.fn(),
   };
   return { ...base, ...over } as unknown as Api;
 }

@@ -2,7 +2,7 @@
 export const lessons = {
   navLabel: "Path",
   pathTitle: "Your learning path",
-  pathIntro: "Six short lessons. Each one teaches a single idea, then asks three questions. Go at your own pace.",
+  pathIntro: "Short lessons. Each one teaches a single idea, then asks three questions. Go at your own pace.",
   privacy: "Your progress is private. It is a record of what you have read, not a grade.",
   loadingPath: "Loading your path...",
   startHere: "Start here",
@@ -37,6 +37,12 @@ export const lessons = {
   finishLesson: "Finish the lesson",
   backToSteps: "Read the steps again",
 
+  markComplete: "Mark as complete",
+  markNotComplete: "Mark as not complete",
+  markSaving: "Saving...",
+  markedByYou: "Marked complete by you",
+  manualNote: "You can mark a lesson complete yourself at any time. It does not change your answers or your steps.",
+  markError: "We could not save that. Please try again.",
   doneTitle: "Lesson finished",
   doneBody: "You read every step and answered every question. Now try the idea on your own.",
   notDoneBody: "You can come back to this lesson at any time.",

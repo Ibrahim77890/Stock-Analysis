@@ -24,6 +24,7 @@ export type StudyOverview = S["StudyOverviewDto"];
 export type LabRun = S["LabRunDto"];
 export type VaultResult = S["VaultResultDto"];
 export type LabMetrics = S["LabMetricsDto"];
+export type DataStatus = S["DataStatusDto"];
 export type IndicatorReply = S["IndicatorDto"];
 export type DecisionIn = S["DecisionInDto"];
 export type Decision = S["DecisionDto"];
@@ -32,6 +33,7 @@ export type LessonSummary = S["LessonSummaryDto"];
 export type LessonDetail = S["LessonDetailDto"];
 export type LessonQuestion = S["LessonQuestionDto"];
 export type StepRead = S["StepReadDto"];
+export type Completion = S["CompletionDto"];
 export type AnswerResult = S["AnswerResultDto"];
 export interface RuleInput { fast: number; slow: number; cost_bps: number; seed?: number; n_paths?: number }
 
@@ -108,11 +110,14 @@ export function createApi({ base = API_BASE, getToken, onUnauthorized }: ClientO
     labRun: (id: string | number, rule: RuleInput) => post<LabRun>(`/lab/studies/${id}/runs`, rule),
     labVault: (id: string | number, rule: Pick<RuleInput, "fast" | "slow" | "cost_bps">) => post<VaultResult>(`/lab/studies/${id}/vault`, { ...rule, confirm: true }),
     labSavedVault: (id: string | number) => get<VaultResult>(`/lab/studies/${id}/vault`),
+    dataStatus: () => get<DataStatus>("/data/status"),
     indicators: (id: string, name: "sma" | "ema" | "rsi", window = 20) => get<IndicatorReply>(`/episodes/${id}/indicators?name=${name}&window=${window}`),
     decide: (id: string, body: DecisionIn) => post<Decision>(`/episodes/${id}/decisions`, body),
     journal: (id: string) => get<Journal>(`/episodes/${id}/decisions`),
     lessons: () => get<LessonSummary[]>("/lessons"),
     lesson: (slug: string) => get<LessonDetail>(`/lessons/${encodeURIComponent(slug)}`),
+    lessonComplete: (slug: string) => post<Completion>(`/lessons/${encodeURIComponent(slug)}/complete`),
+    lessonIncomplete: (slug: string) => post<Completion>(`/lessons/${encodeURIComponent(slug)}/incomplete`),
     lessonRead: (slug: string, step: number) => post<StepRead>(`/lessons/${encodeURIComponent(slug)}/steps/${step}/read`),
     lessonAnswer: (slug: string, question: number, option: number) => post<AnswerResult>(`/lessons/${encodeURIComponent(slug)}/questions/${question}/answer`, { option }),
   };

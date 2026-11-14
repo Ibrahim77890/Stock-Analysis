@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { AuthProvider } from "./auth/AuthContext";
-import "@fontsource-variable/inter";
+import "@fontsource-variable/montserrat";
+import "@fontsource-variable/raleway";
 import "./styles/global.css";
 
 createRoot(document.getElementById("root")!).render(

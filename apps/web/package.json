@@ -14,13 +14,16 @@
     "gen:api": "openapi-typescript ../../docs/02-domain/openapi-gateway.json -o src/api/schema.d.ts",
     "check:api": "node scripts/check-api.mjs",
     "check:copy": "vitest run src/copy",
-    "walk": "node scripts/walk.mjs"
+    "walk": "node scripts/walk.mjs",
+    "a11y": "node scripts/a11y-audit.mjs"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/montserrat": "5.3.0",
+    "@fontsource-variable/raleway": "5.3.0",
     "lightweight-charts": "5.2.1",
     "react": "19.1.10",
     "react-dom": "19.1.10",
+    "react-joyride": "3.2.0",
     "react-router-dom": "7.18.4"
   },
   "devDependencies": {

@@ -15,6 +15,8 @@ import { LearningService } from "./learning/learning.service";
 import { LessonsController } from "./lessons/lessons.controller";
 import { LESSON_ANSWER_LIMITER, LessonsService } from "./lessons/lessons.service";
 import { LimiterFactory } from "./limits/db-rate-limiter";
+import { OpsController } from "./ops/ops.controller";
+import { OpsService } from "./ops/ops.service";
 import { PythonClient } from "./python/python-client";
 import { SystemController } from "./system/system.controller";
 import { TraceMiddleware, TraceService } from "./trace/trace.service";
@@ -24,15 +26,15 @@ export class AppModule implements NestModule {
   static register(cfg: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      imports: [JwtModule.register({ secret: cfg.jwtSecret, signOptions: { expiresIn: "8h", algorithm: "HS256" } })],
-      controllers: [AuthController, LearningController, LabController, JournalController, LessonsController, GlossaryController, SystemController],
+      imports: [JwtModule.register({ secret: cfg.jwtSecret, signOptions: { expiresIn: "2h", algorithm: "HS256" } })],
+      controllers: [AuthController, LearningController, LabController, JournalController, OpsController, LessonsController, GlossaryController, SystemController],
       providers: [
         { provide: APP_CONFIG, useValue: cfg },
         { provide: LOGIN_LIMITER, useFactory: (f: LimiterFactory) => f.make("login", cfg.loginLimit), inject: [LimiterFactory] },
         { provide: LESSON_ANSWER_LIMITER, useFactory: (f: LimiterFactory) => f.make("lesson-answer", 60), inject: [LimiterFactory] },
         { provide: DECISION_LIMITER, useFactory: (f: LimiterFactory) => f.make("decision", DECISIONS_PER_MINUTE), inject: [LimiterFactory] },
         { provide: LabLimiters, useFactory: (f: LimiterFactory) => new LabLimiters(f, cfg.labRunsPerMinute), inject: [LimiterFactory] },
-        DbService, LimiterFactory, TraceService, LessonsService, JournalService, PythonClient, AuthService, AuthGuard, LearningService, LabService, GlossaryService,
+        DbService, LimiterFactory, TraceService, LessonsService, JournalService, OpsService, PythonClient, AuthService, AuthGuard, LearningService, LabService, GlossaryService,
       ],
     };
   }

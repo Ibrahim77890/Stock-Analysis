@@ -537,7 +537,9 @@ export class LessonSummaryDto {
   @ApiProperty({ description: "Steps this learner has read" }) steps_read!: number;
   @ApiProperty() questions_total!: number;
   @ApiProperty({ description: "Questions this learner has answered rightly at least once" }) questions_right!: number;
-  @ApiProperty({ description: "All steps read and all questions answered rightly" }) done!: boolean;
+  @ApiProperty({ description: "Marked complete by the learner, or all steps read and all questions answered rightly" }) done!: boolean;
+  @ApiProperty({ description: "This lesson's own setting: may a learner mark it complete by hand?" }) manual_complete_allowed!: boolean;
+  @ApiProperty({ description: "The learner marked this lesson complete by hand" }) completed_manually!: boolean;
 }
 
 export class LessonStepDto {
@@ -545,6 +547,7 @@ export class LessonStepDto {
   @ApiProperty({ description: "May hold {{slug|label}} glossary markers" }) body!: string;
   @ApiPropertyOptional() more?: string;
   @ApiPropertyOptional({ enum: ["chance-70", "coin-streaks", "many-tries"] }) demo?: string;
+  @ApiPropertyOptional({ description: "A diagram or worked calculation shown with the step" }) visual?: string;
 }
 
 export class LessonQuestionDto {
@@ -559,6 +562,12 @@ export class LessonDetailDto extends LessonSummaryDto {
   @ApiProperty({ type: [LessonStepDto] }) steps!: LessonStepDto[];
   @ApiProperty({ type: [LessonQuestionDto] }) questions!: LessonQuestionDto[];
   @ApiProperty({ type: [Number], description: "1-based numbers of the steps this learner has read" }) steps_read_list!: number[];
+}
+
+export class CompletionDto {
+  @ApiProperty() lesson_slug!: string;
+  @ApiProperty() completed_manually!: boolean;
+  @ApiProperty() done!: boolean;
 }
 
 export class StepReadDto {
@@ -651,4 +660,63 @@ export class JournalDto {
   @ApiProperty() day!: number;
   @ApiProperty({ type: [DecisionDto] }) decisions!: DecisionDto[];
   @ApiProperty({ type: JournalTotalsDto }) totals!: JournalTotalsDto;
+}
+
+// ------------------------------------------------------------------ operations and data status (Sprint 10)
+
+export class MetricRouteDto {
+  @ApiProperty({ example: "GET /lessons/:slug" }) route!: string;
+  @ApiProperty() count!: number;
+  @ApiProperty({ description: "Answers with status 400 to 499" }) client_errors!: number;
+  @ApiProperty({ description: "Answers with status 500 or more" }) server_errors!: number;
+  @ApiProperty({ type: Number, nullable: true }) p50_ms!: number | null;
+  @ApiProperty({ type: Number, nullable: true }) p95_ms!: number | null;
+  @ApiProperty({ type: Number, nullable: true }) max_ms!: number | null;
+}
+
+export class ServiceMetricsDto {
+  @ApiProperty({ enum: ["gateway", "python"] }) service!: string;
+  @ApiPropertyOptional() uptime_seconds?: number;
+  @ApiPropertyOptional() note?: string;
+  @ApiProperty({ type: [MetricRouteDto] }) routes!: MetricRouteDto[];
+}
+
+export class MetricsDto {
+  @ApiProperty() window_hours!: number;
+  @ApiProperty({ type: ServiceMetricsDto }) gateway!: ServiceMetricsDto;
+  @ApiPropertyOptional({ type: ServiceMetricsDto, description: "Absent when the Python service could not be asked" }) python?: ServiceMetricsDto;
+}
+
+export class DataSourceDto {
+  @ApiProperty({ example: "tiingo" }) source!: string;
+  @ApiProperty() symbols!: number;
+  @ApiProperty() symbols_with_long_history!: number;
+  @ApiProperty() bars!: number;
+  @ApiProperty({ example: "2005-01-03" }) first_date!: string;
+  @ApiProperty({ example: "2025-12-31" }) last_date!: string;
+  @ApiPropertyOptional({ type: String, nullable: true }) retrieved_at?: string | null;
+}
+
+export class QualitySummaryDto {
+  @ApiProperty({ description: "Has a quality run been stored at all?" }) run!: boolean;
+  @ApiProperty() rules_flagged!: number;
+  @ApiProperty() errors!: number;
+  @ApiProperty() warnings!: number;
+  @ApiProperty() infos!: number;
+}
+
+export class MacroSummaryDto {
+  @ApiProperty() series!: number;
+  @ApiProperty() observations!: number;
+  @ApiPropertyOptional({ type: String, nullable: true }) first_date?: string | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) last_date?: string | null;
+}
+
+export class DataStatusDto {
+  @ApiProperty({ type: [DataSourceDto] }) sources!: DataSourceDto[];
+  @ApiProperty({ description: "A symbol counts as long history with at least this many sessions" }) min_sessions_for_long_history!: number;
+  @ApiProperty({ type: QualitySummaryDto }) quality!: QualitySummaryDto;
+  @ApiProperty({ type: MacroSummaryDto }) macro!: MacroSummaryDto;
+  @ApiProperty({ type: [String], description: "Always shown: survivorship bias, one vendor, licence, not advice" }) caveats!: string[];
+  @ApiProperty({ description: "True when no price data is loaded" }) empty!: boolean;
 }

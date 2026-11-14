@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, NotFoundException, UnprocessableEntityException } from "@nestjs/common";
 import { DbService } from "../db/db.service";
 import { Limiter } from "../limits/db-rate-limiter";
 import { TooManyRequests } from "../lab/lab.service";
@@ -8,7 +8,7 @@ const NOT_FOUND = "That lesson was not found.";
 /** After this many wrong answers to one question, the reply shows the right option. */
 export const REVEAL_AFTER_WRONG = 2;
 
-interface LessonRow { slug: string; version: number; title: string; summary: string; minutes: number; position: number; content: { steps: any[] } }
+interface LessonRow { allow_manual_complete: boolean; slug: string; version: number; title: string; summary: string; minutes: number; position: number; content: { steps: any[] } }
 
 @Injectable()
 export class LessonsService {
@@ -16,7 +16,7 @@ export class LessonsService {
 
   private async lesson(slug: string): Promise<LessonRow> {
     if (!/^[a-z0-9-]{1,60}$/.test(slug)) throw new NotFoundException(NOT_FOUND);
-    const r = await this.db.query<LessonRow>("SELECT slug, version, title, summary, minutes, position, content FROM app.lesson WHERE slug = $1", [slug]);
+    const r = await this.db.query<LessonRow>("SELECT slug, version, title, summary, minutes, position, content, allow_manual_complete FROM app.lesson WHERE slug = $1", [slug]);
     if (!r.rows[0]) throw new NotFoundException(NOT_FOUND);
     return r.rows[0];
   }
@@ -28,7 +28,8 @@ export class LessonsService {
 
   async list(learnerId: string) {
     const r = await this.db.query(
-      `SELECT l.slug, l.version, l.title, l.summary, l.minutes, l.position,
+      `SELECT l.slug, l.version, l.title, l.summary, l.minutes, l.position, l.allow_manual_complete,
+              EXISTS (SELECT 1 FROM app.lesson_completion c WHERE c.learner_id = $1 AND c.lesson_slug = l.slug) AS completed_manually,
               jsonb_array_length(l.content->'steps') AS steps_total,
               (SELECT count(*)::int FROM app.lesson_question q WHERE q.lesson_slug = l.slug) AS questions_total,
               (SELECT count(*)::int FROM app.lesson_progress p WHERE p.learner_id = $1 AND p.lesson_slug = l.slug
@@ -42,13 +43,14 @@ export class LessonsService {
     return r.rows.map((x) => ({
       slug: x.slug, position: x.position, version: x.version, title: x.title, summary: x.summary, minutes: x.minutes,
       steps_total: x.steps_total, steps_read: x.steps_read, questions_total: x.questions_total, questions_right: x.questions_right,
-      done: x.steps_total > 0 && x.steps_read >= x.steps_total && x.questions_total > 0 && x.questions_right >= x.questions_total,
+      manual_complete_allowed: x.allow_manual_complete, completed_manually: x.completed_manually,
+      done: x.completed_manually || (x.steps_total > 0 && x.steps_read >= x.steps_total && x.questions_total > 0 && x.questions_right >= x.questions_total),
     }));
   }
 
   async detail(learnerId: string, slug: string) {
     const l = await this.lesson(slug);
-    const [qs, read, att] = await Promise.all([
+    const [qs, read, att, manual] = await Promise.all([
       this.db.query("SELECT position, prompt, options FROM app.lesson_question WHERE lesson_slug = $1 ORDER BY position", [slug]),
       this.db.query("SELECT step FROM app.lesson_progress WHERE learner_id = $1 AND lesson_slug = $2 AND step <= $3 ORDER BY step", [learnerId, slug, l.content.steps.length]),
       this.db.query(
@@ -56,20 +58,23 @@ export class LessonsService {
            FROM app.quiz_answer WHERE learner_id = $1 AND lesson_slug = $2 GROUP BY question_position`,
         [learnerId, slug],
       ),
+      this.db.query("SELECT 1 FROM app.lesson_completion WHERE learner_id = $1 AND lesson_slug = $2", [learnerId, slug]),
     ]);
+    const completedManually = (manual.rowCount ?? 0) > 0;
     const attempts = new Map<number, { attempts: number; right: boolean }>(att.rows.map((a) => [a.question_position, { attempts: a.attempts, right: a.right }]));
     const questions = qs.rows.map((q) => ({
       position: q.position, prompt: q.prompt,
       options: (q.options as Array<{ text: string }>).map((o) => o.text), // texts only: no verdicts, no explanations
       answered_right: attempts.get(q.position)?.right ?? false, attempts: attempts.get(q.position)?.attempts ?? 0,
     }));
-    const steps = l.content.steps.map((s) => ({ head: s.head, body: s.body, ...(s.more ? { more: s.more } : {}), ...(s.demo ? { demo: s.demo } : {}) }));
+    const steps = l.content.steps.map((s) => ({ head: s.head, body: s.body, ...(s.more ? { more: s.more } : {}), ...(s.demo ? { demo: s.demo } : {}), ...(s.visual ? { visual: s.visual } : {}) }));
     const stepsRead = read.rows.map((r) => r.step as number);
     const right = questions.filter((q) => q.answered_right).length;
     return {
       slug: l.slug, position: l.position, version: l.version, title: l.title, summary: l.summary, minutes: l.minutes,
       steps_total: steps.length, steps_read: stepsRead.length, questions_total: questions.length, questions_right: right,
-      done: stepsRead.length >= steps.length && questions.length > 0 && right >= questions.length,
+      manual_complete_allowed: l.allow_manual_complete, completed_manually: completedManually,
+      done: completedManually || (stepsRead.length >= steps.length && questions.length > 0 && right >= questions.length),
       steps, questions, steps_read_list: stepsRead,
     };
   }
@@ -85,6 +90,19 @@ export class LessonsService {
     );
     const n = await this.db.query("SELECT count(*)::int AS n FROM app.lesson_progress WHERE learner_id = $1 AND lesson_slug = $2 AND step <= $3", [learnerId, slug, total]);
     return { lesson_slug: slug, step, steps_read: n.rows[0].n, steps_total: total };
+  }
+
+  /** Mark a lesson complete (or take the mark back). Idempotent. Only when the lesson's own setting allows it. */
+  async setManual(learnerId: string, slug: string, complete: boolean) {
+    const l = await this.lesson(slug);
+    if (complete && !l.allow_manual_complete) throw new ConflictException("This lesson cannot be marked complete by hand. Finish its steps and questions instead.");
+    if (complete) {
+      await this.db.query("INSERT INTO app.lesson_completion (learner_id, lesson_slug) VALUES ($1, $2) ON CONFLICT DO NOTHING", [learnerId, slug]);
+    } else {
+      await this.db.query("DELETE FROM app.lesson_completion WHERE learner_id = $1 AND lesson_slug = $2", [learnerId, slug]);
+    }
+    const now = (await this.list(learnerId)).find((x) => x.slug === slug)!;
+    return { lesson_slug: slug, completed_manually: now.completed_manually, done: now.done };
   }
 
   async answer(learnerId: string, slug: string, rawQuestion: string, option: number) {

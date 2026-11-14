@@ -22,7 +22,7 @@ export function EpisodeChart({ bars, showVolume, overlays }: { bars: Bar[]; show
     const chart = createChart(ref.current, {
       autoSize: true,
       height: 360,
-      layout: { background: { color: "#ffffff" }, textColor: "#172033", fontFamily: "Inter Variable, system-ui, sans-serif" },
+      layout: { background: { color: "#ffffff" }, textColor: "#172033", fontFamily: "Raleway Variable, Raleway, system-ui, sans-serif" },
       grid: { vertLines: { color: "#eef1f8" }, horzLines: { color: "#eef1f8" } },
       rightPriceScale: { borderColor: "#dde3ee" },
       localization: { timeFormatter: (t: number) => formatDay(t), priceFormatter: (p: number) => p.toFixed(1) },

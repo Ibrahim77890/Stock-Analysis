@@ -54,7 +54,17 @@ export async function buildApp(cfg: AppConfig, configure?: (builder: any) => any
   }
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true, errorHttpStatusCode: 422 }));
   app.useGlobalFilters(new SafeExceptionFilter(cfg));
-  app.enableCors({ origin: cfg.corsOrigins, methods: ["GET", "POST"], allowedHeaders: ["Content-Type", "Authorization"], credentials: false });
+  // Security headers on every reply (Sprint 11). The Swagger page needs inline scripts, so only it is exempt from the content policy.
+  app.use((req: any, res: any, next: () => void) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+    res.setHeader("Cache-Control", "no-store");
+    if (!String(req.path ?? req.url).startsWith("/docs")) res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'");
+    next();
+  });
+  app.enableCors({ origin: cfg.corsOrigins, methods: ["GET", "POST"], allowedHeaders: ["Content-Type", "Authorization"], credentials: false, exposedHeaders: ["x-request-id", "Retry-After"] });
   SwaggerModule.setup("docs", app, swaggerDocument(app));
   return app;
 }

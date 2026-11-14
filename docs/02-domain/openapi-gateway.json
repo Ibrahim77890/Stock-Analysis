@@ -148,6 +148,25 @@
         ],
         "type": "object"
       },
+      "CompletionDto": {
+        "properties": {
+          "completed_manually": {
+            "type": "boolean"
+          },
+          "done": {
+            "type": "boolean"
+          },
+          "lesson_slug": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lesson_slug",
+          "completed_manually",
+          "done"
+        ],
+        "type": "object"
+      },
       "CostRowDto": {
         "properties": {
           "buy_hold_total_return": {
@@ -248,6 +267,84 @@
         },
         "required": [
           "symbol"
+        ],
+        "type": "object"
+      },
+      "DataSourceDto": {
+        "properties": {
+          "bars": {
+            "type": "number"
+          },
+          "first_date": {
+            "example": "2005-01-03",
+            "type": "string"
+          },
+          "last_date": {
+            "example": "2025-12-31",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "nullable": true,
+            "type": "string"
+          },
+          "source": {
+            "example": "tiingo",
+            "type": "string"
+          },
+          "symbols": {
+            "type": "number"
+          },
+          "symbols_with_long_history": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "source",
+          "symbols",
+          "symbols_with_long_history",
+          "bars",
+          "first_date",
+          "last_date"
+        ],
+        "type": "object"
+      },
+      "DataStatusDto": {
+        "properties": {
+          "caveats": {
+            "description": "Always shown: survivorship bias, one vendor, licence, not advice",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "empty": {
+            "description": "True when no price data is loaded",
+            "type": "boolean"
+          },
+          "macro": {
+            "$ref": "#/components/schemas/MacroSummaryDto"
+          },
+          "min_sessions_for_long_history": {
+            "description": "A symbol counts as long history with at least this many sessions",
+            "type": "number"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/QualitySummaryDto"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/DataSourceDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "sources",
+          "min_sessions_for_long_history",
+          "quality",
+          "macro",
+          "caveats",
+          "empty"
         ],
         "type": "object"
       },
@@ -950,8 +1047,16 @@
       },
       "LessonDetailDto": {
         "properties": {
+          "completed_manually": {
+            "description": "The learner marked this lesson complete by hand",
+            "type": "boolean"
+          },
           "done": {
-            "description": "All steps read and all questions answered rightly",
+            "description": "Marked complete by the learner, or all steps read and all questions answered rightly",
+            "type": "boolean"
+          },
+          "manual_complete_allowed": {
+            "description": "This lesson's own setting: may a learner mark it complete by hand?",
             "type": "boolean"
           },
           "minutes": {
@@ -1019,6 +1124,8 @@
           "questions_total",
           "questions_right",
           "done",
+          "manual_complete_allowed",
+          "completed_manually",
           "steps",
           "questions",
           "steps_read_list"
@@ -1078,6 +1185,10 @@
           },
           "more": {
             "type": "string"
+          },
+          "visual": {
+            "description": "A diagram or worked calculation shown with the step",
+            "type": "string"
           }
         },
         "required": [
@@ -1088,8 +1199,16 @@
       },
       "LessonSummaryDto": {
         "properties": {
+          "completed_manually": {
+            "description": "The learner marked this lesson complete by hand",
+            "type": "boolean"
+          },
           "done": {
-            "description": "All steps read and all questions answered rightly",
+            "description": "Marked complete by the learner, or all steps read and all questions answered rightly",
+            "type": "boolean"
+          },
+          "manual_complete_allowed": {
+            "description": "This lesson's own setting: may a learner mark it complete by hand?",
             "type": "boolean"
           },
           "minutes": {
@@ -1137,7 +1256,9 @@
           "steps_read",
           "questions_total",
           "questions_right",
-          "done"
+          "done",
+          "manual_complete_allowed",
+          "completed_manually"
         ],
         "type": "object"
       },
@@ -1196,6 +1317,93 @@
           "count",
           "not_reported",
           "shuffled_quantiles"
+        ],
+        "type": "object"
+      },
+      "MacroSummaryDto": {
+        "properties": {
+          "first_date": {
+            "nullable": true,
+            "type": "string"
+          },
+          "last_date": {
+            "nullable": true,
+            "type": "string"
+          },
+          "observations": {
+            "type": "number"
+          },
+          "series": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "series",
+          "observations"
+        ],
+        "type": "object"
+      },
+      "MetricRouteDto": {
+        "properties": {
+          "client_errors": {
+            "description": "Answers with status 400 to 499",
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          },
+          "max_ms": {
+            "nullable": true,
+            "type": "number"
+          },
+          "p50_ms": {
+            "nullable": true,
+            "type": "number"
+          },
+          "p95_ms": {
+            "nullable": true,
+            "type": "number"
+          },
+          "route": {
+            "example": "GET /lessons/:slug",
+            "type": "string"
+          },
+          "server_errors": {
+            "description": "Answers with status 500 or more",
+            "type": "number"
+          }
+        },
+        "required": [
+          "route",
+          "count",
+          "client_errors",
+          "server_errors",
+          "p50_ms",
+          "p95_ms",
+          "max_ms"
+        ],
+        "type": "object"
+      },
+      "MetricsDto": {
+        "properties": {
+          "gateway": {
+            "$ref": "#/components/schemas/ServiceMetricsDto"
+          },
+          "python": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceMetricsDto"
+              }
+            ],
+            "description": "Absent when the Python service could not be asked"
+          },
+          "window_hours": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "window_hours",
+          "gateway"
         ],
         "type": "object"
       },
@@ -1424,6 +1632,34 @@
         ],
         "type": "object"
       },
+      "QualitySummaryDto": {
+        "properties": {
+          "errors": {
+            "type": "number"
+          },
+          "infos": {
+            "type": "number"
+          },
+          "rules_flagged": {
+            "type": "number"
+          },
+          "run": {
+            "description": "Has a quality run been stored at all?",
+            "type": "boolean"
+          },
+          "warnings": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "run",
+          "rules_flagged",
+          "errors",
+          "warnings",
+          "infos"
+        ],
+        "type": "object"
+      },
       "RegisterDto": {
         "properties": {
           "display_name": {
@@ -1619,6 +1855,34 @@
           "enough",
           "min_enough",
           "warnings"
+        ],
+        "type": "object"
+      },
+      "ServiceMetricsDto": {
+        "properties": {
+          "note": {
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/MetricRouteDto"
+            },
+            "type": "array"
+          },
+          "service": {
+            "enum": [
+              "gateway",
+              "python"
+            ],
+            "type": "string"
+          },
+          "uptime_seconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "service",
+          "routes"
         ],
         "type": "object"
       },
@@ -2199,6 +2463,33 @@
         "summary": "Create a learner account on this machine",
         "tags": [
           "Account"
+        ]
+      }
+    },
+    "/data/status": {
+      "get": {
+        "operationId": "OpsController_dataStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "What data MarketLab holds: sources, coverage, freshness, quality checks and caveats (no file paths, hashes or keys)",
+        "tags": [
+          "Operations"
         ]
       }
     },
@@ -3091,6 +3382,78 @@
         ]
       }
     },
+    "/lessons/{slug}/complete": {
+      "post": {
+        "operationId": "LessonsController_complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark a lesson complete by hand (like a course site). Allowed when the lesson's own setting says so; safe to repeat.",
+        "tags": [
+          "Lessons"
+        ]
+      }
+    },
+    "/lessons/{slug}/incomplete": {
+      "post": {
+        "operationId": "LessonsController_incomplete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Take back a manual completion mark. The lesson stays done if its steps and questions are finished.",
+        "tags": [
+          "Lessons"
+        ]
+      }
+    },
     "/lessons/{slug}/questions/{n}/answer": {
       "post": {
         "description": "The reply says whether the chosen option is right and why. The index of the right option is sent only when the answer was right, or after the second wrong answer to the same question. Every answer is recorded. Limited to 60 answers per minute per learner.",
@@ -3241,6 +3604,46 @@
         "summary": "My results across all my episodes",
         "tags": [
           "Learning"
+        ]
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "OpsController_metrics",
+        "parameters": [
+          {
+            "description": "1 to 168, default 24",
+            "in": "query",
+            "name": "hours",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-operator-token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "For the person running MarketLab: calls, error counts and p50, p95, max duration per route (needs the operator token, never a learner token)",
+        "tags": [
+          "Operations"
         ]
       }
     },

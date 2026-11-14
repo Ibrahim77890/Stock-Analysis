@@ -9,6 +9,7 @@ export default defineConfig({
     testTimeout: 60_000,
     hookTimeout: 120_000,
     fileParallelism: false,
+    env: { REQUEST_LOG: "off" },
     globalSetup: ["test/global-setup.ts"],
   },
   plugins: [

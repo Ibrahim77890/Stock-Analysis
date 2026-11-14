@@ -5,15 +5,16 @@ import * as path from "node:path";
 import { fleschReadingEase, longestSentenceWords } from "../common/readability";
 
 export const DEMO_IDS = ["chance-70", "coin-streaks", "many-tries"] as const;
+export const VISUAL_IDS = ["candle-anatomy", "candle-row", "volume-bars", "expected-misses", "brier-formula", "brier-curve", "calibration-plot", "many-paths", "cost-drag", "sma-diagram", "rsi-formula"] as const;
 export const BANNED = ["beats the market", "edge", "profit", "alpha", "guarantee", "winning", "proof"];
 export const MIN_EASE = 60;
 export const MAX_SENTENCE_WORDS = 25;
 
 export interface LessonOption { text: string; why: string; correct: boolean }
 export interface LessonQuestion { prompt: string; options: LessonOption[] }
-export interface LessonStep { head: string; body: string; more?: string; demo?: string }
+export interface LessonStep { head: string; body: string; more?: string; demo?: string; visual?: string }
 export interface LessonFile {
-  slug: string; position: number; version: number; title: string; summary: string; minutes: number;
+  slug: string; position: number; version: number; title: string; summary: string; minutes: number; manual_completion?: boolean;
   steps: LessonStep[]; questions: LessonQuestion[];
 }
 

@@ -55,6 +55,8 @@ app = FastAPI(
                                               "They describe the past; they do not forecast. No dates or symbols in replies."},
         {"name": "Paper", "description": "INTERNAL (called by the NestJS gateway): practice decisions (long or flat) with a written reason on blind episodes. "
                                           "Append-only; results use only days already reached. Writes: POST /episodes/{id}/decisions."},
+        {"name": "Metrics", "description": "INTERNAL (called by the NestJS gateway): calls, 4xx and 5xx counts and p50, p95, max duration per route pattern since the service started."},
+        {"name": "Data", "description": "INTERNAL (called by the NestJS gateway): what data is held, coverage, freshness, quality checks and caveats. No paths, hashes or keys."},
         {"name": "Sources", "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor "
                                            "adjustment check, key check. Tiingo data are internal use only: keep this API on loopback."},
         {"name": "Macro", "description": "FRED series DGS3MO (risk-free rate) and VIXCLS, read as of a date. "
@@ -102,6 +104,12 @@ from market_data.api.routers.paper import make_router as make_paper_router  # no
 
 app.include_router(make_indicators_router(get_conn))
 app.include_router(make_paper_router(get_conn))
+
+from market_data.api import observability  # noqa: E402
+from market_data.api.routers.ops import make_router as make_ops_router  # noqa: E402
+
+observability.install(app)
+app.include_router(make_ops_router(get_conn))
 
 
 @app.exception_handler(UnknownSymbolError)

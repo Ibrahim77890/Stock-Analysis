@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "MarketLab gateway (NestJS): logins, ownership, validation, glossary, request trace. Owns database schema `app`.",
-  "engines": { "node": ">=20.19.0" },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/src/main.js",
@@ -23,7 +25,7 @@
     "@nestjs/common": "12.2.0",
     "@nestjs/core": "12.2.0",
     "@nestjs/jwt": "12.0.3",
-    "@nestjs/platform-express": "12.2.0",
+    "@nestjs/platform-express": "12.5.0",
     "@nestjs/swagger": "12.0.4",
     "class-transformer": "0.5.1",
     "class-validator": "0.15.1",

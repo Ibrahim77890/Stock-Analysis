@@ -85,6 +85,13 @@ def main() -> int:
     n_versions = len(list((config.PROJECT_DIR / "migrations" / "versions").glob("0*.py")))
     check("Python migrations (files) versus the head named in the data dictionary", n_versions, int(head_no))
 
+    # 7. Sprint 10: metrics and data status routes (Python and gateway) named in system-overview.md
+    gw_ops = sum(1 for p, ops in gw["paths"].items() if p in ("/metrics", "/data/status") for _ in ops)
+    py_ops = sum(1 for p, ops in spec["paths"].items() if p in ("/metrics", "/data/status") for _ in ops)
+    overview = (ROOT / "docs/02-domain/system-overview.md").read_text(encoding="utf-8")
+    check("operations routes named in system-overview.md versus the gateway OpenAPI", len(re.findall(r"`GET /(?:metrics|data/status)`", overview.split("**Observability and data status")[1].split("**Request path")[0])) , gw_ops)
+    check("operations routes in Python versus the gateway", py_ops, gw_ops)
+
     print("\nall counts match" if not problems else f"\nMISMATCH: {problems}")
     return 1 if problems else 0
 

@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiError, createApi } from "../src/api/client";
 import { Home, SignIn } from "../src/pages/Basics";
 import { Term, clearTermCache } from "../src/components/Term";
-import { Tour } from "../src/components/Tour";
+import { tour } from "../src/copy/home";
 import { Callout } from "../src/components/ui";
 import { contrastRatio } from "../src/lib/contrast";
 import { fakeApi, LEARNER, renderApp, signedIn } from "./helpers";
@@ -61,8 +61,17 @@ describe("api client", () => {
 });
 
 describe("sign in and registration", () => {
-  it("shows the password rules before anyone types", () => {
-    renderApp(<SignIn />, fakeApi());
+  it("opens the sign-in form by default (not the sign-up form)", () => {
+    renderApp(<SignIn />, fakeApi(), "/sign-in");
+    expect(screen.getByRole("heading", { name: /sign in/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Create account" })).toBeNull();
+    expect(screen.queryByText(/10 or more characters/)).toBeNull();
+  });
+
+  it("opens the sign-up form only when asked with ?mode=register, and shows the password rules before anyone types", () => {
+    renderApp(<SignIn />, fakeApi(), "/sign-in?mode=register");
+    expect(screen.getByRole("button", { name: "Create account" })).toBeTruthy();
     expect(screen.getByText(/10 or more characters/)).toBeTruthy();
     expect(screen.getByLabelText("Your name")).toBeTruthy();
     expect(screen.getByLabelText("Password")).toBeTruthy();
@@ -70,7 +79,7 @@ describe("sign in and registration", () => {
 
   it("a taken name shows the friendly message", async () => {
     const api = fakeApi({ register: vi.fn().mockRejectedValue(new ApiError(409, "That name is taken. Please choose another one.")) });
-    renderApp(<SignIn />, api);
+    renderApp(<SignIn />, api, "/sign-in?mode=register");
     await userEvent.type(screen.getByLabelText("Your name"), "Sam");
     await userEvent.type(screen.getByLabelText("Password"), "a few random words");
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
@@ -79,14 +88,15 @@ describe("sign in and registration", () => {
 
   it("stores the session in sessionStorage only, never localStorage or the URL, and sign out clears it", async () => {
     const api = fakeApi({ register: vi.fn().mockResolvedValue({ token: "SECRET-TOKEN", learner: LEARNER }) });
-    renderApp(<><SignIn /></>, api, "/sign-in", "*", true);
+    renderApp(<><SignIn /></>, api, "/sign-in?mode=register", "*", true);
     await userEvent.type(screen.getByLabelText("Your name"), "Sam");
     await userEvent.type(screen.getByLabelText("Password"), "a few random words");
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     await waitFor(() => expect(sessionStorage.getItem("marketlab.session")).toContain("SECRET-TOKEN"));
     expect(JSON.stringify({ ...localStorage })).not.toContain("SECRET-TOKEN");
     expect(window.location.href).not.toContain("SECRET-TOKEN");
-    await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+    await userEvent.click(await screen.findByRole("button", { name: /Hello, Sam/ }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Sign out" }));
     expect(sessionStorage.getItem("marketlab.session")).toBeNull();
   });
 
@@ -114,35 +124,107 @@ describe("Term (word help)", () => {
   });
 });
 
-describe("guided tour", () => {
-  it("appears once on first sign-in, can be skipped, and is reopened from 'Need help?'", async () => {
+describe("guided tour (react-joyride)", () => {
+  it("appears once on first sign-in, can be skipped, and is reopened from the Tutorial button", async () => {
     signedIn();
     sessionStorage.removeItem("marketlab.tour.seen");
     renderApp(<Home />, fakeApi(), "/", "*", true);
-    expect(await screen.findByRole("region", { name: "A quick tour" })).toBeTruthy();
+    expect(await screen.findByText("A quick tour")).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Skip the tour" }));
-    expect(screen.queryByRole("region", { name: "A quick tour" })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Need help?" }));
-    expect(screen.getByRole("region", { name: "A quick tour" })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText("A quick tour")).toBeNull());
+    expect(sessionStorage.getItem("marketlab.tour.seen")).toBe("1");
+    await userEvent.click(screen.getByRole("button", { name: /Tutorial/ }));
+    expect(await screen.findByText("A quick tour")).toBeTruthy();
+  });
+
+  it("does not open again after it was seen, and has no Tutorial button before sign-in", () => {
+    signedIn();
+    renderApp(<Home />, fakeApi(), "/", "*", true);
+    expect(screen.queryByText("A quick tour")).toBeNull();
+    sessionStorage.clear();
   });
 
   it("opens right after someone signs in on a page that was already showing", async () => {
     const api = fakeApi({ login: vi.fn().mockResolvedValue({ token: "t", learner: LEARNER }) });
     renderApp(<SignIn />, api, "/sign-in", "*", true);
-    expect(screen.queryByRole("region", { name: "A quick tour" })).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Already have an account? Sign in" }));
+    expect(screen.queryByText("A quick tour")).toBeNull();
     await userEvent.type(screen.getByLabelText("Your name"), "Sam");
     await userEvent.type(screen.getByLabelText("Password"), "a few random words");
     await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
-    expect(await screen.findByRole("region", { name: "A quick tour" })).toBeTruthy();
+    expect(await screen.findByText("A quick tour")).toBeTruthy();
   });
 
-  it("steps through to the end", async () => {
-    const onClose = vi.fn();
-    renderApp(<Tour onClose={onClose} />, fakeApi());
-    for (let i = 0; i < 4; i++) await userEvent.click(screen.getByRole("button", { name: "Next" }));
-    await userEvent.click(screen.getByRole("button", { name: "Got it" }));
-    expect(onClose).toHaveBeenCalled();
+  it("steps through every menu item to the end", { timeout: 30000 }, async () => {
+    signedIn();
+    sessionStorage.removeItem("marketlab.tour.seen");
+    renderApp(<Home />, fakeApi(), "/", "*", true);
+    expect(await screen.findByText("A quick tour")).toBeTruthy();
+    const titles = ["Path", "Learn", "Lab", "My decisions", "Data", "My progress", "Words", "How does this work?", "Tutorial"];
+    for (const t of titles) {
+      await userEvent.click(screen.getByRole("button", { name: "Next" }));
+      await waitFor(() => expect(screen.getByRole("alertdialog").querySelector("h4")?.textContent).toBe(t));
+    }
+    await userEvent.click(await screen.findByRole("button", { name: "Got it" }));
+    await waitFor(() => expect(sessionStorage.getItem("marketlab.tour.seen")).toBe("1"));
+  });
+
+  it("every tour step points at an element that exists in the sidebar or the header", () => {
+    signedIn();
+    renderApp(<Home />, fakeApi(), "/", "*", true);
+    const missing = tour.steps.filter((s) => s.target !== "body" && !document.querySelector(s.target)).map((s) => s.id);
+    expect(missing).toEqual([]);
+  });
+});
+
+describe("sidebar and menu", () => {
+  const ITEMS = ["Path", "Learn", "Lab", "My decisions", "Data", "My progress", "Words", "How does this work?"];
+
+  it("shows the eight menu items only after sign-in, in a sidebar", () => {
+    signedIn();
+    renderApp(<Home />, fakeApi(), "/", "*", true);
+    const side = screen.getByRole("complementary", { name: "Sidebar" });
+    const names = within(within(side).getByRole("navigation", { name: "Main" })).getAllByRole("link").map((a) => a.textContent?.trim());
+    expect(names).toEqual(ITEMS);
+  });
+
+  it("shows no menu, no sidebar and no Tutorial button to someone who is not signed in, only a Sign in link to the login form", () => {
+    sessionStorage.clear();
+    renderApp(<Home />, fakeApi(), "/", "*", true);
+    expect(screen.queryByRole("complementary", { name: "Sidebar" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Main" })).toBeNull();
+    for (const item of ITEMS) expect(screen.queryByRole("link", { name: item })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Tutorial/ })).toBeNull();
+    expect((screen.getByRole("link", { name: "Sign in" }) as HTMLAnchorElement).getAttribute("href")).toBe("/sign-in");
+  });
+
+  it("the Menu button opens and closes the sidebar on a narrow screen and Escape closes it", async () => {
+    signedIn();
+    renderApp(<Home />, fakeApi(), "/", "*", true);
+    const toggle = screen.getByRole("button", { name: "Menu" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(document.getElementById("sidebar")!.className).toContain("open");
+    await userEvent.keyboard("{Escape}");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("the layout has no fixed maximum width: the page, the header and the sign-in form fill the screen", () => {
+    const css = fs.readFileSync(path.resolve(__dirname, "../src/styles/global.css"), "utf8");
+    expect(css).toMatch(/\.page \{ width: 100%;/);
+    expect(css).not.toMatch(/\.page \{[^}]*max-width/);
+    expect(css).not.toMatch(/\.appbar-inner \{[^}]*max-width/);
+    expect(css).not.toMatch(/\.auth-wrap \{[^}]*max-width/);
+  });
+
+  it("uses Montserrat for headings and Raleway for text, everywhere", () => {
+    const tokens = fs.readFileSync(path.resolve(__dirname, "../src/styles/tokens.css"), "utf8");
+    expect(tokens).toMatch(/--font: "Raleway Variable"/);
+    expect(tokens).toMatch(/--font-head: "Montserrat Variable"/);
+    const main = fs.readFileSync(path.resolve(__dirname, "../src/main.tsx"), "utf8");
+    expect(main).toContain("@fontsource-variable/montserrat");
+    expect(main).toContain("@fontsource-variable/raleway");
+    expect(main).not.toContain("inter");
   });
 });
 

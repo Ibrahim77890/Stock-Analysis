@@ -50,11 +50,11 @@ export async function seedLessons(pool: Pool, lessons: LessonFile[]): Promise<Se
       // The position is unique; park a lesson that moves so two lessons can swap places.
       await client.query("UPDATE app.lesson SET position = -position - 1000 WHERE slug <> $1 AND position = $2", [l.slug, l.position]);
       await client.query(
-        `INSERT INTO app.lesson (slug, version, title, summary, minutes, position, content, content_hash)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+        `INSERT INTO app.lesson (slug, version, title, summary, minutes, position, content, content_hash, allow_manual_complete)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          ON CONFLICT (slug) DO UPDATE SET version = EXCLUDED.version, title = EXCLUDED.title, summary = EXCLUDED.summary,
-           minutes = EXCLUDED.minutes, position = EXCLUDED.position, content = EXCLUDED.content, content_hash = EXCLUDED.content_hash`,
-        [l.slug, l.version, l.title, l.summary, l.minutes, l.position, JSON.stringify({ steps: l.steps }), hash],
+           minutes = EXCLUDED.minutes, position = EXCLUDED.position, content = EXCLUDED.content, content_hash = EXCLUDED.content_hash, allow_manual_complete = EXCLUDED.allow_manual_complete`,
+        [l.slug, l.version, l.title, l.summary, l.minutes, l.position, JSON.stringify({ steps: l.steps }), hash, l.manual_completion ?? true],
       );
       await client.query("DELETE FROM app.lesson_question WHERE lesson_slug = $1", [l.slug]);
       for (const [i, q] of l.questions.entries()) {

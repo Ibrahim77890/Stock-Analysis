@@ -86,6 +86,16 @@ export function makeFakePython(trace?: TraceService): FakePython {
     labVaultBody(id: number, b: any) { const s = hasStudy(id); return { study_id: id, params: { fast: b.fast, slow: b.slow, cost_bps: b.cost_bps }, rule: metrics(0.1), buy_hold: metrics(0.5), growth: growth(), yearly: [{ year: 2022, rule: 0.1, buy_hold: 0.2 }], vault_years: 4, vault_bars: 1000, practice: { rule: metrics(1.2), buy_hold: metrics(2.5), years: 15.9 }, ideas_tried: s.trials.length }; },
     async labSavedVault(id: number) { rec("labSavedVault"); const s = hasStudy(id); if (!s.vault) throw new UpstreamError(422, "The vault of this study has not been opened yet."); const [f, sl, c] = s.trials[0].split("/").map(Number); return fake.labVaultBody(id, { fast: f, slow: sl, cost_bps: c }); },
   });
+  // ---- Operations fake (Sprint 10); `leak` adds fields that must never reach a learner
+  Object.assign(fake, {
+    async metrics() { rec("metrics"); return { service: "python", uptime_seconds: 5, note: "n", routes: [{ route: "GET /health", count: 3, client_errors: 0, server_errors: 0, p50_ms: 1, p95_ms: 2, max_ms: 3 }], ...(fake.leak ? { secret: "x" } : {}) }; },
+    async dataStatus() {
+      rec("dataStatus");
+      return { sources: [{ source: "tiingo", symbols: 52, symbols_with_long_history: 52, bars: 271337, first_date: "2005-01-03", last_date: "2025-12-31", retrieved_at: null, ...(fake.leak ? { file_path: "data/raw/tiingo/x.csv", file_sha256: "abc" } : {}) }],
+        min_sessions_for_long_history: 3000, quality: { run: true, rules_flagged: 2, errors: 0, warnings: 2, infos: 0 }, macro: { series: 2, observations: 13566, first_date: "2000-01-03", last_date: "2025-12-31" },
+        caveats: ["Survivorship bias.", "One vendor.", "Licence.", "Not advice."], empty: false, ...(fake.leak ? { api_key_name: "TIINGO_API_KEY" } : {}) };
+    },
+  });
   // ---- Indicators and practice decisions fake (Sprint 09); `leak` adds identity fields that must never reach a learner
   const decisions = new Map<string, Array<{ decision_id: number; day: number; stance: string; reason: string; cost_bps: number; key: string }>>();
   let did = 0;

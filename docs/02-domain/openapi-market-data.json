@@ -3618,6 +3618,57 @@
         ]
       }
     },
+    "/data/status": {
+      "get": {
+        "operationId": "status_data_status_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Status Data Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "data_status: sources, coverage, freshness, quality checks and caveats (no paths, hashes or keys)",
+        "tags": [
+          "Data"
+        ]
+      }
+    },
     "/episodes": {
       "post": {
         "operationId": "create_episodes_post",
@@ -5874,6 +5925,57 @@
         ]
       }
     },
+    "/metrics": {
+      "get": {
+        "operationId": "get_metrics_metrics_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-internal-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Internal-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Metrics Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "metrics: calls, 4xx and 5xx counts and p50, p95, max duration per route since the service started",
+        "tags": [
+          "Metrics"
+        ]
+      }
+    },
     "/quality/results": {
       "get": {
         "operationId": "quality_results_quality_results_get",
@@ -6965,6 +7067,14 @@
     {
       "description": "INTERNAL (called by the NestJS gateway): practice decisions (long or flat) with a written reason on blind episodes. Append-only; results use only days already reached. Writes: POST /episodes/{id}/decisions.",
       "name": "Paper"
+    },
+    {
+      "description": "INTERNAL (called by the NestJS gateway): calls, 4xx and 5xx counts and p50, p95, max duration per route pattern since the service started.",
+      "name": "Metrics"
+    },
+    {
+      "description": "INTERNAL (called by the NestJS gateway): what data is held, coverage, freshness, quality checks and caveats. No paths, hashes or keys.",
+      "name": "Data"
     },
     {
       "description": "Second price source (Tiingo): download, load, reconcile against Alpaca, vendor adjustment check, key check. Tiingo data are internal use only: keep this API on loopback.",

@@ -6,6 +6,8 @@ import { episode } from "./episode";
 import { hood } from "./hood";
 import { lab } from "./lab";
 import { decision, indicators, journal } from "./journal";
+import { status } from "./status";
+import { landing } from "./landing";
 import { lessons } from "./lessons";
 import { score } from "./score";
 
@@ -17,6 +19,8 @@ const blocks: Record<string, string[]> = {
   lab: flattenStrings(lab),
   lessons: flattenStrings(lessons),
   indicators: flattenStrings(indicators),
+  status: flattenStrings(status),
+  landing: flattenStrings(landing),
   decision: flattenStrings(decision),
   journal: flattenStrings(journal),
 };

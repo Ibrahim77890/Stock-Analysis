@@ -14,3 +14,22 @@ htmlcov/
 
 # OS / editor
 .DS_Store
+
+# Documentation and planning stay on this computer, not in the repository.
+# The three files below are read by code (type generation, contract tests, the glossary seed), so they stay tracked.
+docs/*
+!docs/02-domain/
+docs/02-domain/*
+!docs/02-domain/openapi-gateway.json
+!docs/02-domain/openapi-market-data.json
+!docs/02-domain/glossary.md
+sprints/
+README.md
+CHANGELOG.md
+
+# The project board and PowerShell scripts are local tools
+services/pm/
+*.ps1
+
+# Backups and generated files
+*.dump

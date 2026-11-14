@@ -83,7 +83,7 @@ describe.skipIf(!HAS_DB)("lessons gateway (database, fake Python)", () => {
     expect(list.questions_right).toBe(1);
     const rows = await h.pool.query("SELECT lesson_version, correct FROM app.quiz_answer WHERE learner_id = $1", [id]);
     expect(rows.rowCount).toBe(3);
-    expect(rows.rows.every((r) => r.lesson_version === 1 && r.correct)).toBe(true);
+    expect(rows.rows.every((r) => r.lesson_version === 2 && r.correct)).toBe(true);
   });
 
   it("20 concurrent identical answers: one question counted as right, 20 attempts, same verdict", async () => {
@@ -181,17 +181,77 @@ describe.skipIf(!HAS_DB)("lessons gateway (database, fake Python)", () => {
     const changed: LessonFile[] = JSON.parse(JSON.stringify(lessons));
     changed[2].questions[0].prompt = changed[2].questions[0].prompt + " (reworded)";
     await expect(seedLessons(h.pool, changed)).rejects.toThrow(/Raise "version"/);
-    changed[2].version = 2;
+    changed[2].version = 3;
     expect(await seedLessons(h.pool, changed)).toMatchObject({ updated: 1, unchanged: 6 });
     await answer(token, "brier-score", 1, keyOf("brier-score", 1));
     const rows = await h.pool.query("SELECT lesson_version FROM app.quiz_answer WHERE learner_id = $1 ORDER BY answer_id", [id]);
-    expect(rows.rows.map((r) => r.lesson_version)).toEqual([1, 2]);
+    expect(rows.rows.map((r) => r.lesson_version)).toEqual([2, 3]);
     const list = (await h.http().get("/lessons").set(auth(token))).body.find((x: any) => x.slug === "brier-score");
-    expect(list.version).toBe(2);
+    expect(list.version).toBe(3);
     expect(list.questions_right).toBe(1);
     // restore the original content for the next tests
     await h.pool.query("TRUNCATE app.lesson CASCADE");
     await seedLessons(h.pool, lessons);
+  });
+
+  it("MANUAL COMPLETION: a learner can mark a lesson complete and take the mark back; both are safe to repeat; it changes no answers or steps", async () => {
+    const { token, id } = await register(h, "Ann");
+    const before = (await h.http().get("/lessons").set(auth(token))).body.find((x: any) => x.slug === "reading-candles");
+    expect(before).toMatchObject({ done: false, completed_manually: false, manual_complete_allowed: true, steps_read: 0, questions_right: 0 });
+    const a = await h.http().post("/lessons/reading-candles/complete").set(auth(token)).send();
+    expect(a.status).toBe(200);
+    expect(a.body).toEqual({ lesson_slug: "reading-candles", completed_manually: true, done: true });
+    expect((await h.http().post("/lessons/reading-candles/complete").set(auth(token)).send()).body.done).toBe(true);   // again: still one row
+    expect((await h.pool.query("SELECT count(*)::int AS n FROM app.lesson_completion WHERE learner_id = $1", [id])).rows[0].n).toBe(1);
+    const list = (await h.http().get("/lessons").set(auth(token))).body.find((x: any) => x.slug === "reading-candles");
+    expect(list).toMatchObject({ done: true, completed_manually: true, steps_read: 0, questions_right: 0 });
+    const detail = (await h.http().get("/lessons/reading-candles").set(auth(token))).body;
+    expect(detail).toMatchObject({ done: true, completed_manually: true, manual_complete_allowed: true, questions_right: 0 });
+    expect((await h.pool.query("SELECT count(*)::int AS n FROM app.quiz_answer WHERE learner_id = $1", [id])).rows[0].n).toBe(0);
+    const back = await h.http().post("/lessons/reading-candles/incomplete").set(auth(token)).send();
+    expect(back.body).toEqual({ lesson_slug: "reading-candles", completed_manually: false, done: false });
+    expect((await h.http().post("/lessons/reading-candles/incomplete").set(auth(token)).send()).body.done).toBe(false);   // again: nothing to remove
+  });
+
+  it("taking the mark back keeps a lesson done when its steps and questions really are finished", async () => {
+    const { token } = await register(h, "Ann");
+    for (let n = 1; n <= 5; n++) await read(token, "reading-candles", n);
+    for (let q = 1; q <= 3; q++) await answer(token, "reading-candles", q, keyOf("reading-candles", q));
+    await h.http().post("/lessons/reading-candles/complete").set(auth(token)).send();
+    const back = await h.http().post("/lessons/reading-candles/incomplete").set(auth(token)).send();
+    expect(back.body).toEqual({ lesson_slug: "reading-candles", completed_manually: false, done: true });
+  });
+
+  it("completion is private, unknown lessons are the same 404, and a lesson whose setting turns it off answers 409 (negative)", async () => {
+    const a = await register(h, "Ann"), b = await register(h, "Bob");
+    await h.http().post("/lessons/brier-score/complete").set(auth(a.token)).send();
+    expect((await h.http().get("/lessons").set(auth(b.token))).body.find((x: any) => x.slug === "brier-score").done).toBe(false);
+    for (const p of ["/lessons/nope/complete", "/lessons/nope/incomplete", "/lessons/BAD%20SLUG/complete"]) {
+      const r = await h.http().post(p).set(auth(a.token)).send();
+      expect(r.status, p).toBe(404);
+      expect(r.body).toMatchObject(NOT_FOUND);
+    }
+    await h.pool.query("UPDATE app.lesson SET allow_manual_complete = false WHERE slug = 'calibration'");
+    try {
+      const r = await h.http().post("/lessons/calibration/complete").set(auth(a.token)).send();
+      expect(r.status).toBe(409);
+      expect(r.body.message).toMatch(/cannot be marked complete by hand/);
+      expect((await h.http().get("/lessons/calibration").set(auth(a.token))).body.manual_complete_allowed).toBe(false);
+    } finally {
+      await h.pool.query("UPDATE app.lesson SET allow_manual_complete = true WHERE slug = 'calibration'");
+    }
+  });
+
+  it("every lesson stores its own manual-completion setting from its file", async () => {
+    const rows = await h.pool.query("SELECT slug, allow_manual_complete FROM app.lesson ORDER BY position");
+    expect(rows.rows).toHaveLength(7);
+    for (const r of rows.rows) expect(r.allow_manual_complete, r.slug).toBe(lessons.find((l) => l.slug === r.slug)!.manual_completion ?? true);
+  });
+
+  it("the lesson detail carries the visual id of each step that has one", async () => {
+    const { token } = await register(h, "Ann");
+    const d = (await h.http().get("/lessons/brier-score").set(auth(token))).body;
+    expect(d.steps.map((s: any) => s.visual)).toEqual([undefined, "brier-formula", undefined, "brier-curve", undefined]);
   });
 
   it("the seeded database rows pass the same content checks as the files", async () => {
